@@ -1,0 +1,21 @@
+{
+  "name": "aquila-api-hub",
+  "version": "0.0.2",
+  "dependencies": {
+    "async": "^0.9.0",
+    "body-parser": "^1.8.1",
+    "buffertools": "^2.1.2",
+    "ejs": "^1.0.0",
+    "express": "^4.9.0",
+    "method-override": "^2.2.0",
+    "mongoose": "^3.8.16",
+    "serialport": "^1.4.6",
+    "socket.io": "^1.1.0",
+    "validator": "^3.18.0"
+  },
+  "devDependencies": {
+    "grunt": "latest",
+    "grunt-cli": "latest",
+    "grunt-contrib-jshint": "latest"
+  }
+}

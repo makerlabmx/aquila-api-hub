@@ -1,0 +1,72 @@
+<html lang="es" ng-app="aquila">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Aquila</title>
+	<link href='http://fonts.googleapis.com/css?family=Raleway:400,700,100' rel='stylesheet' type='text/css'>
+	<link href="main/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">	
+	
+
+	<link href="main/icons/capicon.css" rel="stylesheet" >
+	<link href="main/css/main.css" rel="stylesheet" >
+	<!-- <link href="main/css/config.css" rel="stylesheet" >	 -->
+	<link href="main/css/bootstrapc.css" rel="stylesheet" >
+
+	
+</head>
+<body ng-controller="MainController as main" >
+	<div class="container">
+		<div class="row">
+			<div class="col-lg-12">
+				<h1>Bienvenido a Aquila</h1>
+			</div>
+		</div>
+
+	<!-- Static navbar -->
+		<div class="navbar navbar-default navbar-static-top" role="navigation">
+		  <div class="container-fluid">
+		    <div class="navbar-header">
+		      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+		        <span class="sr-only">Toggle navigation</span>
+		        <span class="icon-bar"></span>
+		        <span class="icon-bar"></span>
+		        <span class="icon-bar"></span>
+		      </button>            
+		    </div>
+		    <div class="navbar-collapse collapse">
+		      <ul class="nav navbar-nav">
+		        <li><a href="#/"><i class='icon-001'></i> Home</a></li>
+		        <li><a href="#/interacciones"><i class='icon-001'></i> Interacciones</a></li>
+		        <li><a href="#/configuraciones"><i class='icon-006'></i> Configuración</a></li>                           
+		      </ul>
+		      <ul class="nav navbar-nav navbar-right">
+		        <li class="dropdown">
+		          <a href="#" class="dropdown-toggle" data-toggle="dropdown">Opciones <span class="caret"></span></a>
+		          <ul class="dropdown-menu" role="menu">
+		            <li><a href ng-click="main.doReload()" ><i class='icon-012 f20'></i> Reload</a></li>
+		          </ul>
+		        </li>
+		      </ul>
+		    </div><!--/.nav-collapse -->
+		  </div><!--/.container-fluid -->
+		</div>	
+      
+
+		<div ng-view></div>		
+	</div>	
+
+	<script src="main/bower_components/jquery/dist/jquery.min.js"></script>
+	<script src="main/bower_components/bootstrap/dist/js/bootstrap.min.js" rel="stylesheet"></script>
+	<script src="main/bower_components/angular/angular.js"></script>
+	<script src="main/bower_components/angular-route/angular-route.js"></script>
+	<script src="main/bower_components/angular-socket-io/socket.js"></script>
+	<script src="/socket.io/socket.io.js"></script>	
+	<script src="main/js/app.js"></script>
+	<script src="main/js/controllers/mainController.js"></script>	
+	<script src="main/js/controllers/deviceController.js"></script>	
+	<script src="main/js/controllers/interactionController.js"></script>	
+	<script src="main/js/controllers/configuracionController.js"></script>		
+	
+</body>
+</html>
