@@ -8,7 +8,7 @@
       return socketFactory();
     });
 
-  app.controller('DeviceController', [ '$http' , '$scope', function($http, $scope, socket){    
+  app.controller('DeviceController', [ '$http' , '$scope', 'socket', function($http, $scope, socket){    
       aquila = this;        
       aquila.devices=[];
       aquila.active;
@@ -64,19 +64,22 @@
       }    
 
       socket.on('deviceAdded', function(){
+        console.log("device Added");
         loadMain();
       });
 
-      socket.on('deviceRemoved', function(){      
+      socket.on('deviceRemoved', function(){   
+        console.log("device Removed");   
         loadMain();
       });
 
       function loadMain(){
         if(!aquila.classes) return;
-        aquila.devices=[];
+        
         var devs = [];
         $http.get('/api/devices').success(function(data, status, headers, config)
           {
+            aquila.devices=[];
             devs = data;
             for(var i = 0; i < devs.length; i++)
             {                      

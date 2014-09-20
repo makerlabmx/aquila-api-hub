@@ -49,6 +49,8 @@ exports.deviceAction = function(req, res)
 	console.log(req.params);
 	Device.findById(req.params.id, function(err, device)
 	{
+		console.log("GET /api/devices/" + req.params.id + "/action/" + req.params.action + "/" + req.params.param);
+
 		if(err) return res.send(500, err.message);
 		if(!validator.isInt(req.params.action)) return res.send(500);
 		if(req.params.param && !validator.isInt(req.params.param)) return res.send(500);
@@ -59,7 +61,6 @@ exports.deviceAction = function(req, res)
 				action <= 255)) return res.send(500);
 		if(param  && !(param >= 0 && param <= 255)) return res.send(500);
 
-		console.log("GET /api/devices/" + req.params.id + "/action/" + action + "/" + param);
 		deviceManager.requestAction(device.address, action, param);
 		res.status(200).send("Ok");
 	});

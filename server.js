@@ -2,7 +2,8 @@ var express = require("express"),
 	bodyParser = require("body-parser"),
 	methodOverride = require("method-override"),
 	mongoose = require("mongoose"),
-	socket = require("socket.io");
+	socket = require("socket.io"),
+	toobusy = require('toobusy');
 
 mongoose.connect("mongodb://localhost/aquila", function(err, res)
 {
@@ -13,6 +14,12 @@ mongoose.connect("mongodb://localhost/aquila", function(err, res)
 var app = express();
 
 // Middlewares
+app.use(function(req, res, next) {
+  // check if we're toobusy() - note, this call is extremely fast, and returns
+  // state that is cached at a fixed interval
+  if (toobusy()) res.send(503, "I'm busy right now, sorry.");
+  else next();
+});
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(methodOverride());

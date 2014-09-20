@@ -6,8 +6,7 @@
       'deviceController',
       //'interactionController',
       'configuracionController',
-      'ngRoute',
-      'btford.socket-io'
+      'ngRoute'    
     ]
   );
   
