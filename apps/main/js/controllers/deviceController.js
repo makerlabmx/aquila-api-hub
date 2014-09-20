@@ -1,8 +1,14 @@
 (function(){
 
-  var app = angular.module('deviceController',[]);
+  var app = angular.module('deviceController',['btford.socket-io']);
 
-  app.controller('DeviceController', [ '$http' , '$scope', function($http, $scope){    
+
+  app.factory('socket', function(socketFactory)
+    {
+      return socketFactory();
+    });
+
+  app.controller('DeviceController', [ '$http' , '$scope', function($http, $scope, socket){    
       aquila = this;        
       aquila.devices=[];
       aquila.active;
@@ -57,11 +63,11 @@
           });
       }    
 
-      $scope.$on('socket:deviceAdded', function(){
+      socket.on('deviceAdded', function(){
         loadMain();
       });
 
-      $scope.$on('socket:deviceRemoved', function(){      
+      socket.on('deviceRemoved', function(){      
         loadMain();
       });
 

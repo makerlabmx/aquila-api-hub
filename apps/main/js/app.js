@@ -10,18 +10,7 @@
       'btford.socket-io'
     ]
   );
-
-  app.factory('notifications', function (socketFactory) 
-  {
-    var notifications = socketFactory();
-    notifications.forward('deviceDiscovered');
-    notifications.forward('deviceAdded');
-    notifications.forward('deviceRemoved');
-    notifications.forward('event');
-    return notifications;
-  });
   
-
   app.config(['$routeProvider',
   function($routeProvider) {
     $routeProvider.

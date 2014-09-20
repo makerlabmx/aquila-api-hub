@@ -4,9 +4,9 @@
 
   app.controller('InteractionController', [ '$http' , '$scope', function($http, $scope){    
     inter = this;        
-    inter.devices=[];
-    inter.interaccion;
-    inter.entries;    
+    inter.devices = [];
+    inter.interaccion = [];
+    inter.interactions = [];    
     inter.edit_element = false;
     inter.save_element = false;
 
@@ -77,20 +77,20 @@
 
     function loadInter(){
       inter.devices=[];
-      inter.entries=[];
+      inter.interactions=[];
       var devs = Aq("*");      
       //console.log(devs);
       for(var i = 0; i < devs.length; i++)
       {                           
         if(devs[i].active){           
           inter.devices.push(devs[i]);                    
-          for(var x = 0; x < devs[i].entries.length; x++){                        
-            devs[i].entries[x].device = devs[i].address;
-            devs[i].entries[x].cuando_name = getDevice(devs[i].entries[x].address);            
-            devs[i].entries[x].event_name = getEvent(devs[i].entries[x].address,devs[i].entries[x].event).name;
-            devs[i].entries[x].hacer_name = devs[i].name;            
-            devs[i].entries[x].action_name = getAction(devs[i].address,devs[i].entries[x].action).name;
-            inter.entries.push(devs[i].entries[x]);
+          for(var x = 0; x < devs[i].interactions.length; x++){                        
+            devs[i].interactions[x].device = devs[i].address;
+            devs[i].interactions[x].cuando_name = getDevice(devs[i].interactions[x].address);            
+            devs[i].interactions[x].event_name = getEvent(devs[i].interactions[x].address,devs[i].interactions[x].event).name;
+            devs[i].interactions[x].hacer_name = devs[i].name;            
+            devs[i].interactions[x].action_name = getAction(devs[i].address,devs[i].interactions[x].action).name;
+            inter.interactions.push(devs[i].interactions[x]);
           }          
         }        
       } 
