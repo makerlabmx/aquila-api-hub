@@ -21,64 +21,65 @@ app.use(express.static(__dirname + "/apps"));
 app.set("views", __dirname + "/apps");
 app.engine("html", require("ejs").renderFile);
 
-// Import Models and Controllers
-var DeviceModel = require("./models/device").Device(app, mongoose);
-var InteractionModel = require("./models/interaction").Interaction(app, mongoose);
-var ConfigModel = require("./models/config")(app, mongoose);
-var DeviceCtrl = require("./controllers/device");
-var ConfigCtrl = require("./controllers/config");
-var InteractionCtrl = require("./controllers/interaction");
-
-// Routers
-var router = express.Router();
-var apiRouter = express.Router();
-
-// Main app route
-router.get("/", function(req, res)
-{
-	res.render("main/index.html");
-});
-
-// API:
-// Devices
-apiRouter.route("/devices")
-	.get(DeviceCtrl.findAllDevices);
-
-apiRouter.route("/devices/:id")
-	.get(DeviceCtrl.findById)
-	.put(DeviceCtrl.updateDevice);
-
-apiRouter.route("/devices/:id/action/:action/:param?")
-	.get(DeviceCtrl.deviceAction);
-
-// Interactions
-apiRouter.route("/interactions")
-	.get(InteractionCtrl.findAllInteractions)
-	.post(InteractionCtrl.addInteraction);
-
-apiRouter.route("/interactions/:id")
-	.get(InteractionCtrl.findById)
-	.put(InteractionCtrl.updateInteraction)
-	.delete(InteractionCtrl.deleteInteraction);
-
-// Utils
-apiRouter.route("/pan")
-	.get(ConfigCtrl.getPan)
-	.post(ConfigCtrl.setPan);
-
-apiRouter.route("/discover")
-	.get(ConfigCtrl.discover);
-
-apiRouter.route("/reload")
-	.get(ConfigCtrl.reload);
-
-app.use(router);
-app.use("/api", apiRouter);
-
 mongoose.connect("mongodb://localhost/aquila", function(err, res)
 	{
-	    if(err) throw err;
+		if(err) throw err;
 	    console.log("Connected to Database");
+
+		// Import Models and Controllers
+		var DeviceModel = require("./models/device").Device(app, mongoose);
+		var InteractionModel = require("./models/interaction").Interaction(app, mongoose);
+		var ConfigModel = require("./models/config")(app, mongoose);
+		var DeviceCtrl = require("./controllers/device");
+		var ConfigCtrl = require("./controllers/config");
+		var InteractionCtrl = require("./controllers/interaction");
+
+		// Routers
+		var router = express.Router();
+		var apiRouter = express.Router();
+
+		// Main app route
+		router.get("/", function(req, res)
+		{
+			res.render("main/index.html");
+		});
+
+		// API:
+		// Devices
+		apiRouter.route("/devices")
+			.get(DeviceCtrl.findAllDevices);
+
+		apiRouter.route("/devices/:id")
+			.get(DeviceCtrl.findById)
+			.put(DeviceCtrl.updateDevice);
+
+		apiRouter.route("/devices/:id/action/:action/:param?")
+			.get(DeviceCtrl.deviceAction);
+
+		// Interactions
+		apiRouter.route("/interactions")
+			.get(InteractionCtrl.findAllInteractions)
+			.post(InteractionCtrl.addInteraction);
+
+		apiRouter.route("/interactions/:id")
+			.get(InteractionCtrl.findById)
+			.put(InteractionCtrl.updateInteraction)
+			.delete(InteractionCtrl.deleteInteraction);
+
+		// Utils
+		apiRouter.route("/pan")
+			.get(ConfigCtrl.getPan)
+			.post(ConfigCtrl.setPan);
+
+		apiRouter.route("/discover")
+			.get(ConfigCtrl.discover);
+
+		apiRouter.route("/reload")
+			.get(ConfigCtrl.reload);
+
+		app.use(router);
+		app.use("/api", apiRouter);
+
 
 	    var deviceManager = require("./controllers/deviceManager");
 		//Debug:
