@@ -75,63 +75,66 @@ apiRouter.route("/reload")
 app.use(router);
 app.use("/api", apiRouter);
 
-var deviceManager = require("./controllers/deviceManager");
-//Debug:
-deviceManager.on("deviceDiscovered", function()
-{
-	console.log("Device discovered");
-});
-deviceManager.on("deviceAdded", function()
-{
-	console.log("Device added");
-});
-deviceManager.on("deviceRemoved", function()
-{
-	console.log("Device removed");
-});
-deviceManager.on("event", function(device, eventN)
-{
-	console.log("					EVENT: ", eventN, " From Device: ", device.class);
-});
-// Don't listen until deviceManager is ready:
-deviceManager.on("ready", function()
-{
-	mongoose.connect("mongodb://localhost/aquila", function(err, res)
+mongoose.connect("mongodb://localhost/aquila", function(err, res)
 	{
 	    if(err) throw err;
 	    console.log("Connected to Database");
-	});
-	// Init config
-	ConfigCtrl.init();
-	
-	
 
-	var io = socket.listen(app.listen(3000, function() 
-	{
-		console.log("Node server running on http://localhost:3000");
-	}));
-
-	io.sockets.on("connection", function(socket)
-	{
+	    var deviceManager = require("./controllers/deviceManager");
+		//Debug:
 		deviceManager.on("deviceDiscovered", function()
 		{
-			socket.emit("deviceDiscovered");
+			console.log("Device discovered");
 		});
-
 		deviceManager.on("deviceAdded", function()
 		{
-			socket.emit("deviceAdded");
+			console.log("Device added");
 		});
-
 		deviceManager.on("deviceRemoved", function()
 		{
-			socket.emit("deviceRemoved");
+			console.log("Device removed");
 		});
-
 		deviceManager.on("event", function(device, eventN)
 		{
-			socket.emit("event", device, eventN);
+			console.log("					EVENT: ", eventN, " From Device: ", device.class);
 		});
+		// Don't listen until deviceManager is ready:
+		deviceManager.on("ready", function()
+		{
+			// Init config
+			ConfigCtrl.init();
+			
+			
 
+			var io = socket.listen(app.listen(3000, function() 
+			{
+				console.log("Node server running on http://localhost:3000");
+			}));
+
+			io.sockets.on("connection", function(socket)
+			{
+				deviceManager.on("deviceDiscovered", function()
+				{
+					socket.emit("deviceDiscovered");
+				});
+
+				deviceManager.on("deviceAdded", function()
+				{
+					socket.emit("deviceAdded");
+				});
+
+				deviceManager.on("deviceRemoved", function()
+				{
+					socket.emit("deviceRemoved");
+				});
+
+				deviceManager.on("event", function(device, eventN)
+				{
+					socket.emit("event", device, eventN);
+				});
+
+			});
+		});
 	});
-});
+
+
