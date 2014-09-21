@@ -5,12 +5,6 @@ var express = require("express"),
 	socket = require("socket.io"),
 	toobusy = require('toobusy');
 
-mongoose.connect("mongodb://localhost/aquila", function(err, res)
-{
-    if(err) throw err;
-    console.log("Connected to Database");
-});
-
 var app = express();
 
 // Middlewares
@@ -102,6 +96,11 @@ deviceManager.on("event", function(device, eventN)
 // Don't listen until deviceManager is ready:
 deviceManager.on("ready", function()
 {
+	mongoose.connect("mongodb://localhost/aquila", function(err, res)
+	{
+	    if(err) throw err;
+	    console.log("Connected to Database");
+	});
 	// Init config
 	ConfigCtrl.init();
 	

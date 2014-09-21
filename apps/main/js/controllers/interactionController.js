@@ -1,8 +1,13 @@
 (function(){
 
-  var app = angular.module('interactionController',[]);
+  var app = angular.module('interactionController',['btford.socket-io']);
 
-  app.controller('InteractionController', [ '$http' , '$scope', function($http, $scope){    
+  app.factory('socket', function(socketFactory)
+    {
+      return socketFactory();
+    });
+
+  app.controller('InteractionController', [ '$http' , '$scope', 'socket', function($http, $scope, socket){    
     inter = this;        
     inter.devices = [];
     inter.interaccion = [];
@@ -32,22 +37,23 @@
     inter.edit = function (entry){
       inter.title = "Editar Interaccion"
       inter.interaccion = {};          
-      dev_cuando = Aq(entry.address)[0];
-      dev_hacer = Aq(entry.device)[0];      
+      var dev_cuando = Aq(entry.event_address)[0];
+      var dev_hacer = Aq(entry.action_address)[0];      
       inter.interaccion.dev_cuando = dev_cuando;
       inter.interaccion.dev_hacer = dev_hacer;
-      inter.interaccion.event_cuando = getEvent(dev_cuando.address,entry.event);
-      inter.interaccion.action_hacer = getAction(dev_hacer.address,entry.action);
-      inter.interaccion.n = entry.n;      
+      inter.interaccion.event_cuando = getEvent(dev_cuando.address, entry.event);
+      inter.interaccion.action_hacer = getAction(dev_hacer.address, entry.action);
+      inter.interaccion.n = entry._n;      
       editTrue();
       $('#modal-interaccion').modal('show');
     }
 
     inter.save = function (){      
       var entry =  new Entry();
-      entry.event = inter.interaccion.event_cuando.n ;
-      entry.action = inter.interaccion.action_hacer.n ;
-      entry.address = inter.interaccion.dev_cuando.address ;      
+      entry.event = inter.interaccion.event_cuando.n;
+      entry.action = inter.interaccion.action_hacer.n;
+      entry.event_address = inter.interaccion.dev_cuando.address;
+      entry.action_address = inter.interaction.dev_hacer.address;      
       Aq(inter.interaccion.dev_hacer.address).addEntry(entry, function(){
         console.log("si se guardo")
         $('#modal-interaccion').modal('hide');
@@ -66,12 +72,12 @@
     }    
 
     inter.delete = function (entry){
-      Aq(entry.device).removeEntry(entry.n,function(){
+      Aq(entry.device).removeEntry(entry._n,function(){
         console.log("todo ok");
       });
     }
 
-    $Aq.on('deviceAdded', function(){
+    socket.on('deviceAdded', function(){
       loadInter();  
     });
 
