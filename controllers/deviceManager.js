@@ -69,7 +69,13 @@ var DeviceManager = function()
 						device.save(function(err, device)
 							{
 								if(err) return console.log(err.message);
-								self.emit("deviceRemoved");
+								// Remove all interactions from this device:
+								// Better, query if device is active before displaying in ui? or add active flag to Interaction?
+								/*Interaction.remove({"action_address": device.address}, function(err)
+								{
+									if(err) return console.log("Error deleting all interactions from ", device.address, err);*/
+									self.emit("deviceRemoved");
+								/*});*/
 							});
 					}
 					cb();
@@ -79,111 +85,138 @@ var DeviceManager = function()
 	this.protocol.on("ready", function()
 		{
 			console.log("Starting bridge...");
+
 			// Device adding manager
-			self.protocol.on("post", function(packet)
-				{
-					if(packet.message.command[0] === COM_CLASS)
-					{
-						var deviceAddress = packet.srcAddr;
-						var deviceClass = packet.message.data.toString("utf8");
-
-						var query = Device.where({ address: deviceAddress });
-						query.findOne(function(err, device)
-							{
-								
-								if(err) return console.log("Error", err);
-								if(!device)
-								{
-									// Not aready addeed, add
-									device = new Device(
-										{
-											address: deviceAddress,
-											class: deviceClass,
-											name: null,
-											_defaultName: null,
-											active: false,
-											actions: [],
-											events: [],
-											_fetchComplete: false,
-											_nActions: null,
-											_nEvents: null,
-											_nInteractions: null,
-											_maxInteractions: null
-											//_interactions: []
-										});
-									device.save(function(err, device)
-										{
-											if(err) return console.log("Error", err);
-											self.emit("deviceDiscovered");
-
-											// fetch all
-											self.fetchQueue.push(device);
-										});
-								}
-								else
-								{
-									// if not active, make it active
-									if(!device.active && device._fetchComplete)
-									{
-										device.active = true;
-										device.save(function(err, interaction)
-											{
-												if(err) return console.log("Error", err);
-												// Emit device added
-												self.emit("deviceAdded");
-											});
-									}
-									if(!device._fetchComplete)
-									{
-										// retry fetch all
-										self.fetchQueue.push(device);
-									}
-								}
-							});
-						
-					}
-				});
+			self.protocol.on("post", self.deviceFetcher.bind(self));
 
 			// Device Event handling:
-			self.protocol.on("event", function(packet)
-				{
-					var emitterAddress = packet.srcAddr;
-					var eventN = packet.message.command[0];
-					// ¿Add param?.....
-					var query = Device.where({ address: emitterAddress });
-					query.findOne(function(err, device)
-						{
-							if(err) return console.log(err.message);
-							if(device) self.emit("event", device, eventN);
-						});
-					
-				});
+			self.protocol.on("event", self.eventHandler.bind(self));
 
 			// Housekeeping, check incomplete devices, check if still alive
-			setInterval(function()
-				{
-					console.log("Housekeeping... ");
-					Device.find(function(err, devices)
-					{
-						if(err) return console.log(err);
-
-						for(var i = 0; i < devices.length; i++)
-						{
-							if(!devices[i]._fetchComplete) self.fetchQueue.push(devices[i]);
-							// Check if its alive
-							else if(devices[i].active && staticConfig.autoCheckAlive)
-							{
-								self.pingQueue.push(devices[i]);
-							}
-						}
-					});
-				}, REFRESH_INTERVAL);
+			setInterval(self.refreshActiveDevices.bind(self), REFRESH_INTERVAL);
 
 			self.emit("ready");
 		});
 };
 
 DeviceManager.prototype.__proto__ = events.EventEmitter.prototype;
+
+DeviceManager.prototype.refreshActiveDevices = function()
+{
+	var self = this;
+	console.log("refreshing Active Devices... ");
+	Device.find(function(err, devices)
+	{
+		if(err) return console.log(err);
+
+		for(var i = 0; i < devices.length; i++)
+		{
+			if(!devices[i]._fetchComplete) self.fetchQueue.push(devices[i]);
+			// Check if its alive
+			else if(devices[i].active && staticConfig.autoCheckAlive)
+			{
+				self.pingQueue.push(devices[i]);
+			}
+		}
+	});
+};
+
+DeviceManager.prototype.eventHandler = function(packet)
+{
+	var self = this;
+	var emitterAddress = packet.srcAddr;
+	var eventN = packet.message.command[0];
+	// ¿Add param?.....
+	var query = Device.where({ address: emitterAddress });
+	query.findOne(function(err, device)
+		{
+			if(err) return console.log(err.message);
+			if(device) self.emit("event", device, eventN);
+		});	
+};
+
+DeviceManager.prototype.deviceFetcher = function(packet)
+{
+	var self = this;
+	if(packet.message.command[0] === COM_CLASS)
+	{
+		var deviceAddress = packet.srcAddr;
+		var deviceClass = packet.message.data.toString("utf8");
+
+		var query = Device.where({ address: deviceAddress });
+		query.findOne(function(err, device)
+			{
+				
+				if(err) return console.log("Error", err);
+				if(!device)
+				{
+					// Not aready addeed, add
+					device = new Device(
+						{
+							address: deviceAddress,
+							class: deviceClass,
+							name: null,
+							_defaultName: null,
+							active: false,
+							actions: [],
+							events: [],
+							_fetchComplete: false,
+							_nActions: null,
+							_nEvents: null,
+							_nInteractions: null,
+							_maxInteractions: null
+							//_interactions: []
+						});
+					device.save(function(err, device)
+						{
+							if(err) return console.log("Error", err);
+							self.emit("deviceDiscovered");
+
+							// fetch all
+							self.fetchQueue.push(device);
+						});
+				}
+				else
+				{
+					// if not active, make it active
+					if(!device.active && device._fetchComplete)
+					{
+						device.active = true;
+						device.save(function(err, interaction)
+							{
+								if(err) return console.log("Error", err);
+								// Emit device added
+								self.emit("deviceAdded");
+							});
+					}
+					if(!device._fetchComplete)
+					{
+						// retry fetch all
+						self.fetchQueue.push(device);
+					}
+				}
+			});
+		
+	}
+};
+
+DeviceManager.prototype.discover = function(callback)
+{
+	var self = this;
+	self.protocol.requestGet(addressParser.toBuffer("FF:FF"), COM_CLASS);
+	var count = 0;
+	var interval = setInterval(function()
+		{
+			self.protocol.requestGet(addressParser.toBuffer("FF:FF"), COM_CLASS);
+			count++;
+			if(count > 3) 
+			{
+				clearInterval(interval);
+				if(callback) callback();
+			}
+
+		}, 500);
+};
 
 DeviceManager.prototype.getPAN = function()
 {
@@ -314,24 +347,6 @@ DeviceManager.prototype.requestCustom = function(address, data, callback)
 
 	// TODO: Check if its necesary to remove listener after success.
 	this.protocol.on(addressParser.toString(address), custCb);
-};
-
-DeviceManager.prototype.discover = function(callback)
-{
-	var self = this;
-	self.protocol.requestGet(addressParser.toBuffer("FF:FF"), COM_CLASS);
-	var count = 0;
-	var interval = setInterval(function()
-		{
-			self.protocol.requestGet(addressParser.toBuffer("FF:FF"), COM_CLASS);
-			count++;
-			if(count > 3) 
-			{
-				clearInterval(interval);
-				if(callback) callback();
-			}
-
-		}, 500);
 };
 
 //Command definitions:

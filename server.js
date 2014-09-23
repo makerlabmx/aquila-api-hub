@@ -104,8 +104,6 @@ mongoose.connect("mongodb://localhost/aquila", function(err, res)
 		{
 			// Init config
 			ConfigCtrl.init();
-			
-			
 
 			var io = socket.listen(app.listen(3000, function() 
 			{

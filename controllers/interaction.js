@@ -6,7 +6,8 @@ var deviceManager = require("./deviceManager");
 // GET - List all interactions
 exports.findAllInteractions = function(req, res)
 {
-	Interaction.find(function(err, interactions)
+	console.log(req.query);
+	Interaction.find(req.query, function(err, interactions)
 		{
 			if(err) res.send(500, err.message);
 

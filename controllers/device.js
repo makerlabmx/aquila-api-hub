@@ -7,13 +7,16 @@ var validator = require("validator");
 // GET - List all devices
 exports.findAllDevices = function(req, res)
 {
-	Device.find(function(err, devices)
-		{
-			if(err) res.send(500, err.message);
+	console.log(req.query);
 
-			console.log("GET /api/devices");
-			res.status(200).jsonp(devices);
-		});
+	Device.find(req.query, function(err, devices)
+	{
+		if(err) res.send(500, err.message);
+
+		console.log("GET /api/devices");
+		res.status(200).jsonp(devices);
+	});
+	
 };
 
 // GET - retrieve a device
