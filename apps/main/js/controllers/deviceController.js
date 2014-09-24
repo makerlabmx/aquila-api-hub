@@ -94,9 +94,7 @@
                 }
                 devs[i].img= aquila.classes[devs[i].class].image;
                 devs[i].color = "color"+((i+1)%5);
-                aquila.devices.push(devs[i]);          
-                
-                
+                aquila.devices.push(devs[i]);               
               }        
             } 
           });

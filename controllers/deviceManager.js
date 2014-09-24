@@ -23,6 +23,7 @@ var staticConfig = require("./../config");
 	deviceDiscovered
 	deviceAdded
 	deviceRemoved
+	event(device, eventN, param)
 
 */
 
@@ -126,12 +127,15 @@ DeviceManager.prototype.eventHandler = function(packet)
 	var self = this;
 	var emitterAddress = packet.srcAddr;
 	var eventN = packet.message.command[0];
-	// ¿Add param?.....
+	var hasParam = packet.message.control.hasParam;
+	var param = null;
+	if(hasParam) param = packet.message.param[0];
+
 	var query = Device.where({ address: emitterAddress });
 	query.findOne(function(err, device)
 		{
 			if(err) return console.log(err.message);
-			if(device) self.emit("event", device, eventN);
+			if(device) self.emit("event", device, eventN, param);
 		});	
 };
 
