@@ -3,13 +3,14 @@ var Device = mongoose.model("Device");
 var deviceManager = require("./deviceManager");
 var validator = require("validator");
 
+var queryFields = "-_fetchComplete -_nActions -_nEvents -_nInteractions -_maxInteractions -__v -events._id -actions._id";
 
 // GET - List all devices
 exports.findAllDevices = function(req, res)
 {
 	console.log(req.query);
 
-	Device.find(req.query, function(err, devices)
+	Device.find(req.query, queryFields, function(err, devices)
 	{
 		if(err) res.send(500, err.message);
 
@@ -22,7 +23,7 @@ exports.findAllDevices = function(req, res)
 // GET - retrieve a device
 exports.findById = function(req, res)
 {
-	Device.findById(req.params.id, function(err, device)
+	Device.findById(req.params.id, queryFields, function(err, device)
 		{
 			if(err) return res.send(500, err.message);
 
@@ -34,14 +35,17 @@ exports.findById = function(req, res)
 // PUT - Update customizable details (currently only name)
 exports.updateDevice = function(req, res)
 {
-	Device.findById(req.params.id, function(err, device)
+	Device.findById(req.params.id, queryFields, function(err, device)
 	{
+		if(err) return res.send(500, err.message);
+		if(!device) return res.send(404, "Invalid device id");
+		if(!req.body.name || typeof(req.body.name) !== "string") return res.send(404, "Invalid device name");
 		device.name = req.body.name;
 
 		device.save(function(err)
 			{
 				if(err) return res.send(500, err.message);
-				res.status(200).jsonp(device);
+				res.status(201).jsonp(device);
 			});
 	});
 };
@@ -52,6 +56,9 @@ exports.deviceAction = function(req, res)
 	console.log(req.params);
 	Device.findById(req.params.id, function(err, device)
 	{
+		if(err) return res.send(500, err.message);
+		if(!device) return res.send(404, "Invalid device id");
+		
 		console.log("GET /api/devices/" + req.params.id + "/action/" + req.params.action + "/" + req.params.param);
 
 		if(err) return res.send(500, err.message);
@@ -65,6 +72,6 @@ exports.deviceAction = function(req, res)
 		if(param  && !(param >= 0 && param <= 255)) return res.send(500);
 
 		deviceManager.requestAction(device.address, action, param);
-		res.status(200).send("Ok");
+		res.status(204).send();
 	});
 };
