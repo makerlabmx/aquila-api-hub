@@ -12,25 +12,33 @@ var buffertools = require("buffertools");
 
 var staticConfig = require("./../config");
 
-/*
-	Device Manager: 
-	- Encargado de obtener toda la info de los dispositivos
-	- Manejar la red (PAN)
-	- Enviar mensajes a dispositivos
-	- Recibir eventos
-
-	Events:
-	deviceDiscovered
-	deviceAdded
-	deviceRemoved
-	event(device, eventN, param)
-
-*/
-
 var TIMEOUT = 100;
 var LONGTIMEOUT = 1000;
 var REFRESH_INTERVAL = 5000;
 var COM_CLASS = 2;
+
+/*
+	DeviceManager:
+		- Obtains all the info of the devices in the Aquila network.
+		- Manages the subnetwork (PAN)
+		- Sends messages to devices
+		- Receives events from devices
+	Queues:
+		fetchQueue: fetches devices and interactions of each, one at a time
+		refreshInteractionsQueue: deletes and refetches all interactions of one device
+		pingQueue: Pings every device one at a time, if it doesn't get response, marks it as not active and deletes its interactions.
+
+	Responds to events:
+		Protocol post with COM_CLASS, calls device fetcher.
+		Protocol event, emits event with device, eventN and param (null if there isn't param).
+		Calls ping every REFRESH_INTERVAL ms if staticConfig.autoCheckAlive
+
+	Emits events:
+		deviceDiscovered	(when a device is firts known, but hasn't been fetched)
+		deviceAdded			(when a device is fully fetched or made active)
+		deviceRemoved		(when a device fails Ping and is marked inactive)
+		event(device, eventN, param) (when a device emits an event)
+*/
 
 var DeviceManager = function()
 {
@@ -57,6 +65,15 @@ var DeviceManager = function()
 			
 		}, 1);
 
+	this.refreshInteractionsQueue = async.queue(function(device, callback)
+		{
+			self.fetchInteractions(device, function(err)
+						{
+							if(err) console.log(err);
+							callback();
+						});
+		}, 1);
+
 	this.pingQueue = async.queue(function(device, cb)
 		{
 			console.log("Pinging ", device.class);
@@ -71,17 +88,16 @@ var DeviceManager = function()
 							{
 								if(err) return console.log(err.message);
 								// Remove all interactions from this device:
-								// Better, query if device is active before displaying in ui? or add active flag to Interaction?
-								/*Interaction.remove({"action_address": device.address}, function(err)
+								Interaction.remove({"action_address": device.address}, function(err)
 								{
-									if(err) return console.log("Error deleting all interactions from ", device.address, err);*/
+									if(err) return console.log("Error deleting all interactions from ", device.address, err);
 									self.emit("deviceRemoved");
-								/*});*/
+								});
 							});
 					}
 					cb();
 				} );
-		});
+		}, 1);
 
 	this.protocol.on("ready", function()
 		{
@@ -105,7 +121,7 @@ DeviceManager.prototype.__proto__ = events.EventEmitter.prototype;
 DeviceManager.prototype.refreshActiveDevices = function()
 {
 	var self = this;
-	console.log("refreshing Active Devices... ");
+	console.log("Refreshing Active Devices... ");
 	Device.find(function(err, devices)
 	{
 		if(err) return console.log(err);
@@ -142,6 +158,7 @@ DeviceManager.prototype.eventHandler = function(packet)
 DeviceManager.prototype.deviceFetcher = function(packet)
 {
 	var self = this;
+	// If we get an class message (device anouncing itself)
 	if(packet.message.command[0] === COM_CLASS)
 	{
 		var deviceAddress = packet.srcAddr;
@@ -182,15 +199,18 @@ DeviceManager.prototype.deviceFetcher = function(packet)
 				}
 				else
 				{
-					// if not active, make it active
+					// if not active, make it active and refresh interactions
 					if(!device.active && device._fetchComplete)
 					{
 						device.active = true;
-						device.save(function(err, interaction)
+						self.refreshInteractionsQueue.push(device, function()
 							{
-								if(err) return console.log("Error", err);
-								// Emit device added
-								self.emit("deviceAdded");
+								device.save(function(err, device)
+								{
+									if(err) return console.log("Error", err);
+									// Emit device added
+									self.emit("deviceAdded");
+								});
 							});
 					}
 					if(!device._fetchComplete)
@@ -397,7 +417,6 @@ DeviceManager.prototype.fetchAll = function(device, cb)
 		async.retry(3, (function(callback){ this.fetchName(device, callback); }).bind(this) ),
 		async.retry(3, (function(callback){ this.fetchNActions(device, callback); }).bind(this) ),
 		async.retry(3, (function(callback){ this.fetchNEvents(device, callback); }).bind(this) ),
-		async.retry(3, (function(callback){ this.fetchNInteractions(device, callback); }).bind(this) ),
 		async.retry(3, (function(callback){ this.fetchMaxInteractions(device, callback); }).bind(this) ),
 		async.retry(3, (function(callback){ this.fetchActions(device, callback); }).bind(this) ),
 		async.retry(3, (function(callback){ this.fetchEvents(device, callback); }).bind(this) ),
@@ -660,7 +679,8 @@ DeviceManager.prototype.fetchInteractions = function(device, cb)
 {
 	// console.log("fetchInteractions", device._nInteractions);
 	var self = this;
-	var fcns = [];
+	// Fetch NInteractions first
+	var fcns = [ async.retry(3, (function(callback){ this.fetchNInteractions(device, callback); }).bind(this) ) ];
 
 	// For temporarily storing interactions, in the end we will save them in the interactions document.
 	device._interactions = [];

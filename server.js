@@ -23,7 +23,11 @@ app.engine("html", require("ejs").renderFile);
 
 mongoose.connect("mongodb://localhost/aquila", function(err, res)
 	{
-		if(err) throw err;
+		if(err) 
+		{
+			console.log("ERROR connecting to database, make shure that mongodb is installed and running.");
+			process.exit(1);
+		}
 	    console.log("Connected to Database");
 
 		// Import Models and Controllers
@@ -127,9 +131,9 @@ mongoose.connect("mongodb://localhost/aquila", function(err, res)
 					socket.emit("deviceRemoved");
 				});
 
-				deviceManager.on("event", function(device, eventN)
+				deviceManager.on("event", function(device, eventN, param)
 				{
-					socket.emit("event", device, eventN);
+					socket.emit("event", device, eventN, param);
 				});
 
 			});
