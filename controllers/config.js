@@ -7,6 +7,8 @@ var deviceCtrl = require("./device");
 
 var DEFAULT_PAN = 0xCA5A;
 
+var queryFields = "-__v";
+
 // Initializes config, default PAN, etc.
 exports.init = function()
 {
@@ -38,7 +40,7 @@ exports.init = function()
 // GET - Retrieve current PAN
 exports.getPan = function(req, res)
 {
-	Config.findOne(function(err, config)
+	Config.findOne(null, queryFields, function(err, config)
 		{
 			if(err) return res.send(500, err.message);
 
@@ -56,7 +58,7 @@ exports.setPan = function(req, res)
 	if(!(typeof(req.body.pan) === "number" && req.body.pan >= 0 && req.body.pan <= 0xFFFF))
 	{ return res.send(500, "Invalid PAN"); }
 
-	Config.findOne(function(err, config)
+	Config.findOne(null, queryFields, function(err, config)
 		{
 			config.pan = req.body.pan;
 
