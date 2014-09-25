@@ -1,3 +1,5 @@
+// api/controllers/deviceManager.js
+
 var mongoose = require("mongoose");
 var Device = mongoose.model("Device");
 var Action = mongoose.model("Action");
@@ -10,11 +12,8 @@ var events = require("events");
 var async = require("async");
 var buffertools = require("buffertools");
 
-var staticConfig = require("./../config");
+var staticConfig = require("./../../config/deviceManager.js");
 
-var TIMEOUT = 100;
-var LONGTIMEOUT = 1000;
-var REFRESH_INTERVAL = 5000;
 var COM_CLASS = 2;
 
 /*
@@ -31,7 +30,7 @@ var COM_CLASS = 2;
 	Responds to events:
 		Protocol post with COM_CLASS, calls device fetcher.
 		Protocol event, emits event with device, eventN and param (null if there isn't param).
-		Calls ping every REFRESH_INTERVAL ms if staticConfig.autoCheckAlive
+		Calls ping every staticConfig.refreshInterval ms if staticConfig.autoCheckAlive
 
 	Emits events:
 		deviceDiscovered	(when a device is firts known, but hasn't been fetched)
@@ -39,6 +38,26 @@ var COM_CLASS = 2;
 		deviceRemoved		(when a device fails Ping and is marked inactive)
 		event(device, eventN, param) (when a device emits an event)
 */
+
+var verboseDebug = function(deviceManager)
+{
+	deviceManager.on("deviceDiscovered", function()
+	{
+		console.log("Device discovered");
+	});
+	deviceManager.on("deviceAdded", function()
+	{
+		console.log("Device added");
+	});
+	deviceManager.on("deviceRemoved", function()
+	{
+		console.log("Device removed");
+	});
+	deviceManager.on("event", function(device, eventN, param)
+	{
+		console.log("					EVENT: ", eventN, " From Device: ", device.class, " With param: ", param);
+	});
+};
 
 var DeviceManager = function()
 {
@@ -76,7 +95,7 @@ var DeviceManager = function()
 
 	this.pingQueue = async.queue(function(device, cb)
 		{
-			console.log("Pinging ", device.class);
+			if(staticConfig.debug) console.log("Pinging ", device.class);
 			async.retry(3, function(callback){ self.ping(device, callback); }, function(err)
 				{
 					if(err)
@@ -101,7 +120,7 @@ var DeviceManager = function()
 
 	this.protocol.on("ready", function()
 		{
-			console.log("Starting bridge...");
+			if(staticConfig.debug) console.log("Starting bridge...");
 
 			// Device adding manager
 			self.protocol.on("post", self.deviceFetcher.bind(self));
@@ -110,7 +129,9 @@ var DeviceManager = function()
 			self.protocol.on("event", self.eventHandler.bind(self));
 
 			// Housekeeping, check incomplete devices, check if still alive
-			setInterval(self.refreshActiveDevices.bind(self), REFRESH_INTERVAL);
+			setInterval(self.refreshActiveDevices.bind(self), staticConfig.refreshInterval);
+
+			if(staticConfig.debug) verboseDebug(self);
 
 			self.emit("ready");
 		});
@@ -121,7 +142,7 @@ DeviceManager.prototype.__proto__ = events.EventEmitter.prototype;
 DeviceManager.prototype.refreshActiveDevices = function()
 {
 	var self = this;
-	console.log("Refreshing Active Devices... ");
+	if(staticConfig.debug) console.log("Refreshing Active Devices... ");
 	Device.find(function(err, devices)
 	{
 		if(err) return console.log(err);
@@ -299,7 +320,7 @@ DeviceManager.prototype.requestGet = function(address, command, param, data, cal
 		// Remove callback from event
 		self.protocol.removeListener(addressParser.toString(address), getCb);
 		callback(new Error("Timeout"), null, getCb);
-	}, TIMEOUT);
+	}, staticConfig.timeout);
 
 
 	// TODO: Check if its necesary to remove listener after success.
@@ -309,7 +330,7 @@ DeviceManager.prototype.requestGet = function(address, command, param, data, cal
 DeviceManager.prototype.requestPost = function(address, command, param, data, callback, timeout)
 {
 	var self = this;
-	if(typeof timeout === "undefined") timeout = TIMEOUT;
+	if(typeof timeout === "undefined") timeout = staticConfig.timeout;
 	if(typeof address === "string")
 	{
 		address = addressParser.toBuffer(address);
@@ -367,7 +388,7 @@ DeviceManager.prototype.requestCustom = function(address, data, callback)
 		// Remove callback from event
 		self.protocol.removeListener(addressParser.toString(address), custCb);
 		callback(new Error("Timeout"), null, custCb);
-	}, TIMEOUT);
+	}, staticConfig.timeout);
 
 	// TODO: Check if its necesary to remove listener after success.
 	this.protocol.on(addressParser.toString(address), custCb);
@@ -412,7 +433,7 @@ DeviceManager.prototype.ping = function(device, callback)
 DeviceManager.prototype.fetchAll = function(device, cb)
 {
 	//console.log("fetchAll");
-	console.log("				DEBUG: Fetching: ", device.class);
+	//console.log("				DEBUG: Fetching: ", device.class);
 	async.series([
 		async.retry(3, (function(callback){ this.fetchName(device, callback); }).bind(this) ),
 		async.retry(3, (function(callback){ this.fetchNActions(device, callback); }).bind(this) ),
@@ -734,7 +755,7 @@ DeviceManager.prototype.clearInteractions = function(device, callback)
 				callback(new Error("Unexpected message"));
 			}
 
-		}), LONGTIMEOUT);
+		}), staticConfig.longTimeout);
 };
 
 // Adds interaction and reloads all entries
@@ -779,7 +800,7 @@ DeviceManager.prototype.addInteraction = function(device, interaction, cb)
 				self.protocol.removeListener(addressParser.toString(device.address), postCb);
 				cb(new Error("Unexpected message"));
 			}
-		}), LONGTIMEOUT);
+		}), staticConfig.longTimeout);
 };
 
 DeviceManager.prototype.removeInteraction = function(device, interactionN, cb)
@@ -823,7 +844,7 @@ DeviceManager.prototype.removeInteraction = function(device, interactionN, cb)
 				self.protocol.removeListener(addressParser.toString(device.address), postCb);
 				cb(new Error("Unexpected message"));
 			}
-		}), LONGTIMEOUT);
+		}), staticConfig.longTimeout);
 };
 
 DeviceManager.prototype.editInteraction = function(device, interactionN, interaction, cb)
@@ -867,7 +888,7 @@ DeviceManager.prototype.editInteraction = function(device, interactionN, interac
 				self.protocol.removeListener(addressParser.toString(device.address), postCb);
 				cb(new Error("Unexpected message"));
 			}
-		}), LONGTIMEOUT);
+		}), staticConfig.longTimeout);
 };
 
 var deviceManager = new DeviceManager();

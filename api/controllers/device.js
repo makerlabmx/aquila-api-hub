@@ -1,3 +1,5 @@
+// api/controllers/device.js
+
 var mongoose = require("mongoose");
 var Device = mongoose.model("Device");
 var deviceManager = require("./deviceManager");
@@ -8,13 +10,10 @@ var queryFields = "-_fetchComplete -_nActions -_nEvents -_nInteractions -_maxInt
 // GET - List all devices
 exports.findAllDevices = function(req, res)
 {
-	console.log(req.query);
-
 	Device.find(req.query, queryFields, function(err, devices)
 	{
 		if(err) res.send(500, err.message);
 
-		console.log("GET /api/devices");
 		res.status(200).jsonp(devices);
 	});
 	
@@ -27,7 +26,6 @@ exports.findById = function(req, res)
 		{
 			if(err) return res.send(500, err.message);
 
-			console.log("GET /api/devices/" + req.params.id);
 			res.status(200).jsonp(device);
 		});
 };
@@ -53,13 +51,12 @@ exports.updateDevice = function(req, res)
 // GET - Execute an action with optional param
 exports.deviceAction = function(req, res)
 {
-	console.log(req.params);
 	Device.findById(req.params.id, function(err, device)
 	{
 		if(err) return res.send(500, err.message);
 		if(!device) return res.send(404, "Invalid device id");
 		
-		console.log("GET /api/devices/" + req.params.id + "/action/" + req.params.action + "/" + req.params.param);
+		//console.log("GET /api/devices/" + req.params.id + "/action/" + req.params.action + "/" + req.params.param);
 
 		if(err) return res.send(500, err.message);
 		if(!validator.isInt(req.params.action)) return res.send(500);

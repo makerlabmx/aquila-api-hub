@@ -1,3 +1,5 @@
+// api/models/device.js
+
 var mongoose = require("mongoose"),
 	Schema   = mongoose.Schema;
 	//var interactionSchema = require("./interaction").Schema;

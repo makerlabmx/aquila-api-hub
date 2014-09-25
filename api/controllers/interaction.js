@@ -1,3 +1,5 @@
+// api/controllers/interaction.js
+
 var mongoose = require("mongoose");
 var Interaction = mongoose.model("Interaction");
 var Device = mongoose.model("Device");
@@ -41,7 +43,7 @@ var formatInteraction = function(interaction, callback)
 
 	Device.findOne({"address": interaction.action_address}, devQueryFields, function(err, action_device)
 		{
-			console.log(action_device);
+			//console.log(action_device);
 			if(err) return callback(err);
 			if(!action_device) return callback(new Error("Couldn't get action_device with address " + interaction.action_address));
 
@@ -50,7 +52,7 @@ var formatInteraction = function(interaction, callback)
 			Device.findOne({"address": interaction.event_device}, devQueryFields, function(err, event_device)
 				{
 					if(err) return callback(err);
-					console.log(event_device);
+					//console.log(event_device);
 
 					if(!event_device)
 					{
@@ -85,12 +87,10 @@ var formatInteractions = function(interactions, callback)
 // GET - List all interactions
 exports.findAllInteractions = function(req, res)
 {
-	console.log(req.query);
 	Interaction.find(req.query, interQueryFields, function(err, interactions)
 		{
 			if(err) return res.send(500, err.message);
 
-			console.log("GET /api/interactions");
 			formatInteractions(interactions, function(err, fmtInteractions)
 				{
 					if(err) return res.send(500, err.message);
@@ -103,8 +103,6 @@ exports.findAllInteractions = function(req, res)
 exports.addInteraction = function(req, res)
 {
 	var self = this;
-	console.log("POST interaction");
-	console.log(req.body);
 
 	var newInteraction = new Interaction(
 	{
@@ -117,7 +115,6 @@ exports.addInteraction = function(req, res)
 
 	Device.findOne({"address": req.body.action_address}, function(err, device)
 		{
-			console.log(device);
 			if(err) return res.send(500, err.message);
 			if(!device) return res.send(500);
 
@@ -136,8 +133,6 @@ exports.findById = function(req, res)
 		{
 			if(err) return res.send(500, err.message);
 
-			console.log("GET /api/interactions/" + req.params.id);
-			console.log(interaction);
 			formatInteraction(interaction, function(err, fmtInteraction)
 				{
 					if(err) return res.send(500, err.message);

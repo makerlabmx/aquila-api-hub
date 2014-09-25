@@ -1,3 +1,5 @@
+// api/controllers/config.js
+
 var mongoose = require("mongoose");
 var Config = mongoose.model("Config");
 var Device = mongoose.model("Device");
@@ -26,7 +28,7 @@ exports.init = function()
 				newConfig.save(function(err, newConfig)
 					{
 						if(err) return console.log("Error: ", err.message);
-						console.log("newConfig saved", newConfig);
+						//console.log("newConfig saved", newConfig);
 						deviceManager.setPAN(newConfig.pan);
 					});
 			}
@@ -44,7 +46,6 @@ exports.getPan = function(req, res)
 		{
 			if(err) return res.send(500, err.message);
 
-			console.log("GET /api/pan");
 			res.status(200).jsonp(config);
 		});
 };
@@ -52,9 +53,6 @@ exports.getPan = function(req, res)
 // POST - Set current PAN
 exports.setPan = function(req, res)
 {
-	console.log("POST");
-	console.log(req.body);
-
 	if(!(typeof(req.body.pan) === "number" && req.body.pan >= 0 && req.body.pan <= 0xFFFF))
 	{ return res.send(500, "Invalid PAN"); }
 
@@ -74,7 +72,7 @@ exports.setPan = function(req, res)
 // GET - start discovering devices
 exports.discover = function(req, res)
 {
-	console.log("Discovering");
+	//console.log("Discovering");
 
 	deviceManager.discover(function()
 		{
@@ -85,7 +83,7 @@ exports.discover = function(req, res)
 // GET - reload devices
 exports.reload = function(req, res)
 {
-	console.log("Reloading");
+	//console.log("Reloading");
 
 	Device.remove({}, function(err)
 		{

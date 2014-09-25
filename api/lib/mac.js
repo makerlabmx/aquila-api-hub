@@ -5,13 +5,13 @@
 
 var Bridge = require("./bridge");
 var Packet = require("./packet");
-var config = require("./../config");
+var config = require("./../../config/bridge");
 var events = require("events");
 
 var Mac = function(baudrate, port)
 {
 	var self = this;
-	this.bridge = new Bridge(config.BAUDRATE, config.PORT);
+	this.bridge = new Bridge(config.baudrate, config.port);
 
 	this.bridge.on("ready", function()
 	{

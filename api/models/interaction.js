@@ -1,3 +1,5 @@
+// api/models/interaction.js
+
 var mongoose = require("mongoose"),
 	Schema   = mongoose.Schema;
 
@@ -14,7 +16,7 @@ var interactionSchema = new Schema(
 interactionSchema.methods.fromBuffer = function(raw)
 {
 	// parse entry
-	console.log("interaction fromBuffer: ", this);
+	//console.log("interaction fromBuffer: ", this);
 
 	this.param = Boolean(raw.data[0]);
 	this.event = raw.data[1];
