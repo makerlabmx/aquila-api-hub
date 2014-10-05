@@ -7,11 +7,19 @@ var express = require("express"),
 	methodOverride = require("method-override"),
 	mongoose = require("mongoose"),
 	socket = require("socket.io"),
-	toobusy = require("toobusy");
+	toobusy = require("toobusy"),
+	passport = require("passport"),
+	morgan = require("morgan");
+
+var flash 	 = require('connect-flash');
+var cookieParser = require('cookie-parser');
+var bodyParser   = require('body-parser');
+var session      = require('express-session');
 
 // configuration ===============================================================
 var configDB = require("./config/database.js");
 var port = process.env.PORT || 8080;
+require('./config/passport')(passport); // pass passport for configuration
 
 var app = express();
 
@@ -20,15 +28,26 @@ app.use(function(req, res, next)
 	{
 		// check if we're toobusy() - note, this call is extremely fast, and returns
 		// state that is cached at a fixed interval
-		if (toobusy()) res.send(503, "I'm busy right now, sorry.");
+		if (toobusy()) { res.status(503).send("I'm busy right now, sorry."); console.log("Busy"); }
 		else next();
 	});
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+app.use(morgan('dev')); // log every request to the console
+app.use(cookieParser()); // read cookies (needed for auth)
+app.use(bodyParser());
+
+// required for passport
+app.use(session({ secret: 'ilovescotchscotchyscotchscotch', resave: true, saveUninitialized: true })); // session secret
+app.use(passport.initialize());
+app.use(passport.session()); // persistent login sessions
+app.use(flash()); // use connect-flash for flash messages stored in session
+
+//app.use(bodyParser.urlencoded({ extended: false }));
+//app.use(bodyParser.json());
 app.use(methodOverride());
 app.use(express.static(__dirname + "/apps"));
 app.set("views", __dirname + "/apps");
 app.engine("html", require("ejs").renderFile);
+app.set('view engine', 'ejs'); // set up ejs for templating
 
 mongoose.connect(configDB.url, function(err, res)
 	{
@@ -51,7 +70,9 @@ mongoose.connect(configDB.url, function(err, res)
 
 		app.use(router);
 		// Load API routes passing app.
-		require("./api/routes")(app);
+		require("./api/routes")(app, passport);
+		// Load Admin routes
+		require("./admin/routes")(app, passport);
 
 		// initialize Aquila protocol =================================================
 	    var deviceManager = require("./api/controllers/deviceManager");
@@ -69,8 +90,7 @@ mongoose.connect(configDB.url, function(err, res)
 			}));
 
 			// Socket configuration
-			require("./api/sockets")(io, deviceManager);
+			require("./api/sockets")(io, passport, deviceManager);
 		});
 	});
-
 

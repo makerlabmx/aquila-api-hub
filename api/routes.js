@@ -2,8 +2,11 @@
 
 var express = express = require("express");
 var mongoose = require("mongoose");
+var expressJwt = require("express-jwt");
+var tokenConfig = require("./../config/token");
+var TokenCtrl = require("./controllers/token");
 
-module.exports = function(app)
+module.exports = function(app, passport)
 {
 	// Import Models and Controllers
 	var DeviceModel = require("./models/device").Device(app, mongoose);
@@ -14,6 +17,12 @@ module.exports = function(app)
 	var InteractionCtrl = require("./controllers/interaction");
 
 	var apiRouter = express.Router();
+	//apiRouter.use(passport.authenticate('basic', { session: false }));
+	apiRouter.use(expressJwt({secret: tokenConfig.secret}));
+
+	// Authentication
+	app.route("/api/token")
+		.post(TokenCtrl.retrieveToken);
 
 	// API:
 	// Devices
