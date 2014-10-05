@@ -1,9 +1,20 @@
 // api/sockets.js
 
-module.exports = function(io, deviceManager)
+var socketioJwt = require("socketio-jwt");
+var tokenConfig = require("./../config/token");
+
+module.exports = function(io, passport, deviceManager)
 {
+	// jwt token authorization
+	io.use(socketioJwt.authorize({
+		secret: tokenConfig.secret,
+		handshake: true
+	}));
+
 	io.sockets.on("connection", function(socket)
 		{
+			console.log(socket.handshake.decoded_token.user, 'connected');
+
 			deviceManager.on("deviceDiscovered", function()
 			{
 				socket.emit("deviceDiscovered");

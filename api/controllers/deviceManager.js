@@ -66,7 +66,7 @@ var DeviceManager = function()
 
 	this.fetchQueue = async.queue(function(device, callback)
 		{
-			console.log("Open");
+			//console.log("Open");
 			// Update device to check if not already fetched
 			Device.findById(device._id, function(err, device)
 				{
@@ -77,7 +77,7 @@ var DeviceManager = function()
 						{
 							if(err) console.log(err);
 							else self.emit("deviceAdded");
-							console.log("Close");
+							//console.log("Close");
 							callback();
 						});
 				});

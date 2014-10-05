@@ -1,0 +1,44 @@
+<!-- views/profile.ejs -->
+<!doctype html>
+<html>
+<head>
+	<title>Aquila Admin</title>
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
+	<style>
+		body 		{ padding-top:80px; word-wrap:break-word; }
+	</style>
+</head>
+<body>
+<div class="container">
+
+	<div class="page-header text-center">
+		<h1><span class="fa fa-gears"></span> Aquila Admin</h1>
+		<a href="/admin/logout" class="btn btn-default btn-sm">Logout</a>
+		<a href="/admin/signup" class="btn btn-default btn-sm">Add user</a>
+		<h2>Usuarios</h2>
+	</div>
+
+
+	<div class="row">
+
+		<!-- LOCAL INFORMATION -->
+		<% for(var i = 0; i < users.length; i++) {%>
+		<div class="col-sm-6">
+			<div class="well">
+				<h3><span class="fa fa-user"></span> <%= users[i].name %><br></h3>
+
+					<p>
+						<strong>id</strong>: <%= users[i]._id %><br>
+						<strong>password</strong>: <%= users[i].password %>
+					</p>
+
+			</div>
+		</div>
+		<% } %>
+
+	</div>
+
+</div>
+</body>
+</html>
