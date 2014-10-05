@@ -22,10 +22,10 @@
     	
     	config.getPAN = function(){
     		$http.get('/api/pan').success(function(data, status, headers, config){				
-				config.pan = data.pan;				
-				hexString = data.pan.toString(16);				
-				$("#PANADDRESS").val(hexString);
-			}); 			
+				  config.pan = data.pan;				
+				  hexString = data.pan.toString(16);				
+				  $("#PANADDRESS").val(hexString);
+		    }); 			
     	};
 
     	config.setPAN = function(pan){
