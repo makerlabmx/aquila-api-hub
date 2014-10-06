@@ -23,7 +23,8 @@
     "socket.io": "^1.1.0",
     "socketio-jwt": "^2.3.5",
     "toobusy": "^0.2.4",
-    "validator": "^3.18.0"
+    "validator": "^3.18.0",
+    "passport-http": "~0.2.2"
   },
   "devDependencies": {
     "grunt": "~0.4.5",

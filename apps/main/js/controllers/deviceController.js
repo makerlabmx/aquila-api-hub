@@ -8,7 +8,7 @@
       return socketFactory();
     });
 
-  app.controller('DeviceController', [ '$http' , '$scope', 'socket', function($http, $scope, socket){    
+  app.controller('DeviceController', [ '$http' , '$scope', 'socket','Device', function($http, $scope, socket,Device){    
       aquila = this;        
       aquila.devices=[];
       aquila.active;
@@ -49,8 +49,8 @@
       aquila.load = function (clase){        
         aquila.devices=[];
         var devs = [];
-        $http.get('/api/devices').success(function(data, status, headers, config)
-          {
+
+        var devs = Device.all(function(){        
             devs = data;
             for(var i = 0; i < devs.length; i++)
             {                      
@@ -74,31 +74,26 @@
       });
 
       function loadMain(){
-        if(!aquila.classes) return;
-        
+        if(!aquila.classes) return;        
         var devs = [];
-        $http.get('/api/devices').success(function(data, status, headers, config)
-          {
-            aquila.devices=[];
-            devs = data;
-            for(var i = 0; i < devs.length; i++)
-            {                      
-              if(devs[i].active)  {           
-                if(!(devs[i].class in aquila.classes)){
-                  var clase = {
-                    name: devs[i].class,
-                    image: aquila.images[aquila.sizeClases]
-                  };
-                  aquila.classes[clase.name] = clase;            
-                  aquila.sizeClases++;            
-                }
-                devs[i].img= aquila.classes[devs[i].class].image;
-                devs[i].color = "color"+((i+1)%5);
-                aquila.devices.push(devs[i]);               
-              }        
-            } 
-          });
-        
+        var devs = Device.all(function(){
+          aquila.devices=[];
+          for(var i = 0; i < devs.length; i++){                      
+            if(devs[i].active)  {           
+              if(!(devs[i].class in aquila.classes)){
+                var clase = {
+                  name: devs[i].class,
+                  image: aquila.images[aquila.sizeClases]
+                };
+                aquila.classes[clase.name] = clase;            
+                aquila.sizeClases++;            
+              }
+              devs[i].img= aquila.classes[devs[i].class].image;
+              devs[i].color = "color"+((i+1)%5);
+              aquila.devices.push(devs[i]);               
+            }        
+          } 
+        });              
       }    
       
     }]);

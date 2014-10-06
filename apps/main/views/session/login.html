@@ -1,0 +1,16 @@
+
+<div ng-controller="SessionController" >
+
+  <span></span>
+
+  <form ng-submit="submit()">
+    <input ng-model="user.user" type="text" name="user" placeholder="Username" />
+    <input ng-model="user.password" type="password" name="pass" placeholder="Password" />
+    <input type="submit" value="Login" />
+  </form>
+
+  value:{{isAuthenticated}}
+
+  <a href ng-click="test()">test</a>
+    
+</div>

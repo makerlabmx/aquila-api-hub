@@ -2,13 +2,8 @@
 
   var app = angular.module('mainController',[]);
 
-  app.controller('MainController', [ '$http' , '$scope', function($http, $scope){    
-      main = this;        
-
-      main.doReload = function(){
-        //Aq.reload();
-      };
-          
+  app.controller('MainController', [ '$http' , '$scope','$window','Token', function($http, $scope,$window,Token){
+            
       
     }]);
 })();
