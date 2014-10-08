@@ -8,59 +8,36 @@
       return socketFactory();
     });
 
-  app.controller('DeviceController', [ '$http' , '$scope', 'socket','Device', function($http, $scope, socket,Device){    
-      aquila = this;        
-      aquila.devices=[];
-      aquila.active;
-      aquila.device;    
 
-      /*Main */
+  app.controller('DeviceDetailsController', [ '$http' , '$scope', '$routeParams','socket','Device','Action', function($http, $scope, $routeParams ,socket,Device,Action){    
+            
+      $scope.device = Device.get({ id: $routeParams.device_id });      
+
+      $scope.doAction = function(device, action){        
+        Action.doit({ id: device._id, action: action });
+        //$http.get('/api/devices/' + $routeParams.device_id + '/action/' + String(action));
+      };
+
+      $scope.doSlider = function(device, action){        
+        Action.range({ id: device._id, action: action.n, range: action.range });
+        //$http.get('/api/devices/' + device._id + '/action/' + String(action.n) + '/' + String(action.range));
+      };
+   
+      
+    }]);
+
+  app.controller('DeviceController', [ '$http' , '$scope', 'socket','Device', function($http, $scope, socket,Device){    
+      var aquila = this;
+      $scope.devices=[];          
 
       aquila.classes = {};
       aquila.sizeClases = 0;
 
-      aquila.images=['icon-075','icon-013','icon-023'];
+      //aquila.images=['fa-lightbulb-o','fa-plug','fa-bell'];
+      aquila.images=['fa-lightbulb-o','fa-lightbulb-o','fa-lightbulb-o','fa-lightbulb-o','fa-lightbulb-o','fa-lightbulb-o'];
 
-      aquila.initMain = function (){        
+      $scope.initMain = function (){
         loadMain();
-      }
-
-      aquila.seeOptions = function(device){                  
-        //device = Aq(device.address)[0];
-        device.show_options = true;
-      };
-
-      aquila.hideOptions = function(device){                        
-        device.show_options = false;
-      };
-
-      aquila.seeAllDevices = function(){            
-        aquila.active = false;      
-      };
-
-      aquila.doAction = function(device, action){
-        $http.get('/api/devices/' + device._id + '/action/' + String(action));
-      };
-
-      aquila.doSlider = function(device, action){
-        $http.get('/api/devices/' + device._id + '/action/' + String(action.n) + '/' + String(action.range));
-      };
-
-      aquila.load = function (clase){        
-        aquila.devices=[];
-        var devs = [];
-
-        var devs = Device.all(function(){        
-            devs = data;
-            for(var i = 0; i < devs.length; i++)
-            {                      
-              if(devs[i].active)  { 
-                devs[i].img= aquila.classes[devs[i].class].image; 
-                devs[i].color = "color"+((i+1)%5);
-                aquila.devices.push(devs[i]);                  
-              }        
-            } 
-          });
       }    
 
       socket.on('deviceAdded', function(){
@@ -74,12 +51,23 @@
       });
 
       function loadMain(){
+        /*
+        $http.get('/api/reload').success(function(data){
+          console.log(data);
+        });      
+        $http.get('/api/pan').success(function(data){
+          console.log(data);
+        });      
+        $http.post('/api/pan',{"pan": 0xCA5A}).success(function(data){
+          console.log(data);
+        });
+        */
         if(!aquila.classes) return;        
         var devs = [];
-        var devs = Device.all(function(){
-          aquila.devices=[];
-          for(var i = 0; i < devs.length; i++){                      
-            if(devs[i].active)  {           
+        var devs = Device.all(function(){          
+          $scope.devices=[];
+          for(var i = 0; i < devs.length; i++){            
+            if(devs[i].active)  {
               if(!(devs[i].class in aquila.classes)){
                 var clase = {
                   name: devs[i].class,
@@ -90,8 +78,8 @@
               }
               devs[i].img= aquila.classes[devs[i].class].image;
               devs[i].color = "color"+((i+1)%5);
-              aquila.devices.push(devs[i]);               
-            }        
+              $scope.devices.push(devs[i]);               
+            }
           } 
         });              
       }    

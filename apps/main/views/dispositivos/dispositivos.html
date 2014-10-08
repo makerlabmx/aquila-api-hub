@@ -1,46 +1,14 @@
-<div ng-controller="DeviceController as main" data-ng-init="main.initMain()" >
-	<div class="row" ng-hide="main.active" >
-		<!--
-		<div class="col-md-1" >
-			<div class="navbar-default navbar-static-side" role="navigation">
-	    		<div class="sidebar-collapse">
-	        		<ul class="nav" id="side-menu">
-	            		<li class="text-center" ng-repeat="clase in main.classes" >
-	                		<a href='#'  ng-click='main.load(clase.name)'  ><i class="f40" ng-class="clase.image"></i></a>
-	            		</li>
-	        		</ul>	            			
-	    		</div>	        
-			</div>
-		</div>
-		-->
-		<div class="col-sm-6 col-md-2" ng-repeat="device in main.devices" >        		
+<div class="page page-dashboard" ng-controller="DeviceController as main" ng-init="initMain()" >
+	<div class="row" >		
+		<div class="col-sm-6 col-md-3" ng-repeat="device in devices" >        		
+      <a ng-href="/#device/{{device._id}}" >
 	      <div class="item">
-	        <div class="item-icon" ng-class="device.color" >	                
-				<i class='f120' ng-class="device.img" ></i>	        			        	
-	        </div>
-	        <div class="item-name text-center color1">
-	        	{{device.name}}
-	    	</div>
-	        <div class="item-action">
-	            <a class="type" href=''  ng-click='main.seeOptions(device)'  ng-hide="device.show_options" >
-	            	<i class='icon-288 f40'></i>
-	            </a>	            
-	            <div ng-show="device.show_options" >
-		            <div class="row" ng-repeat="action in device.actions"  >
-			            <div class="col-sm-12 options" ng-init="action.range = 0" >
-		        			<a href class="btn btn-outlined btn-primary" ng-click='main.doAction(device, action.n)'>{{action.name}}</a>				        			
-		        		</div>			        		
-		        		<div class="col-sm-12 options" >
-		        			<input type="range" name="range" min="0" max="255" value="0" ng-model="action.range" ng-change="main.doSlider(device, action)" >
-    						<output id="range">{{action.range}}</output>
-		        		</div>			        		
-	        		</div>
-	        		<a class="type" href=''  ng-click='main.hideOptions(device)' >
-		            	<i class='icon-289 f40'></i>
-		            </a>	
-	            </div>	            
-	        </div>	            
+	        <div class="item-icon"> 
+				      <i class='f120 fa' ng-class="device.img" ></i>
+	        </div>          
+          <div class="item-name text-center">{{device.name}}</div>
 	      </div>
+        <a>
 	    </div>
 	</div>	
 </div>

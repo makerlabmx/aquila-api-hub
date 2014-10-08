@@ -1,0 +1,49 @@
+<div class="page page-dashboard" ng-controller="DeviceController">
+
+  <div class="text-right">
+    <a href="/#"
+      class="btn btn-outlined btn-primary" >
+      Volver a los dispositivos
+    </a>
+  </div>
+  <div class="row" >    
+    <div class="col-sm-10 col-md-3 col-md-offset-4" >      
+      <div class="item">
+        <div class="item-icon"> 
+          <div class="text-right">
+          <a href 
+            class="btn btn-outlined btn-primary" 
+            ng-click='action.show_slide = !action.show_slide'>
+            <i class='f120 fa fa-gear' ></i>
+          </a>
+          </div>
+          <i class='f120 fa fa-lightbulb-o' ></i>
+        </div>
+        <div class="item-name text-center">
+          {{device.name}}          
+        </div>
+      </div>
+            
+      <div class="row pd-top20" ng-repeat="action in device.actions"  >
+        <div class="col-sm-6 options" ng-init="action.range = 0" >
+          <a href 
+            class="btn btn-outlined btn-primary" 
+            ng-click='doAction(device, action.n)'>
+            {{action.name}}
+          </a>
+          <a href 
+            class="btn btn-outlined btn-primary" 
+            ng-click='action.show_slide = !action.show_slide'>
+            <i class='f120 fa fa-gear' ></i>
+          </a>
+        </div>                  
+        <div class="col-sm-6 options" ng-show="action.show_slide" >
+            <input type="range" name="range" 
+              min="0" max="255" value="0" 
+              ng-model="action.range" ng-change="doSlider(device, action)" >
+            <output id="range">{{action.range}}</output>
+        </div>                  
+      </div>        
+    </div>
+  </div>  
+</div>

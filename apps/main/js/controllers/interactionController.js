@@ -7,7 +7,7 @@
       return socketFactory();
     });
 
-  app.controller('InteractionController', [ '$http' , '$scope', 'socket', function($http, $scope, socket){    
+  app.controller('InteractionController', [ '$http' , '$scope', 'socket','Device','Interaction', function($http, $scope, socket,Device,Interaction){    
     inter = this;        
     inter.devices = [];
     inter.interaccion = [];
@@ -84,22 +84,22 @@
     function loadInter(){
       inter.devices=[];
       inter.interactions=[];
-      var devs = Aq("*");      
-      //console.log(devs);
-      for(var i = 0; i < devs.length; i++)
-      {                           
-        if(devs[i].active){           
-          inter.devices.push(devs[i]);                    
-          for(var x = 0; x < devs[i].interactions.length; x++){                        
-            devs[i].interactions[x].device = devs[i].address;
-            devs[i].interactions[x].cuando_name = getDevice(devs[i].interactions[x].address);            
-            devs[i].interactions[x].event_name = getEvent(devs[i].interactions[x].address,devs[i].interactions[x].event).name;
-            devs[i].interactions[x].hacer_name = devs[i].name;            
-            devs[i].interactions[x].action_name = getAction(devs[i].address,devs[i].interactions[x].action).name;
-            inter.interactions.push(devs[i].interactions[x]);
-          }          
-        }        
-      } 
+      var devs = Interaction.all(function(){        
+        for(var i = 0; i < devs.length; i++){                 
+            console.log(devs[i]);          
+            inter.devices.push(devs[i]);                    
+            for(var x = 0; x < devs[i].interactions.length; x++){                        
+              devs[i].interactions[x].device = devs[i].address;
+              devs[i].interactions[x].cuando_name = getDevice(devs[i].interactions[x].address);            
+              devs[i].interactions[x].event_name = getEvent(devs[i].interactions[x].address,devs[i].interactions[x].event).name;
+              devs[i].interactions[x].hacer_name = devs[i].name;            
+              devs[i].interactions[x].action_name = getAction(devs[i].address,devs[i].interactions[x].action).name;
+              inter.interactions.push(devs[i].interactions[x]);
+            }          
+                 
+        } 
+
+      });
     }
 
     function getDevice(address){

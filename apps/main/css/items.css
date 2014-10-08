@@ -1,0 +1,35 @@
+/*  DISEÑO DE LOS ITEMS */
+.item {    
+  border-radius: 5px;
+  position: relative;  
+  font-size: 72px;
+}
+    
+.item .item-icon {
+    background: #340651;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    padding: 20px 15px 40px 15px;
+    margin-top: 10px;
+    text-align: center;
+    min-height: 100px;       
+    color: #fff;    
+}
+.item .item-icon a{
+  color: #fff;    
+}
+.item .item-name {
+  font-size: 14px;
+  background: #eee;  
+  
+  padding: 10px 0 10px 0;
+  
+  /*border: .4em solid #333;*/
+  -webkit-box-shadow: 10px 10px 40px #888888;
+  -moz-box-shadow: 10px 10px 40px #888888;
+  box-shadow: 1px 1px 10px #888888;
+}
+
+a{
+  text-decoration: none !important;
+}

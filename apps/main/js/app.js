@@ -2,9 +2,8 @@
   
   var app = angular.module('aquila',
     [
-      'sessionController','mainController','deviceController','configuracionController',
-      //'interactionController',
-      'deviceFactory','tokenFactory',
+      'sessionController','mainController','deviceController','configuracionController','interactionController',
+      'deviceFactory','tokenFactory','interactionFactory',
       'ngRoute'    
     ]
   );
@@ -16,18 +15,22 @@
       $httpProvider.interceptors.push('authInterceptor');
 
       $routeProvider.
-        when('/login', {
-          templateUrl: 'main/views/session/login.html',
-          controller: 'SessionController'
-        }).
         when('/', {
           templateUrl: 'main/views/dispositivos/dispositivos.html',
           controller: 'DeviceController'
         }).
-        /*when('/interacciones', {
+        when('/device/:device_id', {
+          templateUrl: 'main/views/dispositivos/device.html',
+          controller: 'DeviceDetailsController'
+        }).
+        when('/login', {
+          templateUrl: 'main/views/session/login.html',
+          controller: 'SessionController'
+        }).        
+        when('/interacciones', {
           templateUrl: 'main/views/interacciones/interacciones.html',
           controller: 'InteractionController'
-        }).*/
+        }).
         when('/configuraciones', {
           templateUrl: 'main/views/configuracion/configuracion.html',
           controller: 'ConfiguracionController'
@@ -58,11 +61,14 @@
 
 
   app.run( function($rootScope, $location,$window) {
-    $rootScope.$on( "$routeChangeStart", function(event, next, current) {
+    $rootScope.$on( "$routeChangeStart", function(event, next, current) {      
       if($window.sessionStorage.token === undefined){        
         $location.path('/login');
+        $rootScope.userLogin = false;
       }else{
-
+        $rootScope.userLogin = true;        
+        $rootScope.user = $window.sessionStorage.user;
+        $rootScope.user = $rootScope.user.charAt(0).toUpperCase() + $rootScope.user.slice(1);
       }
     });
   });
