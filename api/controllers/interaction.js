@@ -49,7 +49,7 @@ var formatInteraction = function(interaction, callback)
 
 			newInteraction.action_device = action_device;
 
-			Device.findOne({"address": interaction.event_device}, devQueryFields, function(err, event_device)
+			Device.findOne({"address": interaction.event_address}, devQueryFields, function(err, event_device)
 				{
 					if(err) return callback(err);
 					//console.log(event_device);
