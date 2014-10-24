@@ -1,15 +1,9 @@
 (function(){
 
   var app = angular.module('deviceController',['btford.socket-io']);
+  
 
-
-  app.factory('socket', function(socketFactory)
-    {
-      return socketFactory();
-    });
-
-
-  app.controller('DeviceDetailsController', [ '$http' , '$scope', '$routeParams','socket','Device','Action', function($http, $scope, $routeParams ,socket,Device,Action){    
+  app.controller('DeviceDetailsController', [ '$http' , '$scope', '$routeParams','Device','Action', function($http, $scope, $routeParams,Device,Action){    
             
       $scope.device = Device.get({ id: $routeParams.device_id });      
 
@@ -26,9 +20,10 @@
       
     }]);
 
-  app.controller('DeviceController', [ '$http' , '$scope', 'socket','Device', function($http, $scope, socket,Device){    
-      var aquila = this;
-      $scope.devices=[];          
+  app.controller('DeviceController', [ '$http' , '$scope', 'socketAquila','Device', function($http, $scope, socketAquila,Device){    
+      var aquila = this;      
+      $scope.devices=[];
+
 
       aquila.classes = {};
       aquila.sizeClases = 0;
@@ -40,13 +35,13 @@
         loadMain();
       }    
 
-      socket.on('deviceAdded', function(){
-        console.log("device Added");
+      socketAquila.on('deviceAdded', function(){
+        //console.log("device Added");
         loadMain();
       });
 
-      socket.on('deviceRemoved', function(){   
-        console.log("device Removed");   
+      socketAquila.on('deviceRemoved', function(){   
+        //console.log("device Removed");   
         loadMain();
       });
 

@@ -5,7 +5,7 @@
 
 
 <div class="text-right">
-	<button type="button" class="btn btn-outlined btn-primary" ng-click='inter.new()' >Agregar Interaccion</button>
+	<button type="button" class="btn btn-outlined btn-primary" ng-click='newInteraction()' >Agregar Interaccion</button>
 </div>
 
 
@@ -18,16 +18,16 @@
 		<th>Opciones</th>
 	</thead>
 	<tbody>
-		<tr ng-repeat="entry in inter.entries"  >
-			<td>{{entry.cuando_name}}</td>
-			<td>{{entry.event_name}}</td>
-			<td>{{entry.hacer_name}}</td>
-			<td>{{entry.action_name}}</td>
+		<tr ng-repeat="entry in interactions"  >            
+			<td>{{entry.event_device.name}}</td>
+			<td>{{entry.event}}</td>
+			<td>{{entry.action_device.name}}</td>      
+			<td>{{entry.action}}</td>
 			<td>
-				<a class="btn btn-outlined btn-success" ng-disabled="!entry.event_name" href ng-click='inter.edit(entry)' >
+				<a class="btn btn-outlined btn-success" ng-disabled="entry.event" href ng-click='editInteraction(entry)' >
 					Editar
 		        </a>
-				<a class="btn btn-outlined btn-danger" href ng-click='inter.delete(entry)' >
+				<a class="btn btn-outlined btn-danger" href ng-click='deleteInteraction(entry)' >
 					Eliminar
 		        </a>    		        
 			</td>
@@ -42,32 +42,32 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Cerrar</span></button>
-        <h4 class="modal-title">{{inter.title}}</h4>
+        <h4 class="modal-title">{{title}}</h4>
       </div>
       <div class="modal-body">
       	<div class="row">
       		<div class="col-md-6">
 
 
-
+            
       			<form role="form">
 				  <div class="form-group">
-				    <label for="exampleInputEmail1">Cuando</label>
-				    <select class="form-control" ng-model="inter.interaccion.dev_cuando" ng-options="device.name for device in inter.devices"></select>
+				    <label for="exampleInputEmail1">Cuando</label>            
+				    <select class="form-control" ng-model="interaction.event" ng-options="device.name for device in devices_all"></select>
 				  </div>
 				  <div class="form-group">
 				    <label for="exampleInputEmail1"></label>
-				    <select class="form-control" ng-model="inter.interaccion.event_cuando" ng-options="action.name for action in inter.interaccion.dev_cuando.events"></select>
+				    <select class="form-control" ng-model="interaction.event_cuando" ng-options="action.name for action in interaction.event.events"></select>
 				  </div>
 
 				  <div class="form-group">
 				    <label for="exampleInputEmail1">Hacer</label>
-				    <select class="form-control" ng-disabled="inter.edit_element" ng-model="inter.interaccion.dev_hacer" ng-options="device.name for device in inter.devices"></select>				    
+				    <select class="form-control" ng-disabled="edit_element" ng-model="interaction.action" ng-options="device.name for device in devices"></select>				    
 				  </div>
 
 				  <div class="form-group">
 				    <label for="exampleInputEmail1"></label>
-				    <select class="form-control" ng-model="inter.interaccion.action_hacer" ng-options="action.name for action in inter.interaccion.dev_hacer.actions"></select>
+				    <select class="form-control" ng-model="interaction.action_hacer" ng-options="action.name for action in interaction.action.actions"></select>
 				  </div>
 
 				 
@@ -77,14 +77,14 @@
       		</div>
       	</div>        
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>        
-	  	<button class="btn btn-default" ng-show="inter.edit_element" ng-click="inter.update()">
+      <div class="modal-footer">        
+	  	<button class="btn btn-success" ng-show="edit_element" ng-click="updateInteraction()">
 	  		Actualizar
 	  	</button>
-	    <button class="btn btn-default" ng-show="inter.save_element" ng-click="inter.save()">
+	    <button class="btn btn-success" ng-show="save_element" ng-click="saveInteraction()">
 	    	Guardar
-	    </button>        
+	    </button> 
+      <button type="button" class="btn btn-danger" data-dismiss="modal">Cancelar</button>        
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
