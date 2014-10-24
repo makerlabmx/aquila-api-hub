@@ -4,7 +4,7 @@
     [
       'sessionController','mainController','deviceController','configuracionController','interactionController',
       'deviceFactory','tokenFactory','interactionFactory',
-      'ngRoute'    
+      'ngRoute','btford.socket-io'    
     ]
   );
   

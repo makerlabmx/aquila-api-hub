@@ -5,6 +5,8 @@
     app.factory('Interaction', ['$resource',function($resource){        
         return $resource("/api/interactions/:id", {id: "@id"}, {
             get: { method: 'GET'},  
+            create: { method: 'POST', isArray:true},
+            delete: { method: 'DELETE', isArray:true},
             all: {method:'GET', isArray:true}
         });
     }]);

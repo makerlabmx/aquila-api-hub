@@ -13,7 +13,7 @@ module.exports = function(io, passport, deviceManager)
 
 	io.sockets.on("connection", function(socket)
 		{
-			console.log(socket.handshake.decoded_token.user, 'connected');
+			
 
 			deviceManager.on("deviceDiscovered", function()
 			{

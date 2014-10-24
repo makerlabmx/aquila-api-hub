@@ -1,66 +1,78 @@
 (function(){
 
-  var app = angular.module('interactionController',['btford.socket-io']);
+  var app = angular.module('interactionController',[]);  
 
-  app.factory('socket', function(socketFactory)
-    {
-      return socketFactory();
-    });
+  app.controller('InteractionController', [ '$http' , '$scope', 'socketAquila','Device','Interaction', function($http, $scope, socketAquila,Device,Interaction){            
+    $scope.interactions = [];
+    $scope.interaction = {};
+    $scope.devices = [];
+    $scope.devices_all = [];
+    $scope.edit_element = false;
+    $scope.save_element = false;       
 
-  app.controller('InteractionController', [ '$http' , '$scope', 'socket','Device','Interaction', function($http, $scope, socket,Device,Interaction){    
-    inter = this;        
-    inter.devices = [];
-    inter.interaccion = [];
-    inter.interactions = [];    
-    inter.edit_element = false;
-    inter.save_element = false;
-
-    function editTrue(){
-      inter.edit_element = true;
-      inter.save_element = false;
+    this.init = function (){
+      loadInter();
+      var devs = Device.all(function(){          
+          $scope.devices=[];
+          for(var i = 0; i < devs.length; i++){            
+            if(devs[i].active)  {              
+              $scope.devices.push(devs[i]);               
+            }
+          } 
+      }); 
+      var devs = $scope.devices_all = Device.all(function(){          
+          $scope.devices=[];
+          for(var i = 0; i < devs.length; i++){            
+            if(devs[i].active)  {              
+              $scope.devices.push(devs[i]);               
+            }
+          } 
+      });
     }
-    function saveTrue(){
-      inter.edit_element = false;
-      inter.save_element = true;
-    }
 
-    inter.init = function (){        
-      loadInter();      
-    }
-    inter.new = function (){
-      inter.title = "Nueva Interaccion"
-      inter.interaccion = {};
+    $scope.newInteraction = function (){
+      $scope.title = "Nueva Interaccion"
+      $scope.interaction = {};
       saveTrue();
       $('#modal-interaccion').modal('show');
     }
 
-    inter.edit = function (entry){
-      inter.title = "Editar Interaccion"
-      inter.interaccion = {};          
-      var dev_cuando = Aq(entry.event_address)[0];
-      var dev_hacer = Aq(entry.action_address)[0];      
-      inter.interaccion.dev_cuando = dev_cuando;
-      inter.interaccion.dev_hacer = dev_hacer;
-      inter.interaccion.event_cuando = getEvent(dev_cuando.address, entry.event);
-      inter.interaccion.action_hacer = getAction(dev_hacer.address, entry.action);
-      inter.interaccion.n = entry._n;      
+    $scope.editInteraction = function (interaction){
+      $scope.title = "Editar Interaccion"
+      $scope.interaction = {};
       editTrue();
+
+      console.log(interaction);
+      $scope.interaction.event = interaction.event_device;
+      $scope.interaction.action = interaction.action_device;      
+      
+      //$scope.interaction.event_cuando ="asd";
+      //$scope.interaction.action_hacer = interaction.action;
+      
+      
       $('#modal-interaccion').modal('show');
     }
 
-    inter.save = function (){      
-      var entry =  new Entry();
-      entry.event = inter.interaccion.event_cuando.n;
-      entry.action = inter.interaccion.action_hacer.n;
-      entry.event_address = inter.interaccion.dev_cuando.address;
-      entry.action_address = inter.interaction.dev_hacer.address;      
-      Aq(inter.interaccion.dev_hacer.address).addEntry(entry, function(){
-        console.log("si se guardo")
-        $('#modal-interaccion').modal('hide');
-      });
+    $scope.deleteInteraction = function (interaction){      
+      Interaction.delete({id:interaction._id});
     }
 
-    inter.update = function (){      
+    $scope.saveInteraction = function (){      
+      //console.log($scope.interaction);
+      var data = {
+        "event_address": $scope.interaction.event.address,
+        "event": $scope.interaction.event_cuando.n,
+        "action_address": $scope.interaction.action.address,
+        "action": $scope.interaction.action_hacer.n,
+        "param": null
+      };
+      console.log(data);
+      var result = Interaction.create({},data,function(){
+        $('#modal-interaccion').modal('hide');
+      });      
+    }
+
+    $scope.updateInteraction = function (){      
       var entry =  new Entry();
       entry.event = inter.interaccion.event_cuando.n ;
       entry.action = inter.interaccion.action_hacer.n ;
@@ -71,69 +83,45 @@
       });
     }    
 
-    inter.delete = function (entry){
-      Aq(entry.device).removeEntry(entry._n,function(){
-        console.log("todo ok");
-      });
-    }
+    
 
-    socket.on('deviceAdded', function(){
+    socketAquila.on('deviceAdded', function(){
       loadInter();  
     });
 
     function loadInter(){
-      inter.devices=[];
-      inter.interactions=[];
-      var devs = Interaction.all(function(){        
-        for(var i = 0; i < devs.length; i++){                 
-            console.log(devs[i]);          
-            inter.devices.push(devs[i]);                    
-            for(var x = 0; x < devs[i].interactions.length; x++){                        
-              devs[i].interactions[x].device = devs[i].address;
-              devs[i].interactions[x].cuando_name = getDevice(devs[i].interactions[x].address);            
-              devs[i].interactions[x].event_name = getEvent(devs[i].interactions[x].address,devs[i].interactions[x].event).name;
-              devs[i].interactions[x].hacer_name = devs[i].name;            
-              devs[i].interactions[x].action_name = getAction(devs[i].address,devs[i].interactions[x].action).name;
-              inter.interactions.push(devs[i].interactions[x]);
-            }          
-                 
-        } 
+      $scope.interactions=[];      
+      var devs = Interaction.all(function(){                
+        for(var i = 0; i < devs.length; i++){
+            var dev = devs[i];
+            if(dev.event_device.name == null){
+              dev.event_device.name = dev.event_device.address;
+            }else{
+              for(var x = 0; x < dev.event_device.events.length; x++){
+                dev.event = dev.event_device.events[x].name;
+              }
+            }
+            if(dev.action_device.name == null){
+              dev.action_device.name = dev.action_device.address;
+            }else{
+              for(var x = 0; x < dev.action_device.actions.length; x++){
+                dev.action = dev.action_device.actions[x].name;
+              }
+            }
+            $scope.interactions.push(dev);          
+        }
 
       });
     }
 
-    function getDevice(address){
-      var devices = Aq(address);
-      if(devices.length > 0){
-        return devices[0].name;
-      }      
-      return address;
+    function editTrue(){
+      $scope.edit_element = true;
+      $scope.save_element = false;
     }
-
-    function getAction(address,idAction){      
-      var devices = Aq(address);
-      if(devices.length > 0){
-        device = devices[0];   
-        for (i = 0; i < device.actions.length; i++) { 
-          if(device.actions[i].n == idAction){            
-            return device.actions[i];
-          }                        
-        }             
-      }      
-      return "no found";
-    }
-    function getEvent(address,idEvent){
-      var devices = Aq(address);
-      if(devices.length > 0){
-        device = devices[0];           
-        for (i = 0; i < device.events.length; i++) {                     
-          if(device.events[i].n == idEvent){                   
-            return device.events[i];
-          }                        
-        }             
-      }      
-      return "no found";
-    }
+    function saveTrue(){
+      $scope.edit_element = false;
+      $scope.save_element = true;
+    }    
     
   }]);
 })();
