@@ -1,6 +1,9 @@
 {
-  "name": "aquila-api-hub",
+  "name": "aquila-server",
   "version": "0.0.2",
+  "description": "Aquila API and Web App server for the Hub.",
+  "main": "server.js",
+  "author": "Rodrigo Méndez <rmendez@makerlab.mx> (http://makerlab.mx/)",
   "dependencies": {
     "async": "^0.9.0",
     "bcrypt-nodejs": "0.0.3",
@@ -30,5 +33,13 @@
     "grunt": "~0.4.5",
     "grunt-cli": "latest",
     "grunt-contrib-jshint": "latest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/makerlabmx/aquila-api-hub.git"
+  },
+  "preferGlobal": "true",
+  "bin": {
+    "aquila-server" : "aquila-server.sh"
   }
 }
