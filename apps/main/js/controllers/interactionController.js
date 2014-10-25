@@ -55,7 +55,12 @@
     }
 
     $scope.deleteInteraction = function (interaction){      
-      Interaction.delete({id:interaction._id});
+      var result = Interaction.delete({id:interaction._id}, null, function(){
+        $scope.interactions=[];
+        prepareInteraction(result);
+      },function(data){
+        $scope.error="Error: " + data.data;
+      });
     }
 
     $scope.saveInteraction = function (){      
@@ -77,7 +82,7 @@
         prepareInteraction(result);
         $('#modal-interaccion').modal('hide');
       },function(data){
-        $scope.error=data.data;
+        $scope.error="Error: " + data.data;
       });      
     }
 
@@ -95,6 +100,10 @@
     
 
     socketAquila.on('deviceAdded', function(){
+      loadInter();  
+    });
+
+    socketAquila.on('deviceRemoved', function(){
       loadInter();  
     });
 
