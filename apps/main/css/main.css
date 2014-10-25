@@ -1460,7 +1460,7 @@ a.bg-info:hover {
 }
 
 .bg-warning {
-  background-color: #fcf7e6;
+  background-color: #fcf7e6;  
 }
 
 a.bg-warning:hover {
@@ -1469,6 +1469,9 @@ a.bg-warning:hover {
 
 .bg-danger {
   background-color: #f6ebe9;
+  height: 40px;
+  text-align: center;
+  font-size: 16px;
 }
 
 a.bg-danger:hover {

@@ -24,9 +24,10 @@
 			<td>{{entry.action_device.name}}</td>      
 			<td>{{entry.action}}</td>
 			<td>
+        <!--
 				<a class="btn btn-outlined btn-success" ng-disabled="entry.event" href ng-click='editInteraction(entry)' >
 					Editar
-		        </a>
+		        </a>-->
 				<a class="btn btn-outlined btn-danger" href ng-click='deleteInteraction(entry)' >
 					Eliminar
 		        </a>    		        
@@ -44,10 +45,9 @@
         <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Cerrar</span></button>
         <h4 class="modal-title">{{title}}</h4>
       </div>
-      <div class="modal-body">
+      <div class="modal-body">        
       	<div class="row">
       		<div class="col-md-6">
-
 
             
       			<form role="form">
@@ -75,7 +75,8 @@
 
       		
       		</div>
-      	</div>        
+      	</div> 
+        <p class="bg-danger" ng-show="error" >{{error}}</p>       
       </div>
       <div class="modal-footer">        
 	  	<button class="btn btn-success" ng-show="edit_element" ng-click="updateInteraction()">
