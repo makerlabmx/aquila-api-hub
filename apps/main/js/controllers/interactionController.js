@@ -43,6 +43,7 @@
       editTrue();
 
       console.log(interaction);
+      console.log()
       $scope.interaction.event = interaction.event_device;
       $scope.interaction.action = interaction.action_device;      
       
@@ -59,16 +60,24 @@
 
     $scope.saveInteraction = function (){      
       //console.log($scope.interaction);
-      var data = {
-        "event_address": $scope.interaction.event.address,
-        "event": $scope.interaction.event_cuando.n,
-        "action_address": $scope.interaction.action.address,
-        "action": $scope.interaction.action_hacer.n,
-        "param": null
-      };
-      console.log(data);
+      try {            
+        var data = {
+          "event_address": $scope.interaction.event.address,
+          "event": $scope.interaction.event_cuando.n,
+          "action_address": $scope.interaction.action.address,
+          "action": $scope.interaction.action_hacer.n,
+          "param": null
+        };
+      }
+      catch(err) {
+          $scope.error=err;
+      }     
       var result = Interaction.create({},data,function(){
+        $scope.interactions=[];
+        prepareInteraction(result);
         $('#modal-interaccion').modal('hide');
+      },function(data){
+        $scope.error=data.data;
       });      
     }
 
@@ -91,8 +100,13 @@
 
     function loadInter(){
       $scope.interactions=[];      
-      var devs = Interaction.all(function(){                
-        for(var i = 0; i < devs.length; i++){
+      var inters = Interaction.all(function(){                
+        prepareInteraction(inters);
+      });
+    }
+
+    function prepareInteraction(devs){
+      for(var i = 0; i < devs.length; i++){
             var dev = devs[i];
             if(dev.event_device.name == null){
               dev.event_device.name = dev.event_device.address;
@@ -110,8 +124,6 @@
             }
             $scope.interactions.push(dev);          
         }
-
-      });
     }
 
     function editTrue(){

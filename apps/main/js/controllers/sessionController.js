@@ -4,7 +4,7 @@
 
   app.controller('SessionController', [ '$http' , '$scope','$window','$location','Token', function($http, $scope,$window,$location,Token){
       
-      $scope.user = {user: 'javi', password: '123'};
+      //$scope.user = {user: 'javi', password: '123'};
       $scope.message = '';      
 
       $scope.submit = function () {        
@@ -14,7 +14,7 @@
           $location.path('/');
         },function(){
           delete $window.sessionStorage.token;          
-          $scope.message = 'Error: Invalid user or password';
+          $scope.error = 'El usuario o contraseña es incorrecto';
         });    
       };      
       
