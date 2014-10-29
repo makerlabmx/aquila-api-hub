@@ -34,7 +34,8 @@ app.use(function(req, res, next)
 	});
 app.use(morgan('dev')); // log every request to the console
 app.use(cookieParser()); // read cookies (needed for auth)
-app.use(bodyParser());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 // required for passport
 app.use(session({ secret: 'ilovescotchscotchyscotchscotch', resave: true, saveUninitialized: true })); // session secret
@@ -42,8 +43,6 @@ app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions
 app.use(flash()); // use connect-flash for flash messages stored in session
 
-//app.use(bodyParser.urlencoded({ extended: false }));
-//app.use(bodyParser.json());
 app.use(methodOverride());
 app.use(express.static(__dirname + "/apps"));
 app.set("views", __dirname + "/apps");
