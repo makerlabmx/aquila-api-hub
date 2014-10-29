@@ -8,16 +8,15 @@ API documentation: http://docs.aquila1.apiary.io/
 
 ### Windows
 
+>**Update:** Now, in Windows, you can use an installer that automatically install everything (except Visual Studio, you have to install it separately). Download it from here: [Installer](https://github.com/makerlabmx/aquila-tools-windows-installer).
+
 1. Git and Git bash http://git-scm.com/download/win
 2. Python 2.7 https://www.python.org/downloads/
-3. Microsoft Visual Studio Express 2013 for Windows Desktop (Includes necessary compilers, the installation is very long, over an hour, so be patient) http://www.visualstudio.com/downloads/download-visual-studio-vs#d-express-windows-desktop
+3. Microsoft Visual Studio C++ Express 2010 (Includes compilers needed for some dependencies when developing Node.js applications) http://go.microsoft.com/?linkid=9709958
 4. Node.js http://nodejs.org/
 5. MongoDB http://www.mongodb.org/downloads
 
-> **Important Note**: In every tutorial where we install dependencies with ``npm install``, in Windows we will have to add: 
-```npm install —msvs_version=2013```
-
-> **Note 2**: For any tutorial where we use the command line, we recommend using "Git Bash" instead of "cmd" from windows. "Git Bash" comes included with Git.
+> **Note**: For any tutorial where we use the command line, we recommend using "Git Bash" instead of "cmd" from windows. "Git Bash" comes included with Git.
 
 ### Mac OSX
 
