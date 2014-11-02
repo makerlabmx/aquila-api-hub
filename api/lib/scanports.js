@@ -47,13 +47,13 @@ var scanPorts = function(baudrate, callback)
 								{
 									p.flush(function(err) 
 										{
-							            	setTimeout(function()
+							            	p.drain(function(err)
 							            	{
 							                	p.close(function(err)
 							                	{
 							                		callback(p.path);
 							                	});
-							            	}, 10);
+							            	});
 							        });
 								}
 							}
