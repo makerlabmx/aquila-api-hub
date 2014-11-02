@@ -1,4 +1,4 @@
-<!-- views/signup.ejs -->
+<!-- views/edit.ejs -->
 <!doctype html>
 <html>
 <head>
@@ -14,31 +14,22 @@
 
 <div class="col-sm-6 col-sm-offset-3">
 
-	<h1><span class="fa fa-sign-in"></span> Add User</h1>
-
-	<!-- show any messages that come back with authentication -->
-	<% if (message.length > 0) { %>
-		<div class="alert alert-danger"><%= message %></div>
-	<% } %>
+	<h1><span class="fa fa-sign-in"></span> Edit User <%= user.name %> </h1>
 
 	<!-- LOGIN FORM -->
-	<form action="/admin/signup" method="post">
+	<form action="/admin/edit/<%= user._id %>" method="post">
+
 		<div class="form-group">
-			<label>User</label>
-			<input type="text" class="form-control" name="name">
-		</div>
-		<div class="form-group">
-			<label>Password</label>
+			<label>New Password</label>
 			<input type="password" class="form-control" name="password">
 		</div>
 
-		<button type="submit" class="btn btn-warning btn-lg">Add User</button>
+		<button type="submit" class="btn btn-warning btn-lg">Save</button>
 	</form>
 
 	<hr>
 
 	<p>Back to <a href="/admin">admin</a></p>
-
 </div>
 
 </div>

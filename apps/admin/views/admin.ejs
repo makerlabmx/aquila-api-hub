@@ -1,4 +1,4 @@
-<!-- views/profile.ejs -->
+<!-- views/admin.ejs -->
 <!doctype html>
 <html>
 <head>
@@ -6,17 +6,25 @@
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
 	<style>
-		body 		{ padding-top:80px; word-wrap:break-word; }
+		body 		{ padding-top:10px; word-wrap:break-word; }
 	</style>
 </head>
 <body>
 <div class="container">
 
+	<!-- show any messages that come back with authentication -->
+	<% if (message.length > 0) { %>
+		<div class="alert alert-warning alert-dismissible" role="alert">
+			<!-- <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button> -->
+			<%= message %>
+		</div>
+	<% } %>
+
 	<div class="page-header text-center">
-		<h1><span class="fa fa-gears"></span> Aquila Admin</h1>
+		<h1><span class="fa fa-gears"></span> Aquila Admin - Users</h1>
+		<p>Logged in as <strong> <%= user.name %> </strong> </p>
 		<a href="/admin/logout" class="btn btn-default btn-sm">Logout</a>
-		<a href="/admin/signup" class="btn btn-default btn-sm">Add user</a>
-		<h2>Usuarios</h2>
+		<a href="/admin/signup" class="btn btn-warning btn-sm">Add User</a>
 	</div>
 
 
@@ -24,20 +32,29 @@
 
 		<!-- LOCAL INFORMATION -->
 		<% for(var i = 0; i < users.length; i++) {%>
-		<div class="col-sm-6">
-			<div class="well">
+		<div class="col-sm-4">
+			<div class="well text-center">
 				<h3><span class="fa fa-user"></span> <%= users[i].name %><br></h3>
 
-					<p>
+					<!-- <p>
 						<strong>id</strong>: <%= users[i]._id %><br>
 						<strong>password</strong>: <%= users[i].password %>
-					</p>
+					</p> -->
+
+					<a href="/admin/edit/<%= users[i]._id %>" class="btn btn-success btn-sm">Edit</a>
+					<!-- Shouldn't delete Admin -->
+					<% if(users[i].name !== 'Admin') { %>
+						<a href="/admin/delete/<%= users[i]._id %>" class="btn btn-danger btn-sm">Delete</a>
+					<% } %>
 
 			</div>
 		</div>
 		<% } %>
 
 	</div>
+
+	<hr>
+	<p>Back to <a href="/">home</a></p>
 
 </div>
 </body>

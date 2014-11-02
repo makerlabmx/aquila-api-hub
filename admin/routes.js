@@ -34,17 +34,79 @@ module.exports = function(app, passport)
 			failureFlash : true // allow flash messages
 		}));
 
-	adminRouter.get('/', isLoggedIn, function(req, res) 
+	adminRouter.get("/", isLoggedIn, function(req, res) 
 	{
 		User.find(function(err, users)
 			{
 				if(err) return res.send(500, err.message);
 				res.render('admin/views/admin.ejs', {
 					user : req.user, // get the user out of session and pass to template
-					users: users
+					users: users,
+					message: req.flash('adminMessage')
 				});
 			});
 	});
+
+	adminRouter.route("/edit/:id")
+		.get(isLoggedIn, function(req, res)		// Get view
+			{
+				console.log(req.params.id);
+				User.findById(req.params.id, function(err, user)
+					{
+						if(err) return console.log(err);
+						res.render("admin/views/edit.ejs", { user: user });
+					});
+			})
+		.post(isLoggedIn, function(req, res)
+			{
+				User.findById(req.params.id, function(err, user)
+					{
+						if(req.body.password)
+						{
+							user.password = user.generateHash(req.body.password);
+							user.save(function(err)
+								{
+									if(err) req.flash("adminMessage", "There was an error changing the password");
+									else req.flash("adminMessage", "Password changed ok");
+									return res.redirect("../");
+								});
+						}
+						else
+						{
+							req.flash("adminMessage", "Invalid password");
+							res.redirect("../");
+						}
+					});
+			});
+
+	adminRouter.get("/delete/:id", isLoggedIn, function(req, res)
+		{
+			User.findById(req.params.id, function(err, user)
+				{
+					if(err)
+					{
+						req.flash("adminMessage", 'There was an error removing an user');
+						return res.redirect("../");
+					}
+
+					if(user.name === "Admin")
+					{
+						req.flash("adminMessage", "Admin user can't be removed");
+						return res.redirect("../");
+					}
+
+					user.remove(function(err)
+						{
+							if(err)
+							{
+								req.flash("adminMessage", 'There was an error removing an user');
+								return res.redirect("../");
+							}
+							req.flash("adminMessage", 'User "' + user.name + '" Removed');
+							res.redirect("../");
+						});
+				});
+		});
 
 	// =====================================
 	// LOGOUT ==============================

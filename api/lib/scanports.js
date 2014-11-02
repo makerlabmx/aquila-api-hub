@@ -17,6 +17,9 @@ var scanPorts = function(baudrate, callback)
 			// console.log(port.comName);
 			try
 			{
+				// Avoid Bluetooth tty ports as workaround for OSX kernel panics:
+				if(port.comName.indexOf("Bluetooth") !== -1) return;
+
 				var p = new SerialPort(port.comName, 
 				{
 					baudrate: baudrate
