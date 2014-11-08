@@ -29,7 +29,7 @@ app.use(function(req, res, next)
 	{
 		// check if we're toobusy() - note, this call is extremely fast, and returns
 		// state that is cached at a fixed interval
-		if (toobusy()) { res.status(503).send("I'm busy right now, sorry."); console.log("Busy"); }
+		if (toobusy()) { res.status(503).send("Server is busy right now, try again later."); console.log("Busy"); }
 		else next();
 	});
 app.use(morgan('dev')); // log every request to the console
@@ -38,7 +38,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 // required for passport
-app.use(session({ secret: 'ilovescotchscotchyscotchscotch', resave: true, saveUninitialized: true })); // session secret
+app.use(session({ secret: 'e8b4b052c308c3d5c4c943f9c7ac09d7', resave: true, saveUninitialized: true })); // session secret
 app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions
 app.use(flash()); // use connect-flash for flash messages stored in session
@@ -86,7 +86,7 @@ mongoose.connect(configDB.url, function(err, res)
 			// launch server ==========================================================
 			var io = socket.listen(app.listen(port, function() 
 			{
-				console.log("Node server running on http://localhost:" + port);
+				console.log("Aquila server running on http://localhost:" + port);
 			}));
 
 			// Socket configuration
