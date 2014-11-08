@@ -1,6 +1,6 @@
 {
   "name": "aquila-server",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Aquila API and Web App server for the Hub.",
   "main": "aquila-server.js",
   "author": "Rodrigo Méndez <rmendez@makerlab.mx> (http://makerlab.mx/)",
