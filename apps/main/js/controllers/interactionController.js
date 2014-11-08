@@ -121,14 +121,22 @@
               dev.event_device.name = dev.event_device.address;
             }else{
               for(var x = 0; x < dev.event_device.events.length; x++){
-                dev.event = dev.event_device.events[x].name;
+                if(dev.event === dev.event_device.events[x].n)
+                {
+                  dev.event = dev.event_device.events[x].name;
+                  continue;
+                }
               }
             }
             if(dev.action_device.name == null){
               dev.action_device.name = dev.action_device.address;
             }else{
               for(var x = 0; x < dev.action_device.actions.length; x++){
-                dev.action = dev.action_device.actions[x].name;
+                if(dev.action === dev.action_device.actions[x].n)
+                {
+                  dev.action = dev.action_device.actions[x].name;
+                  continue;
+                }
               }
             }
             $scope.interactions.push(dev);          

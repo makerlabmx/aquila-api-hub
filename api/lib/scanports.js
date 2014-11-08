@@ -1,7 +1,8 @@
 var Serial = require("serialport");
 var SerialPort = Serial.SerialPort;
 var async = require("async");
-var buffertools = require("buffertools"); 
+var buffertools = require("buffertools");
+var os = require("os");
 
 var scanPorts = function(baudrate, callback)
 {
@@ -49,10 +50,25 @@ var scanPorts = function(baudrate, callback)
 										{
 							            	p.drain(function(err)
 							            	{
-							                	p.close(function(err)
+							                	// Windows needs this, otherwise access to COM is denied
+							                	if(os.platform() === "win32" || os.platform() === "win64")
 							                	{
-							                		callback(p.path);
-							                	});
+							                		setTimeout(function()
+								                	{
+									                	p.close(function(err)
+									                	{
+									                		callback(p.path);
+									                	});
+								                	}, 10);
+							                	}
+							                	else
+							                	{
+							                		p.close(function(err)
+								                	{
+								                		callback(p.path);
+								                	});
+							                	}
+							            		
 							            	});
 							        });
 								}
