@@ -68,7 +68,7 @@ exports.deviceAction = function(req, res)
 				action <= 255)) return res.send(500);
 		if(param !== null  && !(param >= 0 && param <= 255)) return res.send(500);
 
-		deviceManager.requestAction(device.address, action, param);
+		deviceManager.requestAction(device.shortAddress, action, param);
 		res.status(204).send();
 	});
 };

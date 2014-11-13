@@ -14,7 +14,32 @@ var buffertools = require("buffertools");
 
 var staticConfig = require("./../../config/deviceManager.js");
 
+//Command definitions:
+
+var NACK = 0;
+var ACK = 1;
+var ACTION = 2;
+var GET = 3;
+var POST = 4;
+var CUSTOM = 5;
+
+var COM_NACTIONS = 0;
+var COM_NEVENTS = 1;
 var COM_CLASS = 2;
+var COM_SIZE = 3;
+var COM_NENTRIES = 4;
+var COM_ABSENTRY = 5;
+var COM_ENTRY = 6;
+var COM_CLEAR = 7;
+var COM_ADDENTRY = 8;
+var COM_DELABSENTRY = 9;
+var COM_DELENTRY = 10;
+var COM_ACTION = 11;
+var COM_EVENT = 12;
+var COM_NAME = 13;
+var COM_EUI = 14;
+
+var BROADCAST = 0xFFFF;
 
 /*
 	DeviceManager:
@@ -57,6 +82,16 @@ var verboseDebug = function(deviceManager)
 	{
 		console.log("					EVENT: ", eventN, " From Device: ", device.class, " With param: ", param);
 	});
+
+	deviceManager.protocol.on("post", function(packet)
+		{
+			console.log("POST packet: ", packet);
+		});
+
+	deviceManager.protocol.on("event", function(packet)
+		{
+			console.log("EVENT packet: ", packet);
+		});
 };
 
 var DeviceManager = function()
@@ -168,7 +203,9 @@ DeviceManager.prototype.eventHandler = function(packet)
 	var param = null;
 	if(hasParam) param = packet.message.param[0];
 
-	var query = Device.where({ address: emitterAddress });
+	var EUIAddr = packet.message.data;
+
+	var query = Device.where({ address: EUIAddr });
 	query.findOne(function(err, device)
 		{
 			if(err) return console.log(err.message);
@@ -179,13 +216,13 @@ DeviceManager.prototype.eventHandler = function(packet)
 DeviceManager.prototype.deviceFetcher = function(packet)
 {
 	var self = this;
-	// If we get an class message (device anouncing itself)
-	if(packet.message.command[0] === COM_CLASS)
+	// If we get an EUI message (device anouncing itself)
+	if(packet.message.command[0] === COM_EUI)
 	{
 		var deviceAddress = packet.srcAddr;
-		var deviceClass = packet.message.data.toString("utf8");
+		var deviceEUI = packet.message.data;
 
-		var query = Device.where({ address: deviceAddress });
+		var query = Device.where({ address: deviceEUI });
 		query.findOne(function(err, device)
 			{
 				
@@ -195,8 +232,9 @@ DeviceManager.prototype.deviceFetcher = function(packet)
 					// Not aready addeed, add
 					device = new Device(
 						{
-							address: deviceAddress,
-							class: deviceClass,
+							address: deviceEUI,
+							shortAddress: deviceAddress,
+							class: null,
 							name: null,
 							_defaultName: null,
 							active: false,
@@ -248,11 +286,11 @@ DeviceManager.prototype.deviceFetcher = function(packet)
 DeviceManager.prototype.discover = function(callback)
 {
 	var self = this;
-	self.protocol.requestGet(addressParser.toBuffer("FF:FF"), COM_CLASS);
+	self.protocol.requestGet(BROADCAST, COM_EUI);
 	var count = 0;
 	var interval = setInterval(function()
 		{
-			self.protocol.requestGet(addressParser.toBuffer("FF:FF"), COM_CLASS);
+			self.protocol.requestGet(BROADCAST, COM_EUI);
 			count++;
 			if(count > 3) 
 			{
@@ -282,7 +320,7 @@ DeviceManager.prototype.requestAction = function(address, action, param)
 {
 	if(typeof address === "string")
 	{
-		address = addressParser.toBuffer(address);
+		address = parseInt(address);
 	}
 
 	if(address)
@@ -296,7 +334,7 @@ DeviceManager.prototype.requestGet = function(address, command, param, data, cal
 	var self = this;
 	if(typeof address === "string")
 	{
-		address = addressParser.toBuffer(address);
+		address = parseInt(address);
 	}
 	if(!address) return callback(new Error("Invalid address"));
 	this.protocol.requestGet(address, command, param, data);
@@ -318,13 +356,13 @@ DeviceManager.prototype.requestGet = function(address, command, param, data, cal
 		// Clear timeout, indicating that timeout has triggered
 		timeout = null;
 		// Remove callback from event
-		self.protocol.removeListener(addressParser.toString(address), getCb);
+		self.protocol.removeListener(String(address), getCb);
 		callback(new Error("Timeout"), null, getCb);
 	}, staticConfig.timeout);
 
 
 	// TODO: Check if its necesary to remove listener after success.
-	this.protocol.on(addressParser.toString(address), getCb);
+	this.protocol.on(String(address), getCb);
 };
 
 DeviceManager.prototype.requestPost = function(address, command, param, data, callback, timeout)
@@ -333,7 +371,7 @@ DeviceManager.prototype.requestPost = function(address, command, param, data, ca
 	if(typeof timeout === "undefined") timeout = staticConfig.timeout;
 	if(typeof address === "string")
 	{
-		address = addressParser.toBuffer(address);
+		address = parseInt(address);
 	}
 	if(!address) return callback(new Error("Invalid address"));
 	this.protocol.requestPost(address, command, param, data);
@@ -353,12 +391,12 @@ DeviceManager.prototype.requestPost = function(address, command, param, data, ca
 	{
 		tout = null;
 		// Remove callback from event
-		self.protocol.removeListener(addressParser.toString(address), postCb);
+		self.protocol.removeListener(String(address), postCb);
 		callback(new Error("Timeout"), null, postCb);
 	}, timeout);
 
 	// TODO: Check if its necesary to remove listener after success.
-	this.protocol.on(addressParser.toString(address), postCb);
+	this.protocol.on(String(address), postCb);
 };
 
 DeviceManager.prototype.requestCustom = function(address, data, callback)
@@ -366,7 +404,7 @@ DeviceManager.prototype.requestCustom = function(address, data, callback)
 	var self = this;
 	if(typeof address === "string")
 	{
-		address = addressParser.toBuffer(address);
+		address = parseInt(address);
 	}
 	if(!address) return callback(new Error("Invalid address"));
 	this.protocol.requestCustom(address, data);
@@ -386,45 +424,22 @@ DeviceManager.prototype.requestCustom = function(address, data, callback)
 	{
 		tout = null;
 		// Remove callback from event
-		self.protocol.removeListener(addressParser.toString(address), custCb);
+		self.protocol.removeListener(String(address), custCb);
 		callback(new Error("Timeout"), null, custCb);
 	}, staticConfig.timeout);
 
 	// TODO: Check if its necesary to remove listener after success.
-	this.protocol.on(addressParser.toString(address), custCb);
+	this.protocol.on(String(address), custCb);
 };
 
-//Command definitions:
-
-var NACK = 0;
-var ACK = 1;
-var ACTION = 2;
-var GET = 3;
-var POST = 4;
-var CUSTOM = 5;
-
-var COM_NACTIONS = 0;
-var COM_NEVENTS = 1;
-var COM_CLASS = 2;
-var COM_SIZE = 3;
-var COM_NENTRIES = 4;
-var COM_ABSENTRY = 5;
-var COM_ENTRY = 6;
-var COM_CLEAR = 7;
-var COM_ADDENTRY = 8;
-var COM_DELABSENTRY = 9;
-var COM_DELENTRY = 10;
-var COM_ACTION = 11;
-var COM_EVENT = 12;
-var COM_NAME = 13;
 
 // Callback: function(err)
 DeviceManager.prototype.ping = function(device, callback)
 {
 	var self = this;
-	self.requestGet(device.address, COM_CLASS, null, null, function(err, packet, getCb)
+	self.requestGet(device.shortAddress, COM_EUI, null, null, function(err, packet, getCb)
 		{
-			self.protocol.removeListener(addressParser.toString(device.address), getCb);
+			self.protocol.removeListener(String(device.shortAddress), getCb);
 			if(err) return callback(err);
 			return callback(null);
 		});
@@ -435,6 +450,7 @@ DeviceManager.prototype.fetchAll = function(device, cb)
 	//console.log("fetchAll");
 	//console.log("				DEBUG: Fetching: ", device.class);
 	async.series([
+		async.retry(3, (function(callback){ this.fetchClass(device, callback); }).bind(this) ),
 		async.retry(3, (function(callback){ this.fetchName(device, callback); }).bind(this) ),
 		async.retry(3, (function(callback){ this.fetchNActions(device, callback); }).bind(this) ),
 		async.retry(3, (function(callback){ this.fetchNEvents(device, callback); }).bind(this) ),
@@ -457,22 +473,42 @@ DeviceManager.prototype.fetchAll = function(device, cb)
 		});
 };
 
+DeviceManager.prototype.fetchClass = function(device, callback)
+{
+	//console.log("fetchName");
+	var self = this;
+	self.requestGet(device.shortAddress, COM_CLASS, null, null, (function(err, packet, getCb)
+	{
+		if(err) { self.protocol.removeListener(String(device.shortAddress), getCb); callback(err); return; }
+		if(packet.message.control.commandType === POST && packet.message.command[0] === COM_CLASS)
+		{
+			self.protocol.removeListener(String(device.shortAddress), getCb);
+			device.class = packet.message.data.toString("utf8");
+			return callback(null);
+		}
+		//else callback(new Error("Unexpected message"));
+		self.protocol.removeListener(String(device.shortAddress), getCb);
+		callback(new Error("Unexpected message"));
+
+	}));
+};
+
 DeviceManager.prototype.fetchName = function(device, callback)
 {
 	//console.log("fetchName");
 	var self = this;
-	self.requestGet(device.address, COM_NAME, null, null, (function(err, packet, getCb)
+	self.requestGet(device.shortAddress, COM_NAME, null, null, (function(err, packet, getCb)
 	{
-		if(err) { self.protocol.removeListener(addressParser.toString(device.address), getCb); callback(err); return; }
+		if(err) { self.protocol.removeListener(String(device.shortAddress), getCb); callback(err); return; }
 		if(packet.message.control.commandType === POST && packet.message.command[0] === COM_NAME)
 		{
-			self.protocol.removeListener(addressParser.toString(device.address), getCb);
+			self.protocol.removeListener(String(device.shortAddress), getCb);
 			device.name = packet.message.data.toString("utf8");
 			device._defaultName = device.name;
 			return callback(null);
 		}
 		//else callback(new Error("Unexpected message"));
-		self.protocol.removeListener(addressParser.toString(device.address), getCb);
+		self.protocol.removeListener(String(device.shortAddress), getCb);
 		callback(new Error("Unexpected message"));
 
 	}));
@@ -482,17 +518,17 @@ DeviceManager.prototype.fetchNActions = function(device, callback)
 {
 	//console.log("fetchNActions");
 	var self = this;
-	self.requestGet(device.address, COM_NACTIONS, null, null, (function(err, packet, getCb)
+	self.requestGet(device.shortAddress, COM_NACTIONS, null, null, (function(err, packet, getCb)
 	{
-		if(err) { self.protocol.removeListener(addressParser.toString(device.address), getCb); callback(err); return; }
+		if(err) { self.protocol.removeListener(String(device.shortAddress), getCb); callback(err); return; }
 		if(packet.message.control.commandType === POST && packet.message.command[0] === COM_NACTIONS)
 		{
-			self.protocol.removeListener(addressParser.toString(device.address), getCb);
+			self.protocol.removeListener(String(device.shortAddress), getCb);
 			device._nActions = packet.message.data[0];
 			return callback(null);
 		}
 		//else callback(new Error("Unexpected message"));
-		self.protocol.removeListener(addressParser.toString(device.address), getCb);
+		self.protocol.removeListener(String(device.shortAddress), getCb);
 		callback(new Error("Unexpected message"));
 
 	}));
@@ -502,17 +538,17 @@ DeviceManager.prototype.fetchNEvents = function(device, callback)
 {
 	//console.log("fetchNEvents");
 	var self = this;
-	self.requestGet(device.address, COM_NEVENTS, null, null, (function(err, packet, getCb)
+	self.requestGet(device.shortAddress, COM_NEVENTS, null, null, (function(err, packet, getCb)
 	{
-		if(err) { self.protocol.removeListener(addressParser.toString(device.address), getCb); callback(err); return; }
+		if(err) { self.protocol.removeListener(String(device.shortAddress), getCb); callback(err); return; }
 		if(packet.message.control.commandType === POST && packet.message.command[0] === COM_NEVENTS)
 		{
-			self.protocol.removeListener(addressParser.toString(device.address), getCb);
+			self.protocol.removeListener(String(device.shortAddress), getCb);
 			device._nEvents = packet.message.data[0];
 			return callback(null);
 		}
 		//else callback(new Error("Unexpected message"));
-		self.protocol.removeListener(addressParser.toString(device.address), getCb);
+		self.protocol.removeListener(String(device.shortAddress), getCb);
 		callback(new Error("Unexpected message"));
 
 	}));
@@ -522,17 +558,17 @@ DeviceManager.prototype.fetchNInteractions = function(device, callback)
 {
 	//console.log("fetchNInteractions");
 	var self = this;
-	self.requestGet(device.address, COM_NENTRIES, null, null, (function(err, packet, getCb)
+	self.requestGet(device.shortAddress, COM_NENTRIES, null, null, (function(err, packet, getCb)
 	{
-		if(err) { self.protocol.removeListener(addressParser.toString(device.address), getCb); callback(err); return; }
+		if(err) { self.protocol.removeListener(String(device.shortAddress), getCb); callback(err); return; }
 		if(packet.message.control.commandType === POST && packet.message.command[0] === COM_NENTRIES)
 		{
-			self.protocol.removeListener(addressParser.toString(device.address), getCb);
+			self.protocol.removeListener(String(device.shortAddress), getCb);
 			device._nInteractions = packet.message.data[0];
 			return callback(null);
 		}
 		//else callback(new Error("Unexpected message"));
-		self.protocol.removeListener(addressParser.toString(device.address), getCb);
+		self.protocol.removeListener(String(device.shortAddress), getCb);
 		callback(new Error("Unexpected message"));
 
 	}));
@@ -541,17 +577,17 @@ DeviceManager.prototype.fetchNInteractions = function(device, callback)
 DeviceManager.prototype.fetchMaxInteractions = function(device, callback)
 {
 	var self = this;
-	self.requestGet(device.address, COM_SIZE, null, null, (function(err, packet, getCb)
+	self.requestGet(device.shortAddress, COM_SIZE, null, null, (function(err, packet, getCb)
 	{
-		if(err) { self.protocol.removeListener(addressParser.toString(device.address), getCb); callback(err); return; }
+		if(err) { self.protocol.removeListener(String(device.shortAddress), getCb); callback(err); return; }
 		if(packet.message.control.commandType === POST && packet.message.command[0] === COM_SIZE)
 		{
-			self.protocol.removeListener(addressParser.toString(device.address), getCb);
+			self.protocol.removeListener(String(device.shortAddress), getCb);
 			device._maxInteractions = packet.message.data[0];
 			return callback(null);
 		}
 		//else callback(new Error("Unexpected message"));
-		self.protocol.removeListener(addressParser.toString(device.address), getCb);
+		self.protocol.removeListener(String(device.shortAddress), getCb);
 		callback(new Error("Unexpected message"));
 
 	}));
@@ -561,12 +597,12 @@ DeviceManager.prototype.fetchAction = function(device, n, callback)
 {
 	//console.log("fetchAction ", n);
 	var self = this;
-	self.requestGet(device.address, COM_ACTION, n, null, (function(err, packet, getCb)
+	self.requestGet(device.shortAddress, COM_ACTION, n, null, (function(err, packet, getCb)
 	{
-		if(err) { self.protocol.removeListener(addressParser.toString(device.address), getCb); callback(err); return; }
+		if(err) { self.protocol.removeListener(String(device.shortAddress), getCb); callback(err); return; }
 		if(packet.message.control.commandType === POST && packet.message.command[0] === COM_ACTION)
 		{
-			self.protocol.removeListener(addressParser.toString(device.address), getCb);
+			self.protocol.removeListener(String(device.shortAddress), getCb);
 			var newAction = new Action();
 			newAction.n = packet.message.param[0];
 			newAction.name = packet.message.data.toString("utf8");
@@ -581,7 +617,7 @@ DeviceManager.prototype.fetchAction = function(device, n, callback)
 			return callback(null);
 		}
 		//else callback(new Error("Unexpected message"));
-		self.protocol.removeListener(addressParser.toString(device.address), getCb);
+		self.protocol.removeListener(String(device.shortAddress), getCb);
 		callback(new Error("Unexpected message"));
 
 	}));
@@ -614,12 +650,12 @@ DeviceManager.prototype.fetchEvent = function(device, n, callback)
 {
 	//console.log("fetchEvent ", n);
 	var self = this;
-	self.requestGet(device.address, COM_EVENT, n, null, (function(err, packet, getCb)
+	self.requestGet(device.shortAddress, COM_EVENT, n, null, (function(err, packet, getCb)
 	{
-		if(err) { self.protocol.removeListener(addressParser.toString(device.address), getCb); callback(err); return; }
+		if(err) { self.protocol.removeListener(String(device.shortAddress), getCb); callback(err); return; }
 		if(packet.message.control.commandType === POST && packet.message.command[0] === COM_EVENT)
 		{
-			self.protocol.removeListener(addressParser.toString(device.address), getCb);
+			self.protocol.removeListener(String(device.shortAddress), getCb);
 			var newEvent = new Event();
 			newEvent.n = packet.message.param[0];
 			newEvent.name = packet.message.data.toString("utf8");
@@ -634,7 +670,7 @@ DeviceManager.prototype.fetchEvent = function(device, n, callback)
 			return callback(null);
 		}
 		//else callback(new Error("Unexpected message"));
-		self.protocol.removeListener(addressParser.toString(device.address), getCb);
+		self.protocol.removeListener(String(device.shortAddress), getCb);
 		callback(new Error("Unexpected message"));
 
 	}));
@@ -667,12 +703,12 @@ DeviceManager.prototype.fetchInteraction = function(device, n, callback)
 {
 	// console.log("fetchInteraction ", n);
 	var self = this;
-	self.requestGet(device.address, COM_ENTRY, n, null, (function(err, packet, getCb)
+	self.requestGet(device.shortAddress, COM_ENTRY, n, null, (function(err, packet, getCb)
 	{
-		if(err) { self.protocol.removeListener(addressParser.toString(device.address), getCb); callback(err); return; }
+		if(err) { self.protocol.removeListener(String(device.shortAddress), getCb); callback(err); return; }
 		if(packet.message.control.commandType === POST && packet.message.command[0] === COM_ENTRY)
 		{
-			self.protocol.removeListener(addressParser.toString(device.address), getCb);
+			self.protocol.removeListener(String(device.shortAddress), getCb);
 			var newInteraction = new Interaction();
 
 			newInteraction._n = packet.message.param[0];
@@ -690,7 +726,7 @@ DeviceManager.prototype.fetchInteraction = function(device, n, callback)
 			return callback(null);
 		}
 		//else callback(new Error("Unexpected message"));
-		self.protocol.removeListener(addressParser.toString(device.address), getCb);
+		self.protocol.removeListener(String(device.shortAddress), getCb);
 		callback(new Error("Unexpected message"));
 
 	}).bind(this));
@@ -730,12 +766,12 @@ DeviceManager.prototype.fetchInteractions = function(device, cb)
 DeviceManager.prototype.clearInteractions = function(device, callback)
 {
 	var self = this;
-	self.requestPost(device.address, COM_CLEAR, null, null, (function(err, packet, postCb)
+	self.requestPost(device.shortAddress, COM_CLEAR, null, null, (function(err, packet, postCb)
 		{
-			if(err) { self.protocol.removeListener(addressParser.toString(device.address), postCb); if(callback) callback(err); return;}
+			if(err) { self.protocol.removeListener(String(device.shortAddress), postCb); if(callback) callback(err); return;}
 			if(packet.message.control.commandType === ACK)
 			{
-				self.protocol.removeListener(addressParser.toString(device.address), postCb);
+				self.protocol.removeListener(String(device.shortAddress), postCb);
 				device._interactions = [];
 				device._nInteractions = 0;
 				Interaction.remove({"action_address": device.address}, function(err)
@@ -746,12 +782,12 @@ DeviceManager.prototype.clearInteractions = function(device, callback)
 			}
 			else if(packet.messafe.control.commandType === NACK) 
 			{
-				self.protocol.removeListener(addressParser.toString(device.address), postCb);
+				self.protocol.removeListener(String(device.shortAddress), postCb);
 				if(callback) return callback(new Error("got NACK"));
 			}
 			else
 			{
-				self.protocol.removeListener(addressParser.toString(device.address), postCb);
+				self.protocol.removeListener(String(device.shortAddress), postCb);
 				callback(new Error("Unexpected message"));
 			}
 
@@ -762,12 +798,12 @@ DeviceManager.prototype.clearInteractions = function(device, callback)
 DeviceManager.prototype.addInteraction = function(device, interaction, cb)
 {
 	var self = this;
-	self.requestPost(device.address, COM_ADDENTRY, null, interaction.toBuffer(), (function(err, packet, postCb)
+	self.requestPost(device.shortAddress, COM_ADDENTRY, null, interaction.toBuffer(), (function(err, packet, postCb)
 		{
-			if(err) {self.protocol.removeListener(addressParser.toString(device.address), postCb); if(cb) cb(err); return;}
+			if(err) {self.protocol.removeListener(String(device.shortAddress), postCb); if(cb) cb(err); return;}
 			if(packet.message.control.commandType === ACK)
 			{
-				self.protocol.removeListener(addressParser.toString(device.address), postCb);
+				self.protocol.removeListener(String(device.shortAddress), postCb);
 				// Reload interactions:
 				Interaction.remove({"action_address": device.address}, function(err)
 					{
@@ -792,12 +828,12 @@ DeviceManager.prototype.addInteraction = function(device, interaction, cb)
 			}
 			else if(packet.message.control.commandType === NACK)
 			{
-				self.protocol.removeListener(addressParser.toString(device.address), postCb);
+				self.protocol.removeListener(String(device.shortAddress), postCb);
 				if(cb) cb(new Error("got NACK"));
 			}
 			else
 			{
-				self.protocol.removeListener(addressParser.toString(device.address), postCb);
+				self.protocol.removeListener(String(device.shortAddress), postCb);
 				cb(new Error("Unexpected message"));
 			}
 		}), staticConfig.longTimeout);
@@ -806,12 +842,12 @@ DeviceManager.prototype.addInteraction = function(device, interaction, cb)
 DeviceManager.prototype.removeInteraction = function(device, interactionN, cb)
 {
 	var self = this;
-	self.requestPost(device.address, COM_DELENTRY, interactionN, null, (function(err, packet, postCb)
+	self.requestPost(device.shortAddress, COM_DELENTRY, interactionN, null, (function(err, packet, postCb)
 		{
-			if(err) {self.protocol.removeListener(addressParser.toString(device.address), postCb); if(cb) cb(err); return;}
+			if(err) {self.protocol.removeListener(String(device.shortAddress), postCb); if(cb) cb(err); return;}
 			if(packet.message.control.commandType === ACK)
 			{
-				self.protocol.removeListener(addressParser.toString(device.address), postCb);
+				self.protocol.removeListener(String(device.shortAddress), postCb);
 				// Reload interactions:
 				Interaction.remove({"action_address": device.address}, function(err)
 					{
@@ -836,12 +872,12 @@ DeviceManager.prototype.removeInteraction = function(device, interactionN, cb)
 			}
 			else if(packet.message.control.commandType === NACK) 
 			{
-				self.protocol.removeListener(addressParser.toString(device.address), postCb);
+				self.protocol.removeListener(String(device.shortAddress), postCb);
 				if(cb) cb(new Error("got NACK"));
 			}
 			else
 			{
-				self.protocol.removeListener(addressParser.toString(device.address), postCb);
+				self.protocol.removeListener(String(device.shortAddress), postCb);
 				cb(new Error("Unexpected message"));
 			}
 		}), staticConfig.longTimeout);
@@ -850,12 +886,12 @@ DeviceManager.prototype.removeInteraction = function(device, interactionN, cb)
 DeviceManager.prototype.editInteraction = function(device, interactionN, interaction, cb)
 {
 	var self = this;
-	self.requestPost(device.address, COM_ENTRY, interactionN, interaction.toBuffer(), (function(err, packet, postCb)
+	self.requestPost(device.shortAddress, COM_ENTRY, interactionN, interaction.toBuffer(), (function(err, packet, postCb)
 		{
-			if(err) {self.protocol.removeListener(addressParser.toString(device.address), postCb); if(cb) cb(err); return;}
+			if(err) {self.protocol.removeListener(String(device.shortAddress), postCb); if(cb) cb(err); return;}
 			if(packet.message.control.commandType === ACK)
 			{
-				self.protocol.removeListener(addressParser.toString(device.address), postCb);
+				self.protocol.removeListener(String(device.shortAddress), postCb);
 				// Reload interactions:
 				Interaction.remove({"action_address": device.address}, function(err)
 					{
@@ -880,12 +916,12 @@ DeviceManager.prototype.editInteraction = function(device, interactionN, interac
 			}
 			else if(packet.message.control.commandType === NACK) 
 			{
-				self.protocol.removeListener(addressParser.toString(device.address), postCb);
+				self.protocol.removeListener(String(device.shortAddress), postCb);
 				if(cb) cb(new Error("got NACK"));
 			}
 			else
 			{
-				self.protocol.removeListener(addressParser.toString(device.address), postCb);
+				self.protocol.removeListener(String(device.shortAddress), postCb);
 				cb(new Error("Unexpected message"));
 			}
 		}), staticConfig.longTimeout);

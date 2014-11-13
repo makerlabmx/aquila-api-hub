@@ -14,11 +14,16 @@
  *		CMD_SET_CHAN:		[Command specific] = CHAN*				*11 - 24
  *		CMD_START													*Sent on bridge start or reset and in response to CMD_PING
  *		CMD_SET_SHORT_ADDR:	[Command specific] = [ADDR*]			*len = 2 (16 bit), lsb first
- *		CMD_SET_LONG_ADDR:	[Command specific] = [ADDR*]			*len = 8 (64 bit), lsb first
+ *		//CMD_SET_LONG_ADDR:	[Command specific] = [ADDR*]			*len = 8 (64 bit), lsb first
  *		CMD_PING:													*Sent by PC, response is CMD_START
  *		CMD_SUCESS:													*Sent on data transmit success
  *		CMD_ERROR:													*Sent on data tranmit error
  *		CMD_GET_LONG_ADDR:											*Get bridge MAC address
+ */
+
+ /*
+	New Data Format 10/11/14: Now we are using LWM, thus all MAC processing is done in the uC, we only send relevant data to PC.
+		lqi rssi srcAddr(16) dstAddr(16) srcEndpoint dstEndpoint frameSize [LWM Data]
  */
 
 /*
@@ -51,8 +56,9 @@ var SerialPort = Serial.SerialPort;
 require("buffertools").extend(); // extend Buffer.prototype
 var scanPorts = require("./scanports");
 var events = require("events");
+var config = require("./../../config/bridge");
 
-var DEBUG = false;
+var DEBUG = true;
 
 // Serial timeout, used for clearing buffer if no char received in that time.
 var TIMEOUT = 20;
@@ -71,16 +77,26 @@ var CMD_SUCCESS 	= 0x08;
 var CMD_ERROR 		= 0x09;
 var CMD_GET_LONG_ADDR = 0x0A;
 
-var INDEX_CMD = PREAMBLE.length;
-var INDEX_LQI = PREAMBLE.length + 1;
-var INDEX_RSSI = PREAMBLE.length + 2;
-var INDEX_SIZE = PREAMBLE.length + 3;
+var INDEX_CMD 			= PREAMBLE.length;
+var INDEX_LQI 			= PREAMBLE.length + 1;
+var INDEX_RSSI 			= PREAMBLE.length + 2;
+var INDEX_SRCADDRLOW 	= PREAMBLE.length + 3;
+var INDEX_SRCADDRHI 	= PREAMBLE.length + 4;
+var INDEX_DSTADDRLOW 	= PREAMBLE.length + 5;
+var INDEX_DSTADDRHI 	= PREAMBLE.length + 6;
+var INDEX_SRCEND 		= PREAMBLE.length + 7;
+var INDEX_DSTEND 		= PREAMBLE.length + 8;
+var INDEX_SIZE 			= PREAMBLE.length + 9;
 
-// Represents a raw 802.15.4 packet
-var Packet = function(lqi, rssi, size, data)
+// Represents a LWM packet
+var Packet = function(lqi, rssi, srcAddr, dstAddr, srcEndpoint, dstEndpoint, size, data)
 {
 	this.lqi = lqi;
 	this.rssi = rssi;
+	this.srcAddr = srcAddr;
+	this.dstAddr = dstAddr;
+	this.srcEndpoint = srcEndpoint;
+	this.dstEndpoint = dstEndpoint;
 	this.size = size;
 	this.data = data;
 };
@@ -112,14 +128,20 @@ var bridgeParser = function()
 			switch(data[INDEX_CMD])
 			{
 				case CMD_DATA:
-					// Checking if we have lqi, rssi and size already
-					if(data.length < PREAMBLE.length + 4) return;
+					// Checking if we have lqi, rssi, size, etc. already
+					if(data.length < PREAMBLE.length + 10) return;
 					var lqi =  data[INDEX_LQI];
 					var rssi = data[INDEX_RSSI];
+					var srcAddr = data[INDEX_SRCADDRLOW];
+					srcAddr |= (data[INDEX_SRCADDRHI] << 8); 
+					var dstAddr = data[INDEX_DSTADDRLOW];
+					dstAddr |= (data[INDEX_DSTADDRHI] << 8); 
+					var srcEndpoint = data[INDEX_SRCEND]; 	
+					var dstEndpoint = data[INDEX_DSTEND]; 	
 					var size = data[INDEX_SIZE];
 
 					// Checking if we have the whole message:
-					if(data.length < PREAMBLE.length + 4 + size) return;
+					if(data.length < PREAMBLE.length + 10 + size) return;
 					var frame = data.slice(INDEX_SIZE + 1);
 					var frameArray = [];
 
@@ -132,7 +154,7 @@ var bridgeParser = function()
 					data = data.slice(INDEX_SIZE + size + 1);
 					try
 					{
-						emmiter.emit("data", new Packet(lqi, rssi, size, frameArray));
+						emmiter.emit("data", new Packet(lqi, rssi, srcAddr, dstAddr, srcEndpoint, dstEndpoint, size, frameArray));
 					}
 					catch(err){}
 
@@ -241,6 +263,9 @@ var bridgeParser = function()
 
 var Bridge = function(baudrate, port)
 {
+	if(baudrate === undefined) var baudrate = config.baudrate;
+	if(port === undefined) var port = config.port;
+
 	var self = this;
 
 	var init = function(path)
@@ -257,10 +282,10 @@ var Bridge = function(baudrate, port)
 				{
 					console.log("open");
 					// data returned as MAC frame array without size, first byte is frame control
-					self.serialPort.on("data", function(data)
+					/*self.serialPort.on("data", function(data)
 						{
 							console.log("data received: ", data);
-						});
+						});*/
 					self.serialPort.on("bridgeStarted", function()
 						{
 							console.log("Bridge Started");
@@ -379,14 +404,15 @@ Bridge.prototype.getLongAddress = function()
 };
 
 // data format: array (or buffer?)
-Bridge.prototype.sendData = function(data)
+Bridge.prototype.sendData = function(srcAddr, dstAddr, srcEndpoint, dstEndpoint, data)
 {
 	if(!data) return;
 	// Dummy lqi and rssi (bridge doesnt care about this on transmit, just for completness):
 	var lqi = 0xFF;
 	var rssi = 0xFF;
 
-	var frame = Buffer.concat([ PREAMBLE, new Buffer([ CMD_DATA, lqi, rssi, data.length ]), data ]);
+	var frame = Buffer.concat([ PREAMBLE, new Buffer([ CMD_DATA, lqi, rssi, srcAddr&0xFF, (srcAddr>>8)&0xFF, 
+								dstAddr&0xFF, (dstAddr>>8)&0xFF, srcEndpoint, dstEndpoint, data.length ]), data ]);
 
 	this.write(frame);
 

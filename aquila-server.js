@@ -32,7 +32,9 @@ app.use(function(req, res, next)
 		if (toobusy()) { res.status(503).send("Server is busy right now, try again later."); console.log("Busy"); }
 		else next();
 	});
-app.use(morgan('dev')); // log every request to the console
+
+// Verbose requests:
+//app.use(morgan('dev')); // log every request to the console
 app.use(cookieParser()); // read cookies (needed for auth)
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());

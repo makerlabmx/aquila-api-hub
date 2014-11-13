@@ -4,11 +4,13 @@
  *	Author: Rodrigo Méndez Gamboa, rmendez@makerlab.mx
  */
 
-var Net = require("./net");
-var Packet = require("./packet");
+var Bridge = require("./bridge");
 var ProtoPacket = require("./protoPacket");
 var events = require("events");
 var addressParser = require("./addressParser");
+
+var PROTOCOL_ENDPOINT = 13;
+var PROTOCOL_VERSION = 2;
 
 var Protocol = function()
 {
@@ -16,26 +18,25 @@ var Protocol = function()
 
 	this.PAN = 0xCA5A;
 
-	this.net = new Net();
+	this.bridge = new Bridge();
 	// Will get this from bridge
-	this.localAddr = new Buffer([0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+	this.localAddr = 0x00FF;
+	this.localEUIAddr = new Buffer([0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
 
-	this.net.on("ready", function()
+	this.bridge.on("ready", function()
 	{
-		//self.net.mac.bridge.setLongAddress(self.localAddr);
-		self.net.mac.bridge.serialPort.on("longAddrSetConfirm", function(addr)
+		self.bridge.serialPort.on("longAddrSetConfirm", function(addr)
 			{
 				addr = new Buffer(addr);
-				if(addressParser.compare(addr, self.localAddr)) return;
-				self.localAddr = addr;
-				console.log("Local Address: ", addressParser.toString(addr));
+				if(addressParser.compare(addr, self.localEUIAddr)) return;
+				self.localEUIAddr = addr;
+				console.log("Local EUI Address: ", addressParser.toString(addr));
 				self.emit("ready");
 			});
 		// not really needed because bridge sends it at start...:
-		setTimeout(function(){ self.net.mac.bridge.getLongAddress(); }, 1500);
-		self.net.on("receive", function(packet)
+		setTimeout(function(){ self.bridge.getLongAddress(); }, 1500);
+		self.bridge.serialPort.on("data", function(packet)
 		{
-
 			var protoPacket = self.parsePacket(packet);
 			if(protoPacket)
 			{
@@ -63,7 +64,7 @@ var Protocol = function()
 						self.emit("event", protoPacket);
 						break;
 				}
-				self.emit(addressParser.toString(protoPacket.srcAddr), protoPacket);
+				self.emit(String(protoPacket.srcAddr), protoPacket);
 				self.emit("receive", protoPacket);
 			} 
 		});
@@ -79,7 +80,7 @@ Protocol.prototype.setPAN = function(pan)
 	if(typeof(pan) === "number")
 	{
 		this.PAN = pan;
-		this.net.mac.bridge.setPan(pan);
+		this.bridge.setPan(pan);
 	}
 };
 
@@ -93,10 +94,16 @@ Protocol.prototype.parsePacket = function(packet)
 	// Should check if its a valid packet... TODO
 	try
 	{
+		// Check if its a protocol packet
+		if(packet.srcEndpoint !== PROTOCOL_ENDPOINT || packet.dstEndpoint !== PROTOCOL_ENDPOINT) return false;
 		var pkt = new ProtoPacket();
 		pkt.srcAddr = packet.srcAddr;
-		pkt.destAddr = packet.destAddr;		
-		pkt.message.fromRaw(packet.payload);
+		pkt.destAddr = packet.dstAddr;
+
+		pkt.message.fromRaw(packet.data);
+
+		// check if correct PROTOCOL_VERSION
+		if(pkt.message.version !== PROTOCOL_VERSION) return false;
 
 		return pkt;
 	}
@@ -109,16 +116,9 @@ Protocol.prototype.parsePacket = function(packet)
 
 Protocol.prototype.send = function(protoPacket)
 {
-	var packet = new Packet();
-	packet.destPan.writeUInt16LE(this.PAN, 0);
-	if(protoPacket.destAddr.length === 2)
-	{
-		packet.frameControl.destAddrMode = Packet.ADDR_SHORT;
-	}
-	packet.destAddr = protoPacket.destAddr;
-	packet.srcAddr = protoPacket.srcAddr;
-	packet.payload = protoPacket.message.getRaw();
-	this.net.send(packet);
+	this.bridge.sendData(protoPacket.srcAddr, protoPacket.destAddr, 
+						 PROTOCOL_ENDPOINT, PROTOCOL_ENDPOINT, 
+						 protoPacket.message.getRaw());
 };
 
 Protocol.prototype.sendAck = function(destAddr)
@@ -141,7 +141,7 @@ Protocol.prototype.sendNAck = function(destAddr)
 	this.send(pkt);
 };
 
-// Currently, destAddr must be a Buffer, action and param numbers.
+// destAddr, action and param  must be numbers.
 Protocol.prototype.requestAction = function(destAddr, action, param)
 {
 	var pkt = new ProtoPacket();

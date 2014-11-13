@@ -29,7 +29,7 @@ ProtoControl.prototype.getRaw = function()
 var ProtoMessage = function()
 {
 	this.version = new Buffer(1);
-	this.version.writeUInt8(0x01, 0);
+	this.version.writeUInt8(0x02, 0);
 	this.control = new ProtoControl();
 	this.command = new Buffer(0);
 	this.param = new Buffer(0);
@@ -38,6 +38,8 @@ var ProtoMessage = function()
 
 ProtoMessage.prototype.fromRaw = function(payload)
 {
+	if(!(payload instanceof Buffer)) payload = new Buffer(payload);
+
 	this.version = payload.readUInt8(0);
 	this.control.fromRaw(payload.readUInt8(1));
 
@@ -78,8 +80,8 @@ ProtoMessage.prototype.getRaw = function()
 
 var ProtoPacket = function()
 {
-	this.srcAddr = new Buffer(8);
-	this.destAddr = new Buffer(8);
+	this.srcAddr = 0xFFFF;
+	this.destAddr = 0xFFFF;
 	this.message = new ProtoMessage();
 };
 
