@@ -12,6 +12,16 @@ var express = require("express"),
 	passport = require("passport"),
 	morgan = require("morgan");
 
+var argv = require("minimist")(process.argv.slice(2));
+var argHelp = "Use: aquila-server <options>\nOptions:\n\t--verbose\tDisplay verbose messages.\n\t--help\t\tDisplay this help text.\n"
+
+// Display Help text on --help option
+if(argv.help)
+{
+	console.log(argHelp);
+	process.exit();
+}
+
 var flash 	 = require('connect-flash');
 var cookieParser = require('cookie-parser');
 var bodyParser   = require('body-parser');
@@ -34,7 +44,7 @@ app.use(function(req, res, next)
 	});
 
 // Verbose requests:
-//app.use(morgan('dev')); // log every request to the console
+if(argv.verbose) app.use(morgan('dev')); // log every request to the console
 app.use(cookieParser()); // read cookies (needed for auth)
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -82,6 +92,9 @@ mongoose.connect(configDB.url, function(err, res)
 		// Don't listen until deviceManager is ready:
 		deviceManager.on("ready", function()
 		{
+			// Discover nearby devices
+			deviceManager.discover();
+
 			// Init config
 			require("./api/controllers/config").init();
 

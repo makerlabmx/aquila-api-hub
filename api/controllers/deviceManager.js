@@ -7,7 +7,6 @@ var Event = mongoose.model("Event");
 var Interaction = mongoose.model("Interaction");
 
 var Protocol = require("./../lib/protocol");
-var addressParser = require("./../lib/addressParser");
 var events = require("events");
 var async = require("async");
 var buffertools = require("buffertools");
@@ -99,6 +98,8 @@ var DeviceManager = function()
 	var self = this;
 	this.protocol = new Protocol();
 
+	this.refreshInterval = null;
+
 	this.fetchQueue = async.queue(function(device, callback)
 		{
 			//console.log("Open");
@@ -135,20 +136,31 @@ var DeviceManager = function()
 				{
 					if(err)
 					{
-						console.log("Ping err: ", err.message);
-						// Device didn't respond, mark as inactive
-						device.active = false;
-						device.save(function(err, device)
-							{
-								if(err) return console.log(err.message);
-								// Remove all interactions from this device:
-								Interaction.remove({"action_address": device.address}, function(err)
+						if(staticConfig.debug) console.log("Ping err: ", err.message);
+						device._retriesInactive++;
+						if(staticConfig.debug) console.log(">>>>>>Retries inactive: ", device._retriesInactive);
+						if(device._retriesInactive > staticConfig.maxRetriesInactive)
+						{
+							// Device didn't respond, mark as inactive
+							device.active = false;
+							device._retriesInactive = 0;
+							device.save(function(err, device)
 								{
-									if(err) return console.log("Error deleting all interactions from ", device.address, err);
-									self.emit("deviceRemoved");
+									if(err) return console.log(err.message);
+									// Remove all interactions from this device:
+									Interaction.remove({"action_address": device.address}, function(err)
+									{
+										if(err) return console.log("Error deleting all interactions from ", device.address, err);
+										self.emit("deviceRemoved");
+									});
 								});
-							});
-					}
+						} 
+						else 
+						{
+							device.save();
+						}
+						
+					} else { device._retriesInactive = 0; device.save(); }
 					cb();
 				} );
 		}, 1);
@@ -164,7 +176,7 @@ var DeviceManager = function()
 			self.protocol.on("event", self.eventHandler.bind(self));
 
 			// Housekeeping, check incomplete devices, check if still alive
-			setInterval(self.refreshActiveDevices.bind(self), staticConfig.refreshInterval);
+			self.refreshInterval = setInterval(self.refreshActiveDevices.bind(self), staticConfig.refreshInterval);
 
 			if(staticConfig.debug) verboseDebug(self);
 
@@ -173,6 +185,16 @@ var DeviceManager = function()
 };
 
 DeviceManager.prototype.__proto__ = events.EventEmitter.prototype;
+
+DeviceManager.prototype.setActiveRefresh = function(active)
+{
+	var self = this;
+	var refreshInterval = staticConfig.refreshInterval;
+	if(active) refreshInterval = staticConfig.activeRefreshInterval;
+
+	clearInterval(self.refreshInterval);
+	self.refreshInterval = setInterval(self.refreshActiveDevices.bind(self), refreshInterval);
+};
 
 DeviceManager.prototype.refreshActiveDevices = function()
 {
@@ -244,7 +266,8 @@ DeviceManager.prototype.deviceFetcher = function(packet)
 							_nActions: null,
 							_nEvents: null,
 							_nInteractions: null,
-							_maxInteractions: null
+							_maxInteractions: null,
+							_retriesInactive: 0
 							//_interactions: []
 						});
 					device.save(function(err, device)

@@ -58,8 +58,6 @@ var scanPorts = require("./scanports");
 var events = require("events");
 var config = require("./../../config/bridge");
 
-var DEBUG = true;
-
 // Serial timeout, used for clearing buffer if no char received in that time.
 var TIMEOUT = 20;
 
@@ -278,14 +276,16 @@ var Bridge = function(baudrate, port)
 
 			self.serialPort.on("open", function()
 			{
-				if(DEBUG)
+				if(config.debug)
 				{
-					console.log("open");
-					// data returned as MAC frame array without size, first byte is frame control
-					/*self.serialPort.on("data", function(data)
+					console.log("Bridge port open");
+					// data returned as LWM frame array
+					/*
+					self.serialPort.on("data", function(data)
 						{
 							console.log("data received: ", data);
-						});*/
+						});
+					*/
 					self.serialPort.on("bridgeStarted", function()
 						{
 							console.log("Bridge Started");

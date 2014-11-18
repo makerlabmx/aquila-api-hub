@@ -15,6 +15,7 @@ module.exports = function(app, passport)
 	var DeviceCtrl = require("./controllers/device");
 	var ConfigCtrl = require("./controllers/config");
 	var InteractionCtrl = require("./controllers/interaction");
+	var WSerialCtrl = require("./controllers/wserial");
 
 	var apiRouter = express.Router();
 	//apiRouter.use(passport.authenticate('basic', { session: false }));
@@ -56,6 +57,10 @@ module.exports = function(app, passport)
 
 	apiRouter.route("/reload")
 		.get(ConfigCtrl.reload);
+
+	// WSerial
+	apiRouter.route("/wserial")
+		.post(WSerialCtrl.sendData);
 
 	// Make app use these routes
 	app.use("/api", apiRouter);
