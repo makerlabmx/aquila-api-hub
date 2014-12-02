@@ -284,6 +284,7 @@ DeviceManager.prototype.deviceFetcher = function(packet)
 					// if not active, make it active and refresh interactions
 					if(!device.active && device._fetchComplete)
 					{
+						device.shortAddress = deviceAddress;
 						device.active = true;
 						self.refreshInteractionsQueue.push(device, function()
 							{
@@ -298,6 +299,7 @@ DeviceManager.prototype.deviceFetcher = function(packet)
 					if(!device._fetchComplete)
 					{
 						// retry fetch all
+						device.shortAddress = deviceAddress;
 						self.fetchQueue.push(device);
 					}
 				}

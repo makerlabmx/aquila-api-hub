@@ -8,6 +8,9 @@ var Mesh = function()
 {
 	var self = this;
 
+	// Constant
+	self.AQUILAMESH_MAXPAYLOAD = 105;
+
 	this.PAN = MESH_DEFAULTPAN;
 
 	this.bridge = new Bridge();

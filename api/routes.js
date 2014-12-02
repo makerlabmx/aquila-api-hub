@@ -37,6 +37,12 @@ module.exports = function(app, passport)
 	apiRouter.route("/devices/:id/action/:action/:param?")
 		.get(DeviceCtrl.deviceAction);
 
+	apiRouter.route("/devices/:id/service/:service")
+		.get(DeviceCtrl.deviceServiceGet)
+		.post(DeviceCtrl.deviceServicePost)
+		.put(DeviceCtrl.deviceServicePut)
+		.delete(DeviceCtrl.deviceServiceDelete);
+
 	// Interactions
 	apiRouter.route("/interactions")
 		.get(InteractionCtrl.findAllInteractions)
