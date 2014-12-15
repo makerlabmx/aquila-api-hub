@@ -12,5 +12,5 @@ module.exports = {
 	timeout: 100,
 	longTimeout: 1000,
 	debug: false
-	
+
 };

@@ -29,7 +29,7 @@ ProtoControl.prototype.getRaw = function()
 var ProtoMessage = function()
 {
 	this.version = new Buffer(1);
-	this.version.writeUInt8(0x02, 0);
+	this.version.writeUInt8(ProtoPacket.PROTOCOL_VERSION, 0);
 	this.control = new ProtoControl();
 	this.command = new Buffer(0);
 	this.param = new Buffer(0);
@@ -43,7 +43,7 @@ ProtoMessage.prototype.fromRaw = function(payload)
 	this.version = payload.readUInt8(0);
 	this.control.fromRaw(payload.readUInt8(1));
 
-	var dataIndex = 2;	
+	var dataIndex = 2;
 
 	if(	this.control.commandType === ProtoPacket.CMD_ACTION ||
 		this.control.commandType === ProtoPacket.CMD_GET    ||
@@ -92,5 +92,6 @@ ProtoPacket.CMD_GET 	= 0x03;
 ProtoPacket.CMD_POST 	= 0x04;
 ProtoPacket.CMD_CUSTOM 	= 0x05;
 ProtoPacket.CMD_EVENT	= 0x06;
+ProtoPacket.PROTOCOL_VERSION = 3;
 
 module.exports = ProtoPacket;

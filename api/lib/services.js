@@ -30,13 +30,18 @@ var Services = function()
 	self.R408 = 0x07;	// Timeout
 	self.R500 = 0x08;	// Service error
 
-	self.mesh = mesh;
-
-	self.mesh.bridge.serialPort.on("data", function(packet)
+	mesh.openEndpoint(AQUILASERVICES_ENDPOINT, function(packet)
 		{
 			var data = self.parsePacket(packet);
+			// DEBUG
 			if(data) console.log("From ", data.srcAddr, ": ", Buffer(data.data).toString("utf8"));
+
 			if(data) self.emit("data", data);
+		});
+
+	self.on("data", function(data)
+		{
+			self.emit(data.name, data.srcAddr, data.method, data.data);
 		});
 };
 
@@ -55,23 +60,26 @@ Services.prototype.parsePacket = function(packet)
 			method: packet.data[1],
 			nameSize: packet.data[2],
 			dataSize: packet.data[3],
-			name: packet.data.slice(4, 4 + nameSize),
-			data: packet.data.slice(4 + nameSize, 4+nameSize+dataSize)
+			name: packet.data.slice(4, 4 + packet.data[2]),
+			data: packet.data.slice(4 + packet.data[2], 4+packet.data[2]+packet.data[3])
 		};
+
+		if(data.version !== AQUILASERVICES_VERSION) return false;
 
 		return data;
 	}
 	catch(err)
 	{
+		console.log(err);
 		return false;
 	}
 };
 
-// TODO: implement
 // callback must have: reqAddr, method, data
 Services.prototype.add = function(name, callback)
 {
-
+	var self = this;
+	self.on(name, callback);
 };
 
 // callback must have: err, srcAddr, status, data
@@ -82,15 +90,16 @@ Services.prototype.request = function(destAddr, method, name, callback, data)
 	// Check body length and fail if longer than expected
 	if(name.length + data.length > AQUILASERVICES_MAXDATASIZE) return callback(new Error("Data length is too long") );
 	// form packet struct
-	var packet = Buffer.concat([Buffer([AQUILASERVICES_VERSION, method, name.length, data.length]), 
-								Buffer(name), 
+	var packet = Buffer.concat([Buffer([AQUILASERVICES_VERSION, method, name.length, data.length]),
+								Buffer(name),
 								Buffer(data)]);
 
 	// DEBUG
 	console.log(packet);
+	console.log(mesh.getShortAddr(), destAddr);
 
-	self.mesh.bridge.sendData(self.mesh.localAddr, destAddr, 
-						 AQUILASERVICES_ENDPOINT, AQUILASERVICES_ENDPOINT, 
+	mesh.bridge.sendData(mesh.getShortAddr(), destAddr,
+						 AQUILASERVICES_ENDPOINT, AQUILASERVICES_ENDPOINT,
 						 packet);
 
 	var tout = null;
@@ -106,8 +115,8 @@ Services.prototype.request = function(destAddr, method, name, callback, data)
 					clearTimeout(tout);
 					// remove listener for only calling this once
 					self.removeListener("data", responseCb);
-					callback(null, packet.srcAddr, packet.status, packet.data);
-				}	
+					callback(null, packet.srcAddr, packet.method, Buffer(packet.data).toString("utf8"));
+				}
 			}
 		};
 
@@ -122,10 +131,18 @@ Services.prototype.request = function(destAddr, method, name, callback, data)
 	self.on("data", responseCb);
 };
 
-// TODO: implement
-Services.prototype.response = function(destAddr, method, data)
+Services.prototype.response = function(destAddr, status, data)
 {
+	var self = this;
+	// Check body length and fail if longer than expected
+	if(data.length > AQUILASERVICES_MAXDATASIZE) return new Error("Data length is too long");
+	// form packet struct
+	var packet = Buffer.concat([Buffer([AQUILASERVICES_VERSION, status, 0, data.length]),
+															Buffer(data)]);
 
+	mesh.bridge.sendData(mesh.getShortAddr(), destAddr,
+												AQUILASERVICES_ENDPOINT, AQUILASERVICES_ENDPOINT,
+												packet);
 };
 
 

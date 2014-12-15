@@ -7,34 +7,40 @@ var mesh = require("./mesh");
 var events = require("events");
 
 var WSERIAL_ENDPOINT = 14;
+var WSERIAL_MAXDATA = mesh.AQUILAMESH_MAXPAYLOAD;
 
 var WSerial = function()
 {
 	var self = this;
-	self.mesh = mesh;
+	mesh = mesh;
 
-	// self.mesh.on("ready", function()
-	// 	{
-	//		console.log("WSerial ready");
-
-			self.mesh.bridge.serialPort.on("data", function(packet)
-				{
-					var data = self.parsePacket(packet);
-					if(data) console.log("From ", data.srcAddr, ": ", Buffer(data.data).toString("utf8"));
-					if(data) self.emit("data", data);
-				});
-	// });
+	mesh.openEndpoint(WSERIAL_ENDPOINT, function(packet)
+		{
+			var data = self.parsePacket(packet);
+			if(data) console.log("From ", data.srcAddr, ": ", Buffer(data.data).toString("utf8"));
+			if(data) self.emit("data", data);
+		});
 };
 
 WSerial.prototype.__proto__ = events.EventEmitter.prototype;
 
-// TODO: Check what to do when message is larger than allowed packet size.
 WSerial.prototype.send = function(data)
 {
 	var self = this;
-	self.mesh.bridge.sendData(self.mesh.localAddr, data.dstAddr, 
-						 WSERIAL_ENDPOINT, WSERIAL_ENDPOINT, 
-						 Buffer(data.data));
+	// If data is longer than allowed, divide it and send it in chunks:
+	var dt = new Buffer(data.data);
+	var remaining = dt.slice();
+
+	while(remaining.length > 0)
+	{
+		var chunk = remaining.slice(0, WSERIAL_MAXDATA - 1);
+		remaining = remaining.slice(WSERIAL_MAXDATA - 1);
+
+		mesh.bridge.sendData(self.mesh.localAddr, data.dstAddr,
+			WSERIAL_ENDPOINT, WSERIAL_ENDPOINT,
+			chunk);
+	}
+
 };
 
 WSerial.prototype.parsePacket = function(packet)

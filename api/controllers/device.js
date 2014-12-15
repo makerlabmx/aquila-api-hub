@@ -6,7 +6,7 @@ var deviceManager = require("./deviceManager");
 var validator = require("validator");
 var services = require("./../lib/services");
 
-var queryFields = "-_fetchComplete -_nActions -_nEvents -_nInteractions -_maxInteractions -__v -events._id -actions._id";
+var queryFields = "-_fetchComplete -_nActions -_nEvents -_nInteractions -_maxInteractions -__v -events._id -actions._id -_retriesInactive";
 
 // GET - List all devices
 exports.findAllDevices = function(req, res)
@@ -17,7 +17,7 @@ exports.findAllDevices = function(req, res)
 
 		res.status(200).jsonp(devices);
 	});
-	
+
 };
 
 // GET - retrieve a device
@@ -56,7 +56,7 @@ exports.deviceAction = function(req, res)
 	{
 		if(err) return res.status(500).send(err.message);
 		if(!device) return res.status(404).send("Invalid device id");
-		
+
 		if(err) return res.status(500).send(err.message);
 		if(!validator.isInt(req.params.action)) return res.status(500).send();
 		if(req.params.param && !validator.isInt(req.params.param)) return res.status(500).send();
@@ -83,8 +83,9 @@ var deviceService = function(method, req, res)
 
 		services.request(device.shortAddress, method, req.params.service, function(err, srcAddr, status, data)
 		{
+			console.log(status, data);
 			if(err) return res.status(500).send(err.message);
-			if(status === services.R200) return res.status(200).send(data);
+			if(status === services.R200) return res.status(200).type("application/json").send(data);
 			if(status === services.R404) return res.status(404).send("Service not found in device");
 			if(status === services.R405) return res.status(405).send("Method not allowed in device");
 			if(status === services.R408) return res.status(408).send("Device Timeout");
