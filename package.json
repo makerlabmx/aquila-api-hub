@@ -1,6 +1,6 @@
 {
   "name": "aquila-server",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "Aquila API and Web App server for the Hub.",
   "main": "aquila-server.js",
   "author": "Rodrigo Méndez <rmendez@makerlab.mx> (http://makerlab.mx/)",
@@ -25,6 +25,7 @@
     "passport-http-bearer": "^1.0.1",
     "passport-local": "^1.0.0",
     "serialport": "^1.4.6",
+    "shelljs": "^0.3.0",
     "socket.io": "^1.1.0",
     "socketio-jwt": "^2.3.5",
     "toobusy": "^0.2.4",

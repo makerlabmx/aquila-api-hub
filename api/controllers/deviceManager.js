@@ -87,7 +87,7 @@ var DeviceManager = function()
 					if(err || alreadyFetched || !device) return callback();
 					self.fetchAll(device, function(err)
 						{
-							if(err) console.log(err);
+							if(err) { console.log(err); console.log("Fetch queue error");}
 							else self.emit("deviceAdded");
 							//console.log("Close");
 							callback();
