@@ -6,7 +6,7 @@ var config = require("shelljs").config;
 var path = require("path");
 
 var home = process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
-var killall_mongod = (process.platform == 'win32') ? 'taskkill /F mongod.exe' : 'killall mongod';
+var killall_mongod = (process.platform == 'win32') ? 'taskkill /F /IM mongod.exe' : 'killall mongod';
 
 echo("Aquila Server\n");
 echo("IMPORTANT: Make shure that the bridge is connected.\n");
