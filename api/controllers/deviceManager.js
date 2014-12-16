@@ -211,6 +211,17 @@ DeviceManager.prototype.eventHandler = function(packet)
 		});
 };
 
+var arrayToHexString = function(arry)
+{
+	var str = arry.map(function(x)
+	{
+		x = x.toString(16).toUpperCase();
+		x = ("00"+x).substr(-2);
+		return x;
+	}).join("");
+	return str;
+};
+
 DeviceManager.prototype.deviceFetcher = function(srcAddr, euiAddr)
 {
 	var self = this;
@@ -224,6 +235,7 @@ DeviceManager.prototype.deviceFetcher = function(srcAddr, euiAddr)
 				// Not aready addeed, add
 				device = new Device(
 					{
+						_id: arrayToHexString(euiAddr),
 						address: euiAddr,
 						shortAddress: srcAddr,
 						class: null,

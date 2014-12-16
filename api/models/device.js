@@ -18,6 +18,7 @@ var eventSchema = new Schema(
 
 var deviceSchema = new Schema(
 	{
+		_id: String,
 		address: Buffer,
 		shortAddress: Number,
 		class: String,
