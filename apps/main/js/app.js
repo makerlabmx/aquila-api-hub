@@ -1,13 +1,13 @@
 (function(){
-  
+
   var app = angular.module('aquila',
     [
-      'sessionController','mainController','deviceController','configuracionController','interactionController',
+      'sessionController','mainController','deviceController','configuracionController','interactionController', 'consoleController',
       'deviceFactory','tokenFactory','interactionFactory',
-      'ngRoute','btford.socket-io'    
+      'ngRoute','btford.socket-io'
     ]
   );
-  
+
   app.config(['$routeProvider','$httpProvider',function($routeProvider, $httpProvider) {
 
       $httpProvider.defaults.headers.common['Content-Type'] = 'application/json; charset=utf-8';
@@ -26,7 +26,7 @@
         when('/login', {
           templateUrl: 'main/views/session/login.html',
           controller: 'SessionController'
-        }).        
+        }).
         when('/interacciones', {
           templateUrl: 'main/views/interacciones/interacciones.html',
           controller: 'InteractionController'
@@ -35,9 +35,14 @@
           templateUrl: 'main/views/configuracion/configuracion.html',
           controller: 'ConfiguracionController'
         }).
+        when('/console', {
+          templateUrl: 'main/views/console/console.html',
+          controller:'ConsoleController'
+        }).
         otherwise({
           redirectTo: '/404error'
         });
+
     }
   ]);
 
@@ -61,19 +66,19 @@
 
 
   app.run( function($rootScope, $location,$window) {
-    $rootScope.$on( "$routeChangeStart", function(event, next, current) {      
-      if($window.sessionStorage.token === undefined){        
+    $rootScope.$on( "$routeChangeStart", function(event, next, current) {
+      if($window.sessionStorage.token === undefined){
         $location.path('/login');
         $rootScope.userLogin = false;
       }else{
-        $rootScope.userLogin = true;        
+        $rootScope.userLogin = true;
         $rootScope.user = $window.sessionStorage.user;
         $rootScope.user = $rootScope.user.charAt(0).toUpperCase() + $rootScope.user.slice(1);
       }
     });
   });
 
-  
+
 
 
 })();

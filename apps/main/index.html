@@ -4,31 +4,32 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Aquila</title>
-	
-	<link href="main/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">	
+
+	<link href="main/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
 	<link href="main/bower_components/fontawesome/css/font-awesome.min.css" rel="stylesheet"  >
-	
+
 	<link href="main/css/bootstrapc.css" rel="stylesheet" >
 	<link href="main/icons/capicon.css" rel="stylesheet" >
 	<link href="main/css/main.css" rel="stylesheet" >
 	<link href="main/css/items.css" rel="stylesheet" >
-	
+	<link href="main/css/console.css" rel="stylesheet" >
 
-	
+
+
 </head>
 <body id="app" data-custom-background data-off-canvas-nav ng-controller="MainController" >
-	
+
 		<div >
 	    <div ng-show="userLogin">
 	        <section ng-include=" 'main/views/layout/header.html' " id="header" class="top-header"></section>
 	        <aside ng-include=" 'main/views/layout/nav.html' " id="nav-container"></aside>
 	    </div>
 	    <div class="view-container">
-	    	<section ng-view ng-class="{'content-body':userLogin}" class=" animate-fade-up" ></section>	    	
+	    	<section ng-view ng-class="{'content-body':userLogin}" class=" animate-fade-up" ></section>
 	    </div>
     </div>
-	
-	
+
+
 
 	<script src="main/bower_components/jquery/dist/jquery.min.js"></script>
 	<script src="main/bower_components/bootstrap/dist/js/bootstrap.min.js" rel="stylesheet"></script>
@@ -36,16 +37,17 @@
 	<script src="main/bower_components/angular-route/angular-route.js"></script>
 	<script src="main/bower_components/angular-socket-io/socket.js"></script>
 	<script src="main/bower_components/angular-resource/angular-resource.min.js"></script>
-	<script src="/socket.io/socket.io.js"></script>	
-	<script src="main/js/app.js"></script>	
-	<script src="main/js/controllers/sessionController.js"></script>	
-	<script src="main/js/controllers/mainController.js"></script>	
-	<script src="main/js/controllers/deviceController.js"></script>	
-	<script src="main/js/controllers/interactionController.js"></script>	
-	<script src="main/js/controllers/configuracionController.js"></script>		
-	<script src="main/js/factories/device.js"></script>	
-	<script src="main/js/factories/interaction.js"></script>	
-	<script src="main/js/factories/token.js"></script> 
-	
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="main/js/app.js"></script>
+	<script src="main/js/controllers/sessionController.js"></script>
+	<script src="main/js/controllers/mainController.js"></script>
+	<script src="main/js/controllers/deviceController.js"></script>
+	<script src="main/js/controllers/interactionController.js"></script>
+	<script src="main/js/controllers/configuracionController.js"></script>
+	<script src="main/js/controllers/consoleController.js"></script>
+	<script src="main/js/factories/device.js"></script>
+	<script src="main/js/factories/interaction.js"></script>
+	<script src="main/js/factories/token.js"></script>
+
 </body>
 </html>

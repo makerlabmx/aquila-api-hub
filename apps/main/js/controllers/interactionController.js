@@ -1,32 +1,45 @@
 (function(){
 
-  var app = angular.module('interactionController',[]);  
+  var app = angular.module('interactionController',[]);
 
-  app.controller('InteractionController', [ '$http' , '$scope', 'socketAquila','Device','Interaction', function($http, $scope, socketAquila,Device,Interaction){            
+  app.controller('InteractionController', [ '$http' , '$scope', 'socketAquila','Device','Interaction', function($http, $scope, socketAquila,Device,Interaction){
     $scope.interactions = [];
     $scope.interaction = {};
     $scope.devices = [];
     $scope.devices_all = [];
     $scope.edit_element = false;
-    $scope.save_element = false;       
+    $scope.save_element = false;
 
     this.init = function (){
       loadInter();
-      var devs = Device.all(function(){          
+      var devs = Device.all(function(){
           $scope.devices=[];
-          for(var i = 0; i < devs.length; i++){            
-            if(devs[i].active)  {              
-              $scope.devices.push(devs[i]);               
+          for(var i = 0; i < devs.length; i++){
+            if(devs[i].active)  {
+              $scope.devices.push(devs[i]);
             }
-          } 
-      }); 
-      var devs = $scope.devices_all = Device.all(function(){          
+          }
+      });
+      var devs = $scope.devices_all = Device.all(function(){
           $scope.devices=[];
-          for(var i = 0; i < devs.length; i++){            
-            if(devs[i].active)  {              
-              $scope.devices.push(devs[i]);               
+          for(var i = 0; i < devs.length; i++){
+            if(devs[i].active)  {
+              $scope.devices.push(devs[i]);
             }
-          } 
+          }
+      });
+
+      var deviceHandler = function(){
+        loadInter();
+      };
+
+      socketAquila.on('deviceAdded', deviceHandler);
+      socketAquila.on('deviceRemoved', deviceHandler);
+
+      $scope.$on('$destroy', function()
+      {
+        socketAquila.removeListener('deviceAdded', deviceHandler);
+        socketAquila.removeListener('deviceRemoved', deviceHandler);
       });
     }
 
@@ -45,16 +58,16 @@
       console.log(interaction);
       console.log()
       $scope.interaction.event = interaction.event_device;
-      $scope.interaction.action = interaction.action_device;      
-      
+      $scope.interaction.action = interaction.action_device;
+
       //$scope.interaction.event_cuando ="asd";
       //$scope.interaction.action_hacer = interaction.action;
-      
-      
+
+
       $('#modal-interaccion').modal('show');
     }
 
-    $scope.deleteInteraction = function (interaction){      
+    $scope.deleteInteraction = function (interaction){
       var result = Interaction.delete({id:interaction._id}, null, function(){
         $scope.interactions=[];
         prepareInteraction(result);
@@ -63,9 +76,9 @@
       });
     }
 
-    $scope.saveInteraction = function (){      
+    $scope.saveInteraction = function (){
       //console.log($scope.interaction);
-      try {            
+      try {
         var data = {
           "event_address": $scope.interaction.event.address,
           "event": $scope.interaction.event_cuando.n,
@@ -76,40 +89,30 @@
       }
       catch(err) {
           $scope.error=err;
-      }     
+      }
       var result = Interaction.create({},data,function(){
         $scope.interactions=[];
         prepareInteraction(result);
         $('#modal-interaccion').modal('hide');
       },function(data){
         $scope.error="Error: " + data.data;
-      });      
+      });
     }
 
-    $scope.updateInteraction = function (){      
+    $scope.updateInteraction = function (){
       var entry =  new Entry();
       entry.event = inter.interaccion.event_cuando.n ;
       entry.action = inter.interaccion.action_hacer.n ;
-      entry.address = inter.interaccion.dev_cuando.address ;      
+      entry.address = inter.interaccion.dev_cuando.address ;
       Aq(inter.interaccion.dev_hacer.address).editEntry(inter.interaccion.n,entry, function(){
         console.log("si se actualizo")
         $('#modal-interaccion').modal('hide');
       });
-    }    
-
-    
-
-    socketAquila.on('deviceAdded', function(){
-      loadInter();  
-    });
-
-    socketAquila.on('deviceRemoved', function(){
-      loadInter();  
-    });
+    }
 
     function loadInter(){
-      $scope.interactions=[];      
-      var inters = Interaction.all(function(){                
+      $scope.interactions=[];
+      var inters = Interaction.all(function(){
         prepareInteraction(inters);
       });
     }
@@ -139,7 +142,7 @@
                 }
               }
             }
-            $scope.interactions.push(dev);          
+            $scope.interactions.push(dev);
         }
     }
 
@@ -150,7 +153,7 @@
     function saveTrue(){
       $scope.edit_element = false;
       $scope.save_element = true;
-    }    
-    
+    }
+
   }]);
 })();

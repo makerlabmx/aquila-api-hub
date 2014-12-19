@@ -1,5 +1,7 @@
 #! /usr/bin/env bash
 
+# DEPRECATED - USE launcher.js INSTEAD (multi platform support).
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $DIR
 

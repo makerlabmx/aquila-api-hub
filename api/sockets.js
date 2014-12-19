@@ -54,9 +54,17 @@ module.exports = function(io, passport, deviceManager)
 
 	io.of("/wserial").on("connection", function(socket)
 		{
+			console.log("socket connected");
 			wserial.on("data", function(data)
 				{
+					//console.log(Buffer(data.data).toString('utf8'));
 					socket.emit("data", data);
+				});
+
+			socket.on("data", function(data)
+				{
+					if(data.dstAddr === undefined || data.data === undefined) socket.emit("err", "Missing dstAddr or data");
+					else wserial.send(data);
 				});
 		});
 }

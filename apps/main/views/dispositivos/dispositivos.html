@@ -1,14 +1,14 @@
-<div class="page page-dashboard" ng-controller="DeviceController as main" ng-init="initMain()" >
-	<div class="row" >		
-		<div class="col-sm-6 col-md-3" ng-repeat="device in devices" >        		
+<div class="page page-dashboard" ng-controller="DeviceController as main" ng-init="main.init()" >
+	<div class="row" >
+		<div class="col-sm-6 col-md-3" ng-repeat="device in devices" >
       <a ng-href="/#device/{{device._id}}" >
 	      <div class="item">
-	        <div class="item-icon"> 
+	        <div class="item-icon">
 				      <i class='f120 fa' ng-class="device.img" ></i>
-	        </div>          
+	        </div>
           <div class="item-name text-center">{{device.name}}</div>
 	      </div>
         <a>
 	    </div>
-	</div>	
+	</div>
 </div>

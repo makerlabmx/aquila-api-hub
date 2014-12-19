@@ -63,7 +63,7 @@ app.set('view engine', 'ejs'); // set up ejs for templating
 
 mongoose.connect(configDB.url, function(err, res)
 	{
-		if(err) 
+		if(err)
 		{
 			console.log("ERROR connecting to database, make shure that mongodb is installed and running.");
 			process.exit(1);
@@ -73,11 +73,17 @@ mongoose.connect(configDB.url, function(err, res)
 	    // routes ======================================================================
 		// Routers
 		var router = express.Router();
-		
+
 		// Main app route
 		router.get("/", function(req, res)
 		{
 			res.render("main/index.html");
+		});
+
+		// Serial monitor
+		router.get("/console", function(req, res)
+		{
+			res.render("serialMonitor/index.html");
 		});
 
 		app.use(router);
@@ -99,7 +105,7 @@ mongoose.connect(configDB.url, function(err, res)
 			require("./api/controllers/config").init();
 
 			// launch server ==========================================================
-			var io = socket.listen(app.listen(port, function() 
+			var io = socket.listen(app.listen(port, function()
 			{
 				console.log("Aquila server running on http://localhost:" + port);
 			}));
@@ -108,4 +114,3 @@ mongoose.connect(configDB.url, function(err, res)
 			require("./api/sockets")(io, passport, deviceManager);
 		});
 	});
-

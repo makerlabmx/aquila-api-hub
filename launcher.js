@@ -5,6 +5,9 @@ require("shelljs/global");
 var config = require("shelljs").config;
 var path = require("path");
 
+// get args for passing to aquila-server
+var args = process.argv.slice(2).join(" ");
+
 var home = process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
 var killall_mongod = (process.platform == 'win32') ? 'taskkill /F /IM mongod.exe' : 'killall mongod';
 
@@ -32,7 +35,7 @@ exec("mongod --journal --dbpath " + dbpath + " --logpath " + logpath, { async: t
 
 // Start aquila-server
 echo("Starting Aquila Server...");
-exec("node aquila-server.js", function(code, output)
+exec("node aquila-server.js " + args, function(code, output)
   {
     exec(killall_mongod);
   });

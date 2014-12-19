@@ -17,8 +17,13 @@ var WSerial = function()
 	mesh.openEndpoint(WSERIAL_ENDPOINT, function(packet)
 		{
 			var data = self.parsePacket(packet);
-			if(data) console.log("From ", data.srcAddr, ": ", Buffer(data.data).toString("utf8"));
-			if(data) self.emit("data", data);
+			//if(data) console.log(Buffer(data.data).toString('utf8'));
+			if(data)
+			{
+				// convert data to string
+				data.data = Buffer(data.data).toString("utf8");
+				self.emit("data", data);
+			}
 		});
 };
 
@@ -36,7 +41,7 @@ WSerial.prototype.send = function(data)
 		var chunk = remaining.slice(0, WSERIAL_MAXDATA - 1);
 		remaining = remaining.slice(WSERIAL_MAXDATA - 1);
 
-		mesh.bridge.sendData(self.mesh.localAddr, data.dstAddr,
+		mesh.bridge.sendData(mesh.localAddr, data.dstAddr,
 			WSERIAL_ENDPOINT, WSERIAL_ENDPOINT,
 			chunk);
 	}
