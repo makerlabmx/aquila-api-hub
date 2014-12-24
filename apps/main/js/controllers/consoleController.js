@@ -11,13 +11,33 @@
     return socket;
   }]);
 
-  app.controller('ConsoleController', [ '$http' , '$scope', 'socketWSerial', function($http, $scope, socketWSerial){
+  app.controller('ConsoleController', [ '$http' , '$scope', 'socketWSerial', 'Device', function($http, $scope, socketWSerial, Device){
     self = this;
     self.output = '';
     self.input = '';
     self.deviceAddr = 0xFFFF;
     self.lastSender = 0;
     self.filter = false;
+
+    self.devices = [];
+
+    var fetchDevices = function()
+    {
+      var devs = Device.all(function(){
+        self.devices=[];
+        // add broadcast
+        self.devices.push({
+          name: "All (BROADCAST)",
+          shortAddress: 0xFFFF
+        });
+        for(var i = 0; i < devs.length; i++){
+            self.devices.push({
+              name: devs[i].name + "(" + devs[i].shortAddress + ")",
+              shortAddress: devs[i].shortAddress
+            });
+        }
+      });
+    };
 
     self.dataHandler = function(data)
     {
@@ -42,6 +62,8 @@
 
     self.init = function()
     {
+      fetchDevices();
+
       socketWSerial.on("data", self.dataHandler);
       socketWSerial.on("err", self.errorHandler);
 
@@ -55,6 +77,7 @@
 
     self.send = function()
     {
+      console.log(self.deviceAddr);
       var message = {
         dstAddr: parseInt(self.deviceAddr),
         data: self.input

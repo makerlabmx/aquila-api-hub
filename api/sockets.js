@@ -57,7 +57,6 @@ module.exports = function(io, passport, deviceManager)
 			console.log("socket connected");
 			wserial.on("data", function(data)
 				{
-					//console.log(Buffer(data.data).toString('utf8'));
 					socket.emit("data", data);
 				});
 

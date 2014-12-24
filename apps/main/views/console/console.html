@@ -5,23 +5,26 @@
   </div> -->
 
   <div class="row" >
-    <label for="send_input">Enviar:</label>
-    <input type="text" name="send_input" id="send_input" value="" ng-model="console.input" ng-keyup="$event.keyCode == 13 ? console.send() : null">
+    <div class="input-group">
+      <span class="input-group-addon">Enviar:</span>
+      <input class="form-control" type="text" name="send_input" id="send_input" value="" ng-model="console.input" ng-keyup="$event.keyCode == 13 ? console.send() : null">
 
-    <label for="addr_input">A:</label>
-    <!-- <select class="form-control" ng-model="interaction.event" ng-options="device.name for device in devices_all"></select> -->
+      <span class="input-group-addon">A:</span>
+      <select class="form-control" id="addr_input" ng-model="console.deviceAddr" ng-options="device.shortAddress as device.name for device in console.devices"></select>
 
-    <input type="text" name="addr_input" id="addr_input" value="" ng-model="console.deviceAddr" ng-keyup="$event.keyCode == 13 ? console.send() : null">
+    </div>
+
+    <!-- <input type="text" name="addr_input" id="addr_input" value="" ng-model="console.deviceAddr" ng-keyup="$event.keyCode == 13 ? console.send() : null"> -->
 
     <label for="filter_input">Filter</label>
     <input type="checkbox" name="filter_input" id="filter_input" ng-model="console.filter">
 
-    <input type="button" name="send_button" id="send_button" value="Send" ng-click="console.send()">
+    <input class="btn btn-success" type="button" name="send_button" id="send_button" value="Send" ng-click="console.send()">
 
     <div id="output_div">
       <pre id="console_output">{{console.output}}</pre>
     </div>
-    <button name="clear_button" id="clear_button" ng-click="console.clear()">Clear</button>
+    <button class="btn btn-danger" name="clear_button" id="clear_button" ng-click="console.clear()">Clear</button>
   </div>
 
 </div>

@@ -63,7 +63,7 @@ var config = require("./../../config/bridge");
 var Packet = require("./meshPacket.js");
 
 // Serial timeout, used for clearing buffer if no char received in that time.
-var TIMEOUT = 20;
+var TIMEOUT = 1000;
 
 // Bridge Protocol Constants:
 var PREAMBLE 						= new Buffer([0xAA, 0x55, 0xAA, 0x55]);
@@ -285,12 +285,12 @@ var Bridge = function(baudrate, port)
 				{
 					console.log("Bridge port open");
 					// data returned as LWM frame array
-					/*
+
 					self.serialPort.on("data", function(data)
 						{
-							console.log("data received: ", data);
+							console.log("data received: ", Buffer(data.data).toString());
 						});
-					*/
+
 					self.serialPort.on("bridgeStarted", function()
 						{
 							console.log("Bridge Started");
