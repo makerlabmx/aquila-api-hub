@@ -58,6 +58,10 @@ module.exports = function(app, passport)
 		.get(ConfigCtrl.getPan)
 		.post(ConfigCtrl.setPan);
 
+	apiRouter.route("/security")
+		.get(ConfigCtrl.getSec)
+		.post(ConfigCtrl.setSec);
+
 	apiRouter.route("/discover")
 		.get(ConfigCtrl.discover);
 

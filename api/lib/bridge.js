@@ -266,10 +266,13 @@ var bridgeParser = function()
 
 var Bridge = function(baudrate, port)
 {
+	var self = this;
+
+	self.fake = config.fake;
+	if(self.fake) return self.emit("ready");
+
 	if(baudrate === undefined) var baudrate = config.baudrate;
 	if(port === undefined) var port = config.port;
-
-	var self = this;
 
 	var init = function(path)
 		{
@@ -427,7 +430,7 @@ Bridge.prototype.setSecurityKey = function(key)
 {
 	if(key.length === 16)
 	{
-		var frame = Buffer.concat([PREAMBLE, CMD_SET_KEY, new Buffer(key)]);
+		var frame = Buffer.concat([PREAMBLE, new Buffer([CMD_SET_KEY]), new Buffer(key)]);
 		this.write(frame);
 	}
 };
@@ -451,6 +454,8 @@ Bridge.prototype.sendData = function(srcAddr, dstAddr, srcEndpoint, dstEndpoint,
 Bridge.prototype.write = function(data)
 {
 	var self = this;
+	// do nothing if we are in fake mode
+	if(self.fake) return;
 	self.serialPort.drain(function()
 		{
 			self.serialPort.write(data);

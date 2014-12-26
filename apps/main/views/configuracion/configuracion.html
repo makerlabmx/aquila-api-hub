@@ -7,7 +7,7 @@
 	                <a href class="list-group-item active text-center" ng-click="config.selectTab(1)" >
 	                  <h4 class="icon-024"></h4><br/>PAN
 	                </a>
-	                
+
 	                <!-- <a href class="list-group-item text-center" >
 	                  <h4 class="icon-033"></h4><br/>Agenda
 	                </a> -->
@@ -26,14 +26,25 @@
 	            </div>
 	            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-9 bhoechie-tab">
 	                <!-- flight section -->
-	                <div class="bhoechie-tab-content" ng-show="config.isSelected(1)" ng-init="config.getPAN()" >	                
+	                <div class="bhoechie-tab-content" ng-show="config.isSelected(1)" ng-init="config.init()" >
 	                    <center>
 	                    	PAN:
-	                    	<input type="texbox" id="PANADDRESS" value="" ng-model="config.pan"  ng-maxlength="4	" required>
+	                    	<input type="textbox" id="PANADDRESS" value="" ng-model="config.panString"  ng-maxlength="4	" required>
 
-	                    	<button type="button" 
-	                    		class="btn btn-outlined btn-success" 
-	                    		ng-click='config.setPAN(config.pan)' >Guardar</button>
+	                    	<button type="button"
+	                    		class="btn btn-outlined btn-success"
+	                    		ng-click='config.setPAN()' >Guardar PAN</button>
+
+												SECURITY:
+												<label for="secKey">Key</label>
+												<input type="textbox" name="secKey" value="">
+
+												<label for"secEnabled">Enabled</label>
+												<input type="checkbox" name="secEnabled" ng-model="config.secEnabled">
+
+												<button type="button"	class="btn btn-outlined btn-success"
+												ng-click='config.setSec()' >Save Security</button>
+
 	                    </center>
 	                </div>
 	                <!-- train section -->
@@ -44,7 +55,7 @@
 	                      <h3 style="margin-top: 0;color:#55518a">Train Reservation</h3>
 	                    </center>
 	                </div>
-	    
+
 	                <!-- hotel search -->
 	                <div class="bhoechie-tab-content" ng-show="config.isSelected(3)" >
 	                    <center>

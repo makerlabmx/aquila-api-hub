@@ -9,7 +9,7 @@ var MESH_ENDPOINT = 15;
 var MESH_CMD_GETEUI = 0;
 var MESH_CMD_RESEUI = 1;
 
-var MESH_PING_TIMEOUT = 1000;
+var MESH_PING_TIMEOUT = 500;
 
 var Mesh = function()
 {
@@ -23,11 +23,19 @@ var Mesh = function()
 	this.CHANNEL = MESH_DEFAULTCHAN;
 
 	this.bridge = new Bridge();
+	this.ready = false;
 
 	// Will get this from bridge
 	this.localAddr = 0x00FF;
 	this.localEUIAddr = new Buffer([0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
 	this.securityEnabled = false;
+
+	if(self.bridge.fake)
+	{
+		console.log("Started with fake bridge");
+		self.ready = true;
+		self.emit("ready");
+	}
 
 	this.bridge.on("ready", function()
 		{
@@ -37,6 +45,7 @@ var Mesh = function()
 					if(addressParser.compare(addr, self.localEUIAddr)) return;
 					self.localEUIAddr = addr;
 					console.log("Bridge EUI Address: ", addressParser.toString(addr));
+					self.ready = true;
 					self.emit("ready");
 				});
 			// not really needed because bridge sends it at start...:

@@ -54,7 +54,6 @@ module.exports = function(io, passport, deviceManager)
 
 	io.of("/wserial").on("connection", function(socket)
 		{
-			console.log("socket connected");
 			wserial.on("data", function(data)
 				{
 					socket.emit("data", data);

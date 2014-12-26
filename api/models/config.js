@@ -5,7 +5,9 @@ var mongoose = require('mongoose'),
 
 var configSchema = new Schema(
 	{
-		pan: Number
+		pan: Number,
+		secEnabled: Boolean,
+		secKey: Buffer
 	});
 
 module.exports = mongoose.model('Config', configSchema);

@@ -22,7 +22,7 @@ if(argv.help)
 	process.exit();
 }
 
-var flash 	 = require('connect-flash');
+var flash 	 		 = require('connect-flash');
 var cookieParser = require('cookie-parser');
 var bodyParser   = require('body-parser');
 var session      = require('express-session');
@@ -68,7 +68,7 @@ mongoose.connect(configDB.url, function(err, res)
 			console.log("ERROR connecting to database, make shure that mongodb is installed and running.");
 			process.exit(1);
 		}
-	    console.log("Connected to Database");
+	  console.log("Connected to Database");
 
 	    // routes ======================================================================
 		// Routers
@@ -80,7 +80,7 @@ mongoose.connect(configDB.url, function(err, res)
 			res.render("main/index.html");
 		});
 
-		// Serial monitor
+		// Serial monitor dev test, TODO remove this
 		router.get("/console", function(req, res)
 		{
 			res.render("serialMonitor/index.html");
@@ -93,10 +93,10 @@ mongoose.connect(configDB.url, function(err, res)
 		require("./admin/routes")(app, passport);
 
 		// initialize Aquila protocol =================================================
-	    var deviceManager = require("./api/controllers/deviceManager");
+	  var deviceManager = require("./api/controllers/deviceManager");
 
 		// Don't listen until deviceManager is ready:
-		deviceManager.on("ready", function()
+		var onReady = function()
 		{
 			// Discover nearby devices
 			deviceManager.discover();
@@ -112,5 +112,8 @@ mongoose.connect(configDB.url, function(err, res)
 
 			// Socket configuration
 			require("./api/sockets")(io, passport, deviceManager);
-		});
+		}
+
+		if(deviceManager.ready) onReady();
+		else deviceManager.on("ready", onReady);
 	});

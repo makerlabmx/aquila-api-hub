@@ -40,46 +40,39 @@ var Protocol = function()
 	self.COM_NAME = 13;
 	self.COM_EUI = 14;
 
-	mesh.on("ready", function()
+	mesh.openEndpoint(PROTOCOL_ENDPOINT, function(packet)
 	{
-		mesh.openEndpoint(PROTOCOL_ENDPOINT, function(packet)
+		var protoPacket = self.parsePacket(packet);
+		if(protoPacket)
 		{
-			var protoPacket = self.parsePacket(packet);
-			if(protoPacket)
+			switch(protoPacket.message.control.commandType)
 			{
-				switch(protoPacket.message.control.commandType)
-				{
-					case ProtoPacket.CMD_ACK:
-						self.emit("ack", protoPacket);
-						break;
-					case ProtoPacket.CMD_NACK:
-						self.emit("nack", protoPacket);
-						break;
-					case ProtoPacket.CMD_ACTION:
-						self.emit("action", protoPacket);
-						break;
-					case ProtoPacket.CMD_GET:
-						self.emit("get", protoPacket);
-						break;
-					case ProtoPacket.CMD_POST:
-						self.emit("post", protoPacket);
-						break;
-					case ProtoPacket.CMD_CUSTOM:
-						self.emit("custom", protoPacket);
-						break;
-					case ProtoPacket.CMD_EVENT:
-						self.emit("event", protoPacket);
-						break;
-				}
-				self.emit(String(protoPacket.srcAddr), protoPacket);
-				self.emit("receive", protoPacket);
+				case ProtoPacket.CMD_ACK:
+					self.emit("ack", protoPacket);
+					break;
+				case ProtoPacket.CMD_NACK:
+					self.emit("nack", protoPacket);
+					break;
+				case ProtoPacket.CMD_ACTION:
+					self.emit("action", protoPacket);
+					break;
+				case ProtoPacket.CMD_GET:
+					self.emit("get", protoPacket);
+					break;
+				case ProtoPacket.CMD_POST:
+					self.emit("post", protoPacket);
+					break;
+				case ProtoPacket.CMD_CUSTOM:
+					self.emit("custom", protoPacket);
+					break;
+				case ProtoPacket.CMD_EVENT:
+					self.emit("event", protoPacket);
+					break;
 			}
-		});
-
-		self.emit("ready");
-
+			self.emit(String(protoPacket.srcAddr), protoPacket);
+			self.emit("receive", protoPacket);
+		}
 	});
-
 };
 
 Protocol.prototype.__proto__ = events.EventEmitter.prototype;

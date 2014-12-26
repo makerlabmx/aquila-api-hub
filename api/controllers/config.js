@@ -6,6 +6,7 @@ var Device = mongoose.model("Device");
 var Interaction = mongoose.model("Interaction");
 var deviceManager = require("./deviceManager");
 var deviceCtrl = require("./device");
+var mesh = require("./../lib/mesh");
 
 var DEFAULT_PAN = 0xCA5A;
 
@@ -22,7 +23,9 @@ exports.init = function()
 			if(!config)
 			{
 				var newConfig = new Config({
-					pan: DEFAULT_PAN
+					pan: DEFAULT_PAN,
+					secEnabled: false,
+					secKey: new Buffer([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
 				});
 
 				newConfig.save(function(err, newConfig)
@@ -35,6 +38,8 @@ exports.init = function()
 			else
 			{
 				deviceManager.setPAN(config.pan);
+				mesh.setSecurityKey(config.secKey);
+				mesh.setSecurityEnabled(config.secEnabled);
 			}
 		});
 };
@@ -46,7 +51,7 @@ exports.getPan = function(req, res)
 		{
 			if(err) return res.send(500, err.message);
 
-			res.status(200).jsonp(config);
+			res.status(200).jsonp({ pan: config.pan });
 		});
 };
 
@@ -58,12 +63,44 @@ exports.setPan = function(req, res)
 
 	Config.findOne(null, queryFields, function(err, config)
 		{
+			if(err) return res.send(500, err.message);
 			config.pan = req.body.pan;
 
 			config.save(function(err)
 				{
 					if(err) return res.send(500, err.message);
 					deviceManager.setPAN(config.pan);
+					res.status(200).jsonp(config);
+				});
+		});
+};
+
+// GET - Get mesh security status
+exports.getSec = function(req, res)
+{
+	Config.findOne(null, queryFields, function(err, config)
+		{
+			if(err) return res.send(500, err.message);
+
+			res.status(200).jsonp({ secEnabled: config.secEnabled, secKey: config.secKey });
+		});
+};
+
+// POST - Set mesh security status
+exports.setSec = function(req, res)
+{
+	Config.findOne(null, queryFields, function(err, config)
+		{
+			if(err) return res.send(500, err.message);
+			// validate
+			if(req.body.secEnabled && (typeof(req.body.secEnabled) === "boolean") ) config.secEnabled = req.body.secEnabled;
+			if(req.body.secKey && req.body.secKey.length === 16) config.secKey = new Buffer(req.body.secKey);
+
+			config.save(function(err)
+				{
+					if(err) return res.send(500, err.message);
+					mesh.setSecurityKey(config.secKey);
+					mesh.setSecurityEnabled(config.secEnabled);
 					res.status(200).jsonp(config);
 				});
 		});
@@ -96,6 +133,6 @@ exports.reload = function(req, res)
 				{
 					deviceCtrl.findAllDevices(req, res);
 				});
-			
+
 		});
 };

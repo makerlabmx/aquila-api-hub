@@ -73,6 +73,7 @@ var DeviceManager = function()
 {
 	var self = this;
 	this.protocol = new Protocol();
+	self.ready = false;
 
 	this.refreshInterval = null;
 
@@ -122,42 +123,53 @@ var DeviceManager = function()
 							device._retriesInactive = 0;
 							device.save(function(err, device)
 								{
-									if(err) return console.log(err.message);
+									if(err) {cb(); return console.log(err.message);}
 									// Remove all interactions from this device:
 									Interaction.remove({"action_address": device.address}, function(err)
 									{
-										if(err) return console.log("Error deleting all interactions from ", device.address, err);
+										if(err) {cb(); return console.log("Error deleting all interactions from ", device.address, err);}
 										self.emit("deviceRemoved");
+										cb();
 									});
 								});
 						}
 						else
 						{
-							device.save();
+							device.save(function(err, device)
+								{
+									if(err) console.log(err.message);
+									console.log(">>Device saved")
+									cb();
+								});
+							console.log(">>Saving device");
 						}
 
-					} else { device._retriesInactive = 0; device.save(); }
-					cb();
+					} else { device._retriesInactive = 0; device.save(); cb();}
+					//cb();
 				} );
 		}, 1);
 
-	this.protocol.on("ready", function()
-		{
-			if(staticConfig.debug) console.log("Starting bridge...");
+	var onReady = function()
+	{
+		if(staticConfig.debug) console.log("Starting bridge...");
 
-			// Device adding manager
-			mesh.on("gotAnnounce", self.deviceFetcher.bind(self));
+		// Device adding manager
+		mesh.on("gotAnnounce", self.deviceFetcher.bind(self));
 
-			// Device Event handling:
-			self.protocol.on("event", self.eventHandler.bind(self));
+		// Device Event handling:
+		self.protocol.on("event", self.eventHandler.bind(self));
 
-			// Housekeeping, check incomplete devices, check if still alive
-			self.refreshInterval = setInterval(self.refreshActiveDevices.bind(self), staticConfig.refreshInterval);
+		// Housekeeping, check incomplete devices, check if still alive
+		self.refreshInterval = setInterval(self.refreshActiveDevices.bind(self), staticConfig.refreshInterval);
 
-			if(staticConfig.debug) verboseDebug(self);
+		if(staticConfig.debug) verboseDebug(self);
 
-			self.emit("ready");
-		});
+		self.ready = true;
+		self.emit("ready");
+	}
+
+	if(mesh.ready) onReady();
+	else mesh.on("ready", onReady);
 };
 
 DeviceManager.prototype.__proto__ = events.EventEmitter.prototype;
