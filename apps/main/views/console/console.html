@@ -1,30 +1,39 @@
-<div class="container" ng-controller="ConsoleController as console" ng-init="console.init()" >
+<div class="page page-dashboard container" ng-controller="ConsoleController as console" ng-init="console.init()" >
 
   <!-- <div class="page-header">
     <h1>Serial Console</h1>
   </div> -->
 
   <div class="row" >
-    <div class="input-group">
-      <span class="input-group-addon">Enviar:</span>
-      <input class="form-control" type="text" name="send_input" id="send_input" value="" ng-model="console.input" ng-keyup="$event.keyCode == 13 ? console.send() : null">
+    <div class="col-md-12">
 
-      <span class="input-group-addon">A:</span>
-      <select class="form-control" id="addr_input" ng-model="console.deviceAddr" ng-options="device.shortAddress as device.name for device in console.devices"></select>
+      <div class="form-group">
+        <div class="input-group">
+          <span class="input-group-addon">To:</span>
+          <select class="form-control" id="addr_input" ng-model="console.deviceAddr" ng-options="device.shortAddress as device.name for device in console.devices"></select>
+          <span class="input-group-addon">
+            <label for="filter_input">Filter Messages</label>
+            <input type="checkbox" name="filter_input" id="filter_input" ng-model="console.filter">
+          </span>
+        </div>
+      </div>
 
+      <div class="form-group">
+        <div class="input-group">
+          <input class="form-control" type="text" name="send_input" id="send_input" value="" ng-model="console.input" ng-keyup="$event.keyCode == 13 ? console.send() : null">
+
+          <span class="input-group-btn">
+            <input class="btn btn-success" type="button" name="send_button" id="send_button" value="Send" ng-click="console.send()">
+          </span>
+
+        </div>
+      </div>
+
+      <div id="console_div" class="form-group">
+        <pre id="console_output">{{console.output}}</pre>
+      </div>
+      <button class="btn btn-danger" name="clear_button" id="clear_button" ng-click="console.clear()">Clear</button>
     </div>
-
-    <!-- <input type="text" name="addr_input" id="addr_input" value="" ng-model="console.deviceAddr" ng-keyup="$event.keyCode == 13 ? console.send() : null"> -->
-
-    <label for="filter_input">Filter</label>
-    <input type="checkbox" name="filter_input" id="filter_input" ng-model="console.filter">
-
-    <input class="btn btn-success" type="button" name="send_button" id="send_button" value="Send" ng-click="console.send()">
-
-    <div id="output_div">
-      <pre id="console_output">{{console.output}}</pre>
-    </div>
-    <button class="btn btn-danger" name="clear_button" id="clear_button" ng-click="console.clear()">Clear</button>
   </div>
 
 </div>

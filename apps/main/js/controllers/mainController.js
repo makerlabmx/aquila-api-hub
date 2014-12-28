@@ -12,6 +12,21 @@
       $scope.reload = function(){
         $http.get('/api/reload');
       }
+
+      $scope.navClass = "";
+
+      $scope.toggleNav = function()
+      {
+        if($scope.navClass !== "on-canvas")
+        {
+          $scope.navClass = "on-canvas"
+        }
+        else
+        {
+          $scope.navClass = "";
+        }
+      }
+
   }]);
 
   app.factory('socketAquila',['socketFactory','$window', function(socketFactory,$window){

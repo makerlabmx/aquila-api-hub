@@ -44,14 +44,14 @@
     }
 
     $scope.newInteraction = function (){
-      $scope.title = "Nueva Interacción"
+      $scope.title = "New Interaction"
       $scope.interaction = {};
       saveTrue();
       $('#modal-interaccion').modal('show');
     }
 
     $scope.editInteraction = function (interaction){
-      $scope.title = "Editar Interacción"
+      $scope.title = "Edit Interaction"
       $scope.interaction = {};
       editTrue();
 

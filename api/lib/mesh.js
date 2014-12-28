@@ -109,7 +109,7 @@ Mesh.prototype.setAddr = function(shortAddr)
 Mesh.prototype.setPanId = function(panId)
 {
 	var self = this;
-	if(typeof(pan) === "number")
+	if(typeof(panId) === "number")
 		{
 			self.PAN = panId;
 			self.bridge.setPan(panId);

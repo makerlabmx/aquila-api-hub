@@ -89,11 +89,12 @@ exports.getSec = function(req, res)
 // POST - Set mesh security status
 exports.setSec = function(req, res)
 {
+
 	Config.findOne(null, queryFields, function(err, config)
 		{
 			if(err) return res.send(500, err.message);
 			// validate
-			if(req.body.secEnabled && (typeof(req.body.secEnabled) === "boolean") ) config.secEnabled = req.body.secEnabled;
+			if(typeof(req.body.secEnabled) === "boolean") { config.secEnabled = req.body.secEnabled; }
 			if(req.body.secKey && req.body.secKey.length === 16) config.secKey = new Buffer(req.body.secKey);
 
 			config.save(function(err)

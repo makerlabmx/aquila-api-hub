@@ -351,7 +351,7 @@ Bridge.prototype.setPromiscuous = function(isProm)
 	if(isProm === true) param = 0x01;
 	else if(isProm === false) param = 0x00;
 
-	if(param)
+	if(param !== null)
 	{
 		var frame = Buffer.concat([PREAMBLE, new Buffer([CMD_SET_PROM, param])]);
 		this.write(frame);
@@ -361,7 +361,7 @@ Bridge.prototype.setPromiscuous = function(isProm)
 // pan format: 16 bit number, example: 0xCA5A
 Bridge.prototype.setPan = function(pan)
 {
-	if(pan)
+	if(typeof(pan) !== "undefined")
 	{
 		var low = pan & 0xFF;
 		var high = (pan >>> 8) & 0xFF;
@@ -417,7 +417,7 @@ Bridge.prototype.setSecurityEnabled = function(enabled)
 	if(enabled === true) param = 0x01;
 	else if(enabled === false) param = 0x00;
 
-	if(param)
+	if(param !== null)
 		{
 			var frame = Buffer.concat([PREAMBLE, new Buffer([CMD_SET_SECURITY, param])]);
 			this.write(frame);

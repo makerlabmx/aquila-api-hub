@@ -1,9 +1,9 @@
-<div class="page-signin">
+<div class="page-signin" ng-controller="SessionController">
 
     <div class="signin-header">
         <div class="container text-center">
             <section class="logo">
-                <a href="#/">AQUILA</a>
+              <a href="#/"><img src="main/icons/aquilalogo.png" width="200px"></img></a>
             </section>
         </div>
     </div>
@@ -12,15 +12,15 @@
         <div class="container">
 
             <div class="form-container pd-top100">
-                
+
                 <form class="form-horizontal" ng-submit="submit()" >
-                    <fieldset>                        
+                    <fieldset>
                         <div class="form-group">
                             <div class="input-group input-group-lg">
                                 <span class="input-group-addon">
-                                    <span class="glyphicon glyphicon-envelope"></span>
+                                    <span class="glyphicon glyphicon-user"></span>
                                 </span>
-                                <input type="text" ng-model="user.user" name="user" placeholder="Usuario" 
+                                <input type="text" ng-model="user.user" name="user" placeholder="User"
                                        class="form-control">
                             </div>
                         </div>
@@ -38,16 +38,16 @@
                         <div class="form-group">
                         </div>
                         <div class="form-group">
-                            <input type="submit" value="Login" class="btn btn-primary btn-lg btn-block" />                            
+                            <input type="submit" value="Login" class="btn btn-primary btn-lg btn-block" />
                         </div>
                     </fieldset>
                 </form>
 
                 <section>
                     <!-- <p class="text-center"><a href="javascript:;">¿Olvidaste tu contraseña?</a></p> -->
-                    <p class="text-center text-muted text-small"><a href="/admin">Administrar cuentas</a></p>
+                    <p class="text-center text-muted text-small"><a href="/admin">Manage accounts</a></p>
                 </section>
-                
+
             </div>
         </div>
     </div>

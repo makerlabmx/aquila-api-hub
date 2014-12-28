@@ -308,8 +308,8 @@ th {
 }
 @font-face {
   font-family: 'Glyphicons Halflings';
-  src: url("../fonts/glyphicons-halflings-regular.eot");
-  src: url("../fonts/glyphicons-halflings-regular.eot?#iefix") format("embedded-opentype"), url("../fonts/glyphicons-halflings-regular.woff") format("woff"), url("../fonts/glyphicons-halflings-regular.ttf") format("truetype"), url("../fonts/glyphicons-halflings-regular.svg#glyphicons_halflingsregular") format("svg");
+  src: url("../bower_components/bootstrap/fonts/glyphicons-halflings-regular.eot");
+  src: url("../bower_components/bootstrap/fonts/glyphicons-halflings-regular.eot?#iefix") format("embedded-opentype"), url("../bower_components/bootstrap/fonts/glyphicons-halflings-regular.woff") format("woff"), url("../bower_components/bootstrap/fonts/glyphicons-halflings-regular.ttf") format("truetype"), url("../bower_components/bootstrap/fonts/glyphicons-halflings-regular.svg#glyphicons_halflingsregular") format("svg");
 }
 
 .glyphicon {
@@ -1460,7 +1460,7 @@ a.bg-info:hover {
 }
 
 .bg-warning {
-  background-color: #fcf7e6;  
+  background-color: #fcf7e6;
 }
 
 a.bg-warning:hover {
@@ -1472,6 +1472,7 @@ a.bg-warning:hover {
   height: 40px;
   text-align: center;
   font-size: 16px;
+  padding: 10px;
 }
 
 a.bg-danger:hover {
@@ -3824,6 +3825,10 @@ tbody.collapse.in {
 
 .dropdown {
   position: relative;
+}
+
+#user-dropdown {
+  padding-left: 18px;
 }
 
 .dropdown-toggle:focus {
@@ -9831,7 +9836,7 @@ button.toast-close-button {
   position: absolute;
   width: 100%;
   height: 80px;
-  padding: 20px;
+  padding: 30px;
   text-align: center;
 }
 @media (min-width: 768px) {
@@ -9915,7 +9920,7 @@ button.toast-close-button {
 }
 .top-header .top-nav .nav-left > li.nav-profile > a,
 .top-header .top-nav .nav-right > li.nav-profile > a {
-  padding: 5px 10px 5px 10px;  
+  padding: 5px 10px 5px 10px;
 }
 .top-header .top-nav .nav-left > li.nav-profile .hidden-xs,
 .top-header .top-nav .nav-right > li.nav-profile .hidden-xs {
@@ -10010,7 +10015,7 @@ button.toast-close-button {
 }
 @media (min-width: 768px) {
   .content-body {
-    top: 80px;
+    top: 60px;
     width: auto;
     left: 220px;
   }

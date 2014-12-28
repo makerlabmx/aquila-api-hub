@@ -16,10 +16,10 @@ exports.retrieveToken = function(req, res)
 
 	User.findOne({ name: user }, function(err, user)
         {
-            if(err) return res.send(500);
-            if(!user) return res.send(401, 'Wrong user or password');
-            if(!user.validPassword(password)) return res.send(401, 'Wrong user or password');
-            
+            if(err) return res.sendStatus(500);
+            if(!user) return res.status(401).send('Wrong user or password');
+            if(!user.validPassword(password)) return res.status(401).send('Wrong user or password');
+
             var profile = {
             	id: user._id,
             	user: user.name

@@ -1,27 +1,27 @@
 
 
 
-<div ng-controller="InteractionController as inter" data-ng-init="inter.init()">
+<div class="page page-dashboard col-md-12" ng-controller="InteractionController as inter" data-ng-init="inter.init()">
 
 
 <div class="text-right">
-	<button type="button" class="btn btn-outlined btn-primary" ng-click='newInteraction()' >Agregar Interacción</button>
+	<button type="button" class="btn btn-outlined btn-primary" ng-click='newInteraction()' >Add new Interaction</button>
 </div>
 
 
 <table class="table table-striped pd-top100">
 	<thead>
-		<th>Cuando el dispositivo</th>
-		<th>Emita el evento</th>
-		<th>Hacer en dispositivo</th>
-		<th>La acción</th>
-		<th>Opciones</th>
+		<th>When the Device</th>
+		<th>Emits the Event</th>
+		<th>Do in Device</th>
+		<th>The Action</th>
+		<th>Options</th>
 	</thead>
 	<tbody>
-		<tr ng-repeat="entry in interactions"  >            
+		<tr ng-repeat="entry in interactions"  >
 			<td>{{entry.event_device.name}}</td>
 			<td>{{entry.event}}</td>
-			<td>{{entry.action_device.name}}</td>      
+			<td>{{entry.action_device.name}}</td>
 			<td>{{entry.action}}</td>
 			<td>
         <!--
@@ -29,8 +29,8 @@
 					Editar
 		        </a>-->
 				<a class="btn btn-outlined btn-danger" href ng-click='deleteInteraction(entry)' >
-					Eliminar
-		        </a>    		        
+					Delete
+		        </a>
 			</td>
 		</tr>
 	</tbody>
@@ -42,60 +42,60 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Cerrar</span></button>
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
         <h4 class="modal-title">{{title}}</h4>
       </div>
-      <div class="modal-body">        
+      <div class="modal-body">
       	<div class="row">
       		<div class="col-md-6">
 
-            
+
       			<form role="form">
 				  <div class="form-group">
-				    <label for="exampleInputEmail1">Cuando</label>            
-				    <select class="form-control" ng-model="interaction.event" ng-options="device.name for device in devices_all"></select>
+				    <label for="whenDevice">When the Device:</label>
+				    <select class="form-control" name="whenDevice" ng-model="interaction.event" ng-options="device.name for device in devices_all"></select>
 				  </div>
 				  <div class="form-group">
-				    <label for="exampleInputEmail1"></label>
-				    <select class="form-control" ng-model="interaction.event_cuando" ng-options="action.name for action in interaction.event.events"></select>
+				    <label for="eventDevice">Emits:</label>
+				    <select class="form-control" name="eventDevice" ng-model="interaction.event_cuando" ng-options="action.name for action in interaction.event.events"></select>
 				  </div>
 
 				  <div class="form-group">
-				    <label for="exampleInputEmail1">Hacer</label>
-				    <select class="form-control" ng-disabled="edit_element" ng-model="interaction.action" ng-options="device.name for device in devices"></select>				    
+				    <label for="doDevice">Do in Device:</label>
+				    <select class="form-control" name="doDevice" ng-disabled="edit_element" ng-model="interaction.action" ng-options="device.name for device in devices"></select>
 				  </div>
 
 				  <div class="form-group">
-				    <label for="exampleInputEmail1"></label>
-				    <select class="form-control" ng-model="interaction.action_hacer" ng-options="action.name for action in interaction.action.actions"></select>
+				    <label for="actionDevice">Action:</label>
+				    <select class="form-control" name="actionDevice" ng-model="interaction.action_hacer" ng-options="action.name for action in interaction.action.actions"></select>
 				  </div>
 
-				 
+
 				</form>
 
-      		
+
       		</div>
-      	</div> 
-        <p class="bg-danger" ng-show="error" >{{error}}</p>       
+      	</div>
+        <p class="bg-danger" ng-show="error" >{{error}}</p>
       </div>
-      <div class="modal-footer">        
+      <div class="modal-footer">
 	  	<button class="btn btn-success" ng-show="edit_element" ng-click="updateInteraction()">
-	  		Actualizar
+	  		Update
 	  	</button>
 	    <button class="btn btn-success" ng-show="save_element" ng-click="saveInteraction()">
-	    	Guardar
-	    </button> 
-      <button type="button" class="btn btn-danger" data-dismiss="modal">Cancelar</button>        
+	    	Save
+	    </button>
+      <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 
 
-	
-  
+
+
   <!--
-  <pre>form = {{inter.interaccion | json}}</pre>  
+  <pre>form = {{inter.interaccion | json}}</pre>
 	-->
 
 </div>

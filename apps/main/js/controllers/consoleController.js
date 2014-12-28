@@ -32,7 +32,7 @@
         });
         for(var i = 0; i < devs.length; i++){
             self.devices.push({
-              name: devs[i].name + "(" + devs[i].shortAddress + ")",
+              name: devs[i].name + " (" + devs[i].shortAddress + ")",
               shortAddress: devs[i].shortAddress
             });
         }

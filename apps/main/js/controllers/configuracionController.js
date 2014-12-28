@@ -5,27 +5,18 @@
 	app.controller('ConfiguracionController', [ '$http' , '$scope', function($http, $scope)
 	{
 		config = this;
-    config.panel = 1;
     config.pan = 0xCA5A;
 		config.panString = "CA5A";
 		config.secEnabled = false;
 		config.secKey = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+		config.errorMsg = "";
+		config.showError = false;
 
-		config.selectTab = function(index)
-		{
-			config.panel = index;
-		};
-
-		config.isSelected = function(index)
-		{
-    		return config.panel == index;
-  	};
-
-  	$('#PANADDRESS').keyup(function()
+  	/*$('#PANADDRESS').keyup(function()
 		{
   	    var $th = $(this);
   	    $th.val( $th.val().replace(/[^a-zA-Z0-9]/g, function(str) { alert('You typed " ' + str + ' ".\n\nPlease use only letters and numbers.'); return ''; } ) );
-  	});
+  	});*/
 
 		config.init = function()
 		{
@@ -33,28 +24,38 @@
 			config.getSec();
 		};
 
+		config.displayError = function(show, msg)
+		{
+			config.showError = show;
+			if(msg) config.errorMsg = msg;
+		};
+
   	config.getPAN = function()
 		{
-  		$http.get('/api/pan').success(function(data, status, headers, config){
+  		$http.get('/api/pan').success(function(data, status, headers){
 			  config.pan = data.pan;
-			  config.panString = data.pan.toString(16);
+			  config.panString = data.pan.toString(16).toUpperCase();;
 	    });
   	};
 
   	config.setPAN = function()
 		{
+			config.displayError(false);
       var data = {
         pan: parseInt(config.panString, 16)
       };
-      $http.post('/api/pan', data).success(function(data, status, headers, config){
+      $http.post('/api/pan', data).success(function(data, status, headers){
         config.pan = data.pan;
-				config.panString = data.pan.toString(16);
-      });
+				config.panString = data.pan.toString(16).toUpperCase();
+      }).error(function(data, status, headers)
+			{
+				config.displayError(true, data);
+			});
   	};
 
 		config.getSec = function()
 		{
-			$http.get('/api/security').success(function(data, status, headers, config)
+			$http.get('/api/security').success(function(data, status, headers)
 				{
 					config.secEnabled = data.secEnabled;
 					config.secKey = data.secKey;
@@ -63,14 +64,18 @@
 
 		config.setSec = function()
 		{
+			config.displayError(false);
 			var data = {
 				secEnabled: config.secEnabled,
 				secKey: config.secKey
 			};
-			$http.post('/api/security', data).success(function(data, status, headers, config)
+			$http.post('/api/security', data).success(function(data, status, headers)
 				{
 					config.secEnabled = data.secEnabled;
 					config.secKey = data.secKey;
+				}).error(function(data, status, headers)
+				{
+					config.displayError(true, data);
 				});
 		}
 
