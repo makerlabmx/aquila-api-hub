@@ -5,6 +5,7 @@ var mongoose = require("mongoose");
 var expressJwt = require("express-jwt");
 var tokenConfig = require("./../config/token");
 var TokenCtrl = require("./controllers/token");
+var IpCtrl = require("./controllers/ip");
 
 module.exports = function(app, passport)
 {
@@ -75,6 +76,10 @@ module.exports = function(app, passport)
 	// WSerial
 	apiRouter.route("/wserial")
 		.post(WSerialCtrl.sendData);
+
+	// Server ip service
+	apiRouter.route("/ip")
+		.get(IpCtrl.getIp);
 
 	// Make app use these routes
 	app.use("/api", apiRouter);

@@ -12,6 +12,8 @@
 		config.showDisconnected = true;
 		config.errorMsg = "";
 		config.showError = false;
+		config.localIp = "";
+		config.extIp = "";
 
   	/*$('#PANADDRESS').keyup(function()
 		{
@@ -24,6 +26,7 @@
 			config.getPAN();
 			config.getSec();
 			config.getShowDisconnected();
+			config.getIps();
 		};
 
 		config.displayError = function(show, msg)
@@ -102,6 +105,15 @@
 				{
 					config.displayError(true, data);
 				});
+		};
+
+		config.getIps = function()
+		{
+			$http.get('/api/ip').success(function(data, status, headers)
+				{
+					config.localIp = data.localIp;
+					config.extIp = data.extIp;
+				}).error(function(data, status){console.log(data, status)});
 		};
 
 
