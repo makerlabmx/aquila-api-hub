@@ -7,11 +7,15 @@
       $scope.logout = function(){
         delete $window.sessionStorage.token;
         $location.path('/login');
-      }
+      };
 
       $scope.reload = function(){
         $http.get('/api/reload');
-      }
+      };
+
+      $scope.discover = function(){
+        $http.get('/api/discover');
+      };
 
       $scope.navClass = "";
 
@@ -25,7 +29,11 @@
         {
           $scope.navClass = "";
         }
-      }
+      };
+
+      $scope.isActive = function(route) {
+        return route === $location.path();
+      };
 
   }]);
 

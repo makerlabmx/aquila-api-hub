@@ -14,7 +14,7 @@
           $location.path('/');
         },function(){
           delete $window.sessionStorage.token;
-          $scope.error = 'El usuario o contraseña es incorrecto';
+          $scope.error = 'Invalid User or Password';
         });
       };
 

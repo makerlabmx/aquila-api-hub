@@ -13,13 +13,27 @@ var express = require("express"),
 	morgan = require("morgan");
 
 var argv = require("minimist")(process.argv.slice(2));
-var argHelp = "Use: aquila-server <options>\nOptions:\n\t--verbose\tDisplay verbose messages.\n\t--help\t\tDisplay this help text.\n"
+var argHelp = "Use: aquila-server <options>\nOptions:\n\t--verbose\tDisplay verbose messages.\n\t--help\t\tDisplay this help text.\n\t--ssl\t\tStart with SSL.\n"
 
 // Display Help text on --help option
 if(argv.help)
 {
 	console.log(argHelp);
 	process.exit();
+}
+
+// SSL
+if(argv.ssl)
+{
+	// For SSL support
+	var https = require("https");
+	var fs = require("fs");
+	var keyFile = "./config/ssl/rsaKey.pem";
+	var certFile = "./config/ssl/sslCert.crt";
+	var sslConfig = {
+		key: fs.readFileSync(keyFile),
+		cert: fs.readFileSync(certFile)
+	};
 }
 
 var flash 	 		 = require('connect-flash');
@@ -105,10 +119,22 @@ mongoose.connect(configDB.url, function(err, res)
 			require("./api/controllers/config").init();
 
 			// launch server ==========================================================
-			var io = socket.listen(app.listen(port, function()
+			if(argv.ssl)
 			{
-				console.log("Aquila server running on http://localhost:" + port);
-			}));
+				var server = https.createServer(sslConfig, app);
+				var io = socket.listen(server);
+				server.listen(port, function()
+				{
+					console.log("Aquila server running on https://localhost:" + port);
+				});
+			}
+			else
+			{
+				var io = socket.listen(app.listen(port, function()
+				{
+					console.log("Aquila server running on http://localhost:" + port);
+				}));
+			}
 
 			// Socket configuration
 			require("./api/sockets")(io, passport, deviceManager);

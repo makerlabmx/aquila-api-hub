@@ -21,9 +21,9 @@ var interQueryFields = "-__v";
 		_n: Number
 	}
 
-	*action_device is always known, because is the one that has the interaction 
+	*action_device is always known, because is the one that has the interaction
 	in memory, however, event_device could be unknown, in this case we pass an
-	empty device with just its address. 
+	empty device with just its address.
 */
 
 // modifies interaction for the new format.
@@ -89,11 +89,11 @@ exports.findAllInteractions = function(req, res)
 {
 	Interaction.find(req.query, interQueryFields, function(err, interactions)
 		{
-			if(err) return res.send(500, err.message);
+			if(err) return res.status(500).send(err.message);
 
 			formatInteractions(interactions, function(err, fmtInteractions)
 				{
-					if(err) return res.send(500, err.message);
+					if(err) return res.status(500).send(err.message);
 					res.status(200).jsonp(fmtInteractions);
 				});
 		});
@@ -115,12 +115,12 @@ exports.addInteraction = function(req, res)
 
 	Device.findOne({"address": req.body.action_address}, function(err, device)
 		{
-			if(err) return res.send(500, err.message);
-			if(!device) return res.send(500);
+			if(err) return res.status(500).send(err.message);
+			if(!device) return res.sendStatus(500);
 
 			deviceManager.addInteraction(device, newInteraction, function(err)
 				{
-					if(err) return res.send(500, err.message);
+					if(err) return res.status(500).send(err.message);
 					exports.findAllInteractions(req, res);
 				});
 		});
@@ -131,11 +131,11 @@ exports.findById = function(req, res)
 {
 	Interaction.findById(req.params.id, interQueryFields, function(err, interaction)
 		{
-			if(err) return res.send(500, err.message);
+			if(err) return res.status(500).send(err.message);
 
 			formatInteraction(interaction, function(err, fmtInteraction)
 				{
-					if(err) return res.send(500, err.message);
+					if(err) return res.status(500).send(err.message);
 					res.status(200).jsonp(fmtInteraction);
 				});
 		});
@@ -156,19 +156,19 @@ exports.updateInteraction = function(req, res)
 
 	Interaction.findById(req.params.id, function(err, interaction)
 	{
-		if(err) return res.send(500, err.message);
-		if(!interaction) return res.send(500);
+		if(err) return res.status(500).send(err.message);
+		if(!interaction) return res.sendStatus(500);
 
 		Device.findOne({"address": interaction.action_address}, function(err, device)
 		{
-			if(err) return res.send(500, err.message);
+			if(err) return res.status(500).send(err.message);
 			try{
 			deviceManager.editInteraction(device, interaction._n, newInteraction, function(err)
 				{
-					if(err) return res.send(500, err.message);
+					if(err) return res.status(500).send(err.message);
 					exports.findAllInteractions(req, res);
 				});
-			}catch(err){return res.send(500, err.message);}
+			}catch(err){return res.status(500).send(err.message);}
 			/*interaction.event_address = req.body.event_address;
 			interaction.event = req.body.event;
 			interaction.action_address = req.body.action_address;
@@ -177,7 +177,7 @@ exports.updateInteraction = function(req, res)
 
 			interaction.save(function(err)
 				{
-					if(err) return res.send(500, err.message);
+					if(err) return res.status(500).send(err.message);
 					res.status(200).jsonp(interaction);
 				});*/
 		});
@@ -189,20 +189,20 @@ exports.deleteInteraction = function(req, res)
 {
 	Interaction.findById(req.params.id, function(err, interaction)
 		{
-			if(err) return res.send(500, err.message);
-			if(!interaction) return res.send(500);
-			
+			if(err) return res.status(500).send(err.message);
+			if(!interaction) return res.sendStatus(500);
+
 			Device.findOne({"address": interaction.action_address}, function(err, device)
 				{
 					deviceManager.removeInteraction(device, interaction._n, function(err)
 						{
-							if(err) return res.send(500, err.message);
+							if(err) return res.status(500).send(err.message);
 							exports.findAllInteractions(req, res);
 						});
 				});
 			/*interaction.remove(function(err)
 				{
-					if(err) return res.send(500, err.message);
+					if(err) return res.status(500).send(err.message);
 					res.status(200).send();
 				});*/
 		});

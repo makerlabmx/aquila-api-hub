@@ -9,6 +9,7 @@
 		config.panString = "CA5A";
 		config.secEnabled = false;
 		config.secKey = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+		config.showDisconnected = true;
 		config.errorMsg = "";
 		config.showError = false;
 
@@ -22,6 +23,7 @@
 		{
 			config.getPAN();
 			config.getSec();
+			config.getShowDisconnected();
 		};
 
 		config.displayError = function(show, msg)
@@ -78,6 +80,29 @@
 					config.displayError(true, data);
 				});
 		}
+
+		config.getShowDisconnected = function()
+		{
+			$http.get('/api/config').success(function(data, status, headers)
+				{
+					config.showDisconnected = data.showDisconnected;
+				});
+		};
+
+		config.setShowDisconnected = function()
+		{
+			config.displayError(false);
+			var data = {
+				showDisconnected: config.showDisconnected
+			};
+			$http.post('/api/config', data).success(function(data, status, headers)
+				{
+					config.showDisconnected = data.showDisconnected;
+				}).error(function(data, status, headers)
+				{
+					config.displayError(true, data);
+				});
+		};
 
 
   }]);

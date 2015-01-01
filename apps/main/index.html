@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="es" ng-app="aquila">
 <head>
 	<meta charset="utf-8">
@@ -7,6 +8,7 @@
 
 	<link href="main/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
 	<link href="main/bower_components/fontawesome/css/font-awesome.min.css" rel="stylesheet"  >
+	<link rel="stylesheet" href="main/bower_components/bootstrap-iconpicker/bootstrap-iconpicker/css/bootstrap-iconpicker.min.css"/>
 
 	<link href="main/css/bootstrapc.css" rel="stylesheet" >
 	<link href="main/icons/capicon.css" rel="stylesheet" >
@@ -33,6 +35,10 @@
 
 	<script src="main/bower_components/jquery/dist/jquery.min.js"></script>
 	<script src="main/bower_components/bootstrap/dist/js/bootstrap.min.js" rel="stylesheet"></script>
+	<!-- Bootstrap-Iconpicker Iconset for Font Awesome -->
+	<script type="text/javascript" src="main/bower_components/bootstrap-iconpicker/bootstrap-iconpicker/js/iconset/iconset-fontawesome-4.2.0.min.js"></script>
+	<!-- Bootstrap-Iconpicker -->
+	<script type="text/javascript" src="main/bower_components/bootstrap-iconpicker/bootstrap-iconpicker/js/bootstrap-iconpicker.min.js"></script>
 	<script src="main/bower_components/angular/angular.js"></script>
 	<script src="main/bower_components/angular-route/angular-route.js"></script>
 	<script src="main/bower_components/angular-socket-io/socket.js"></script>
@@ -42,12 +48,14 @@
 	<script src="main/js/controllers/sessionController.js"></script>
 	<script src="main/js/controllers/mainController.js"></script>
 	<script src="main/js/controllers/deviceController.js"></script>
+	<script src="main/js/controllers/deviceDetailsController.js"></script>
 	<script src="main/js/controllers/interactionController.js"></script>
 	<script src="main/js/controllers/configuracionController.js"></script>
 	<script src="main/js/controllers/consoleController.js"></script>
 	<script src="main/js/factories/device.js"></script>
 	<script src="main/js/factories/interaction.js"></script>
 	<script src="main/js/factories/token.js"></script>
+	<script src="main/js/factories/config.js"></script>
 
 </body>
 </html>

@@ -62,6 +62,10 @@ module.exports = function(app, passport)
 		.get(ConfigCtrl.getSec)
 		.post(ConfigCtrl.setSec);
 
+	apiRouter.route("/config")
+		.get(ConfigCtrl.getConfig)
+		.post(ConfigCtrl.setConfig);
+
 	apiRouter.route("/discover")
 		.get(ConfigCtrl.discover);
 

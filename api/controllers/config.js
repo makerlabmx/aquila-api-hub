@@ -25,7 +25,9 @@ exports.init = function()
 				var newConfig = new Config({
 					pan: DEFAULT_PAN,
 					secEnabled: false,
-					secKey: new Buffer([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
+					secKey: new Buffer([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]),
+					showDisconnected: true,
+					language: "en"
 				});
 
 				newConfig.save(function(err, newConfig)
@@ -49,7 +51,7 @@ exports.getPan = function(req, res)
 {
 	Config.findOne(null, queryFields, function(err, config)
 		{
-			if(err) return res.send(500, err.message);
+			if(err) return res.status(500).send(err.message);
 
 			res.status(200).jsonp({ pan: config.pan });
 		});
@@ -59,16 +61,16 @@ exports.getPan = function(req, res)
 exports.setPan = function(req, res)
 {
 	if(!(typeof(req.body.pan) === "number" && req.body.pan >= 0 && req.body.pan <= 0xFFFF))
-	{ return res.send(500, "Invalid PAN"); }
+	{ return res.status(500).send("Invalid PAN"); }
 
 	Config.findOne(null, queryFields, function(err, config)
 		{
-			if(err) return res.send(500, err.message);
+			if(err) return res.status(500).send(err.message);
 			config.pan = req.body.pan;
 
 			config.save(function(err)
 				{
-					if(err) return res.send(500, err.message);
+					if(err) return res.status(500).send(err.message);
 					deviceManager.setPAN(config.pan);
 					res.status(200).jsonp(config);
 				});
@@ -80,7 +82,7 @@ exports.getSec = function(req, res)
 {
 	Config.findOne(null, queryFields, function(err, config)
 		{
-			if(err) return res.send(500, err.message);
+			if(err) return res.status(500).send(err.message);
 
 			res.status(200).jsonp({ secEnabled: config.secEnabled, secKey: config.secKey });
 		});
@@ -92,20 +94,58 @@ exports.setSec = function(req, res)
 
 	Config.findOne(null, queryFields, function(err, config)
 		{
-			if(err) return res.send(500, err.message);
+			if(err) return res.status(500).send(err.message);
 			// validate
 			if(typeof(req.body.secEnabled) === "boolean") { config.secEnabled = req.body.secEnabled; }
 			if(req.body.secKey && req.body.secKey.length === 16) config.secKey = new Buffer(req.body.secKey);
 
 			config.save(function(err)
 				{
-					if(err) return res.send(500, err.message);
+					if(err) return res.status(500).send(err.message);
 					mesh.setSecurityKey(config.secKey);
 					mesh.setSecurityEnabled(config.secEnabled);
 					res.status(200).jsonp(config);
 				});
 		});
 };
+
+// GET - Get Whole Config
+exports.getConfig = function(req, res)
+{
+	Config.findOne(null, queryFields, function(err, config)
+	{
+		if(err) return res.status(500).send(err.message);
+
+		res.status(200).jsonp(config);
+	});
+};
+
+// POST - Set Whole Config
+exports.setConfig = function(req, res)
+{
+
+	Config.findOne(null, queryFields, function(err, config)
+	{
+		if(err) return res.status(500).send(err.message);
+		// validate
+		if(typeof(req.body.secEnabled) === "boolean") { config.secEnabled = req.body.secEnabled; }
+		if(req.body.secKey && req.body.secKey.length === 16) config.secKey = new Buffer(req.body.secKey);
+		if(typeof(req.body.pan) === "number" && req.body.pan >= 0 && req.body.pan <= 0xFFFF)
+		{ config.pan = req.body.pan; }
+		if(typeof(req.body.showDisconnected) === "boolean") { config.showDisconnected = req.body.showDisconnected }
+		if(typeof(req.body.language) === "string") { config.language = req.body.language }
+
+		config.save(function(err)
+		{
+			if(err) return res.status(500).send(err.message);
+			deviceManager.setPAN(config.pan);
+			mesh.setSecurityKey(config.secKey);
+			mesh.setSecurityEnabled(config.secEnabled);
+			res.status(200).jsonp(config);
+		});
+	});
+};
+
 
 // GET - start discovering devices
 exports.discover = function(req, res)
@@ -129,7 +169,7 @@ exports.reload = function(req, res)
 			{
 				if(err) console.log(err);
 			});
-			if(err) return res.send(500, err.message);
+			if(err) return res.status(500).send(err.message);
 			deviceManager.discover(function()
 				{
 					deviceCtrl.findAllDevices(req, res);

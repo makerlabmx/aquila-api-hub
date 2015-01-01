@@ -4,86 +4,90 @@
 		<div class="row">
 
 	  	<div class="col-md-6">
-        	<h2>PAN Configuration</h2>
-
+					<h1>Configuration</h1>
+					<hr>
+        	<h2>PAN</h2>
+					<p class="help-block">Hex number, from 0000 to FFFF.</p>
 					<div class="form-group">
-						<div class="input-group">
-							<span class="input-group-addon">
-								PAN:
-							</span>
-        			<input class="form-control" type="textbox" id="PANADDRESS" value="" ng-model="config.panString"  ng-maxlength="4	" required>
+						<div class="row">
+							<div class="col-md-4">
+        				<input class="form-control" type="textbox" id="PANADDRESS" value="" ng-model="config.panString"  ng-maxlength="4" required>
+							</div>
 						</div>
 					</div>
 
 					<div class="form-group">
 						<button type="button"
 						class="btn btn-outlined btn-success"
-						ng-click='config.setPAN()' >Set PAN</button>
+						ng-click='config.setPAN()' >
+							<i class="fa fa-check"></i>
+							Set PAN
+						</button>
 					</div>
 
 					<hr>
-					<h2>Security Configuration</h2>
+					<h2>Security</h2>
 
 					<div class="form-group">
 						<div class="form-horizontal">
 							<label for="secKey">Key:</label>
-
+							<p class="help-block">Numbers, from 0 to 255.</p>
 							<div class="row">
-								<div class="col-xs-2">
+								<div class="col-xs-3">
 									<input class="form-control" type="number" min="0" max="255" ng-model="config.secKey[0]" value="">
 								</div>
-								<div class="col-xs-2">
+								<div class="col-xs-3">
 									<input class="form-control" type="number" min="0" max="255" ng-model="config.secKey[1]" value="">
 								</div>
-								<div class="col-xs-2">
+								<div class="col-xs-3">
 									<input class="form-control" type="number" min="0" max="255" ng-model="config.secKey[2]" value="">
 								</div>
-								<div class="col-xs-2">
+								<div class="col-xs-3">
 									<input class="form-control" type="number" min="0" max="255" ng-model="config.secKey[3]" value="">
 								</div>
 							</div>
 
 							<div class="row">
-								<div class="col-xs-2">
+								<div class="col-xs-3">
 									<input class="form-control" type="number" min="0" max="255" ng-model="config.secKey[4]" value="">
 								</div>
-								<div class="col-xs-2">
+								<div class="col-xs-3">
 									<input class="form-control" type="number" min="0" max="255" ng-model="config.secKey[5]" value="">
 								</div>
-								<div class="col-xs-2">
+								<div class="col-xs-3">
 									<input class="form-control" type="number" min="0" max="255" ng-model="config.secKey[6]" value="">
 								</div>
-								<div class="col-xs-2">
+								<div class="col-xs-3">
 									<input class="form-control" type="number" min="0" max="255" ng-model="config.secKey[7]" value="">
 								</div>
 							</div>
 
 							<div class="row">
-								<div class="col-xs-2">
+								<div class="col-xs-3">
 									<input class="form-control" type="number" min="0" max="255" ng-model="config.secKey[8]" value="">
 								</div>
-								<div class="col-xs-2">
+								<div class="col-xs-3">
 									<input class="form-control" type="number" min="0" max="255" ng-model="config.secKey[9]" value="">
 								</div>
-								<div class="col-xs-2">
+								<div class="col-xs-3">
 									<input class="form-control" type="number" min="0" max="255" ng-model="config.secKey[10]" value="">
 								</div>
-								<div class="col-xs-2">
+								<div class="col-xs-3">
 									<input class="form-control" type="number" min="0" max="255" ng-model="config.secKey[11]" value="">
 								</div>
 							</div>
 
 							<div class="row">
-								<div class="col-xs-2">
+								<div class="col-xs-3">
 									<input class="form-control" type="number" min="0" max="255" ng-model="config.secKey[12]" value="">
 								</div>
-								<div class="col-xs-2">
+								<div class="col-xs-3">
 									<input class="form-control" type="number" min="0" max="255" ng-model="config.secKey[13]" value="">
 								</div>
-								<div class="col-xs-2">
+								<div class="col-xs-3">
 									<input class="form-control" type="number" min="0" max="255" ng-model="config.secKey[14]" value="">
 								</div>
-								<div class="col-xs-2">
+								<div class="col-xs-3">
 									<input class="form-control" type="number" min="0" max="255" ng-model="config.secKey[15]" value="">
 								</div>
 							</div>
@@ -99,8 +103,51 @@
 
 					<div class="form-group">
 						<button type="button"	class="btn btn-outlined btn-success"
-						ng-click='config.setSec()' >Set Security</button>
+						ng-click='config.setSec()' >
+							<i class="fa fa-check"></i>
+							Set Security
+						</button>
 					</div>
+
+					<hr>
+					<h2>Presentation</h2>
+
+					<div class="form-group">
+						<label for="showDisconnected">Show Disconnected Devices:</label>
+						<input class="form-control" type="checkbox" name="showDisconnected" ng-model="config.showDisconnected">
+					</div>
+
+					<div class="form-group">
+						<button type="button"	class="btn btn-outlined btn-success"
+						ng-click='config.setShowDisconnected()' >
+							<i class="fa fa-check"></i>
+							Apply
+						</button>
+					</div>
+
+					<hr>
+					<h2>Info</h2>
+
+					<p>
+						<label>Local ip address:</label>
+						<span>192.168.1.13</span>
+					</p>
+					<p>
+						<label>External ip address:</label>
+						<span>189.23.23.23</span>
+					</p>
+
+					<p>
+						<label for="reloadBtn">Forget all devices and reload:</label>
+
+						<div class="form-group">
+							<button type="button" name="reloadBtn"	class="btn btn-warning btn-success"
+								ng-click='reload()' >
+								<i class="fa fa-repeat"></i>
+								Reload Devices
+							</button>
+						</div>
+					</p>
 
 	    </div>
 

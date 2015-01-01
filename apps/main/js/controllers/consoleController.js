@@ -4,20 +4,20 @@
 
   app.factory('socketWSerial',['socketFactory','$window', function(socketFactory,$window){
     var myIoSocket = io.connect('/wserial',{query: "token=" + $window.sessionStorage.token});
-    console.log("wserial socket started");
     socket = socketFactory({
       ioSocket: myIoSocket
     });
     return socket;
   }]);
 
-  app.controller('ConsoleController', [ '$http' , '$scope', 'socketWSerial', 'Device', function($http, $scope, socketWSerial, Device){
+  app.controller('ConsoleController', [ '$http' , '$scope', 'socketWSerial','socketAquila', 'Device', 'Config', function($http, $scope, socketWSerial, socketAquila, Device, Config){
     self = this;
     self.output = '';
     self.input = '';
     self.deviceAddr = 0xFFFF;
     self.lastSender = 0;
     self.filter = false;
+    self.showDisconnected = true;
 
     self.devices = [];
 
@@ -27,21 +27,34 @@
         self.devices=[];
         // add broadcast
         self.devices.push({
-          name: "All (BROADCAST)",
+          name: "All [BROADCAST]",
           shortAddress: 0xFFFF
         });
         for(var i = 0; i < devs.length; i++){
-            self.devices.push({
-              name: devs[i].name + " (" + devs[i].shortAddress + ")",
-              shortAddress: devs[i].shortAddress
-            });
+            if(devs[i].active || self.showDisconnected)
+            {
+              var name = devs[i].name;
+              if(!name) name = "";
+              self.devices.push({
+                name: name + " [" + devs[i].shortAddress + "]",
+                shortAddress: devs[i].shortAddress
+              });
+            }
         }
       });
     };
 
+    socketAquila.on('deviceAdded', fetchDevices);
+    socketAquila.on('deviceRemoved', fetchDevices);
+
+    $scope.$on("$destroy", function()
+      {
+        socketAquila.removeListener('deviceAdded', fetchDevices);
+        socketAquila.removeListener('deviceRemoved', fetchDevices);
+      });
+
     self.dataHandler = function(data)
     {
-      console.log(data);
       // If filter address, discard any message not comming from selected device (exept when broadcast is selected)
       if(self.filter) if(self.deviceAddr !== 0xFFFF && data.srcAddr !== parseInt(self.deviceAddr)) return;
 
@@ -62,6 +75,11 @@
 
     self.init = function()
     {
+      // get config
+      /*var config = Config.get({}, function()
+        {
+          self.showDisconnected = config.showDisconnected;
+        });*/
       fetchDevices();
 
       socketWSerial.on("data", self.dataHandler);
@@ -77,12 +95,10 @@
 
     self.send = function()
     {
-      console.log(self.deviceAddr);
       var message = {
         dstAddr: parseInt(self.deviceAddr),
         data: self.input
       };
-      console.log(message);
       socketWSerial.emit("data", message);
     };
 

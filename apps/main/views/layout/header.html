@@ -20,21 +20,22 @@
             <li class="dropdown text-normal nav-profile">
                 <a href id="user-dropdown" class="dropdown-toggle" data-toggle="dropdown">
                     <span>
-                        Hello, <b>{{user}}</b> <i class="fa  fa-chevron-down"></i>
+                        <span style="vertical-align: middle">Hello, <b>{{user}}</b></span>
+                        <i style="vertical-align: middle" class="fa fa-chevron-circle-down"></i>
                     </span>
                 </a>
                 <ul class="dropdown-menu pull-right">
 
                     <li>
-                        <a href="/#/configuraciones" >
+                        <a href="/#/configuration" >
                             <i class="fa fa-gear"></i>
                             Configuration
                         </a>
                     </li>
                     <li>
-                        <a href ng-click="reload()" >
-                            <i class="fa fa-repeat"></i>
-                            Reload Devices
+                        <a href ng-click="discover()" >
+                            <i class="fa fa-search"></i>
+                            Discover Devices
                         </a>
                     </li>
                     <li>

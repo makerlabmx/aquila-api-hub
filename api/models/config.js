@@ -7,7 +7,9 @@ var configSchema = new Schema(
 	{
 		pan: Number,
 		secEnabled: Boolean,
-		secKey: Buffer
+		secKey: Buffer,
+		showDisconnected: Boolean,
+		language: String
 	});
 
 module.exports = mongoose.model('Config', configSchema);

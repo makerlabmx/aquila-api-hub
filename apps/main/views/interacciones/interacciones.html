@@ -5,7 +5,10 @@
 
 
 <div class="text-right">
-	<button type="button" class="btn btn-outlined btn-primary" ng-click='newInteraction()' >Add new Interaction</button>
+	<button type="button" class="btn btn-outlined btn-primary" ng-click='newInteraction()' >
+		<i class="fa fa-plus"></i>
+		Add new Interaction
+	</button>
 </div>
 
 
@@ -29,8 +32,8 @@
 					Editar
 		        </a>-->
 				<a class="btn btn-outlined btn-danger" href ng-click='deleteInteraction(entry)' >
-					Delete
-		        </a>
+					<i class="fa fa-trash"></i>
+		    </a>
 			</td>
 		</tr>
 	</tbody>
@@ -79,13 +82,13 @@
         <p class="bg-danger" ng-show="error" >{{error}}</p>
       </div>
       <div class="modal-footer">
+			<button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
 	  	<button class="btn btn-success" ng-show="edit_element" ng-click="updateInteraction()">
 	  		Update
 	  	</button>
 	    <button class="btn btn-success" ng-show="save_element" ng-click="saveInteraction()">
 	    	Save
 	    </button>
-      <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->

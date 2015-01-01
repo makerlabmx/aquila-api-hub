@@ -2,8 +2,8 @@
 
   var app = angular.module('aquila',
     [
-      'sessionController','mainController','deviceController','configuracionController','interactionController', 'consoleController',
-      'deviceFactory','tokenFactory','interactionFactory',
+      'sessionController','mainController','deviceController', 'deviceDetailsController', 'configuracionController','interactionController', 'consoleController',
+      'deviceFactory','tokenFactory','interactionFactory','configFactory',
       'ngRoute','btford.socket-io'
     ]
   );
@@ -27,11 +27,11 @@
           templateUrl: 'main/views/session/login.html',
           controller: 'SessionController'
         }).
-        when('/interacciones', {
+        when('/interactions', {
           templateUrl: 'main/views/interacciones/interacciones.html',
           controller: 'InteractionController'
         }).
-        when('/configuraciones', {
+        when('/configuration', {
           templateUrl: 'main/views/configuracion/configuracion.html',
           controller: 'ConfiguracionController'
         }).

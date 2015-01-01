@@ -32,7 +32,10 @@ var deviceSchema = new Schema(
 		_nEvents: Number,
 		_nInteractions: Number,
 		_maxInteractions: Number,
-		_retriesInactive: Number
+		_retriesInactive: Number,
+		_waitingRefresh: Boolean,
+		_retriesFetch: Number,
+		icon: String
 		//_interactions: [interactionSchema]
 	});
 

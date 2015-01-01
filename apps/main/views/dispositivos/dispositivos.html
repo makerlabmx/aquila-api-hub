@@ -3,10 +3,14 @@
 		<div class="col-sm-6 col-md-3" ng-repeat="device in devices" >
       <a ng-href="/#device/{{device._id}}" >
 	      <div class="item">
-	        <div class="item-icon">
-				      <i class='f120 fa' ng-class="device.img" ></i>
+	        <div class="item-icon" ng-class="{true:'item-icon-disabled', false:''}[device.active===false]">
+				      <i class="f120 fa" ng-class="device.icon" ></i>
 	        </div>
-          <div class="item-name text-center">{{device.name}}</div>
+          <div class="item-name text-center">
+						<span ng-show="device.name === null">{{device.shortAddress.toString(16).toUpperCase()}}</span>
+						{{device.name}}
+						<span ng-hide="device.active">(Disconnected)</span>
+					</div>
 	      </div>
         <a>
 	    </div>

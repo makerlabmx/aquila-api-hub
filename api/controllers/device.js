@@ -6,7 +6,7 @@ var deviceManager = require("./deviceManager");
 var validator = require("validator");
 var services = require("./../lib/services");
 
-var queryFields = "-_fetchComplete -_nActions -_nEvents -_nInteractions -_maxInteractions -__v -events._id -actions._id -_retriesInactive";
+var queryFields = "-_fetchComplete -_nActions -_nEvents -_nInteractions -_maxInteractions -__v -events._id -actions._id -_retriesInactive -_waitingRefresh -_retriesFetch";
 
 // GET - List all devices
 exports.findAllDevices = function(req, res)
@@ -38,8 +38,16 @@ exports.updateDevice = function(req, res)
 	{
 		if(err) return res.status(500).send(err.message);
 		if(!device) return res.status(404).send("Invalid device id");
-		if(!req.body.name || typeof(req.body.name) !== "string") return res.status(404).send("Invalid device name");
-		device.name = req.body.name;
+		if(req.body.name)
+		{
+			if(typeof(req.body.name) !== "string") return res.status(404).send("Invalid device name");
+			device.name = req.body.name;
+		}
+		if(req.body.icon)
+		{
+			if(typeof(req.body.icon) !== "string") return res.status(404).send("Invalid device icon");
+			device.icon = req.body.icon;
+		}
 
 		device.save(function(err)
 			{

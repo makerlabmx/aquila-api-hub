@@ -1,49 +1,139 @@
-<div class="page page-dashboard" ng-controller="DeviceController">
+<div class="page page-dashboard" ng-controller="DeviceDetailsController" ng-init="init()">
 
-  <div class="text-right">
+  <div class="">
     <a href="/#"
-      class="btn btn-outlined btn-primary" >
-      Back to Devices
+      class="btn btn-outlined btn-link" >
+      <i class="fa  fa-chevron-left" style="padding-right: 4px;"></i>
+      <span>Back to Devices</span>
     </a>
   </div>
   <div class="row" >
-    <div class="col-sm-10 col-md-3 col-md-offset-4" >
+    <div class="col-md-4">
       <div class="item">
-        <div class="item-icon">
-          <div class="text-right">
-         <!--  <a href
-            class="btn btn-outlined btn-primary"
-            ng-click='action.show_slide = !action.show_slide'>
-            <i class='f120 fa fa-gear' ></i>
-          </a> -->
+        <div class="item-icon" ng-class="{true:'item-icon-disabled', false:''}[device.active===false]">
+          <div class="text-left" style="font-size: 20px">
+            <button type="button"
+              class="btn btn-outlined"
+              ng-class="{true: 'btn-primary', false: 'btn-inverse'}[device.active]"
+              ng-click='togglePrefs()'>
+              <i class='fa fa-gear' style="font-size: 18px"></i>
+            </button>
           </div>
-          <i class='f120 fa fa-lightbulb-o' ></i>
+          <div>
+            <i class="f120 fa" ng-class="device.icon" ></i>
+          </div>
         </div>
         <div class="item-name text-center">
+          <span ng-show="device.name === null">{{device.shortAddress.toString(16).toUpperCase()}}</span>
           {{device.name}}
+          <span ng-hide="device.active">(Disconnected)</span>
+        </div>
+      </div>
+      <br>
+      <div class="panel panel-default">
+        <div class="panel-heading" ng-click="toggleDetails()">
+          <h3 class="panel-title">
+            <i class="fa fa-chevron-right" ng-show="!showDetails"></i>
+            <i class="fa fa-chevron-down" ng-show="showDetails"></i>
+            Details
+          </h3>
+        </div>
+        <div class="panel-body" ng-show="showDetails">
+          <p><label>Short Address:</label> {{device.shortAddress.toString(16).toUpperCase()}}</p>
+          <p><label>Hardware Address:</label>
+            <span ng-repeat="byte in device.address track by $index">{{byte.toString(16).toUpperCase()}}<span ng-if="$index !== device.address.length - 1">-</span></span>
+          </p>
+          <p><label>Default Name:</label> {{device._defaultName}}</p>
+          <p><label>Class:</label> {{device.class}}</p>
         </div>
       </div>
 
-      <div class="row pd-top20" ng-repeat="action in device.actions"  >
-        <div class="col-sm-6 options" ng-init="action.range = 0" >
-          <a href
-            class="btn btn-outlined btn-primary"
-            ng-click='doAction(device, action.n)'>
-            {{action.name}}
-          </a>
-          <a href
-            class="btn btn-outlined btn-primary"
-            ng-click='action.show_slide = !action.show_slide'>
-            <i class='f120 fa fa-gear' ></i>
-          </a>
-        </div>
-        <div class="col-sm-6 options" ng-show="action.show_slide" >
-            <input type="range" name="range"
-              min="0" max="255" value="0"
-              ng-model="action.range" ng-change="doSlider(device, action)" >
-            <output id="range">{{action.range}}</output>
+    </div>
+
+  <div class="col-md-4">
+    <h2>Actions</h2>
+    <p class="help-block" ng-show="device.actions.length === 0">No Actions</p>
+
+    <div class="row pd-top20" ng-repeat="action in device.actions" >
+      <div class="col-md-4" style="min-width: 100%">
+        <div class="btn-group" ng-init="action.range = 0" style="min-width:40%">
+          <button type="button" class="btn btn-outlined btn-primary" ng-click="doAction(device, action.n)" ng-class="{disabled:device.active===false}" style="width:70%">{{action.name}}</button>
+          <button type="button" class="btn btn-outlined btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="false" ng-class="{disabled:device.active===false}">
+            <span class="caret"></span>
+            <span class="sr-only">Toggle Param</span>
+          </button>
+          <ul class="dropdown-menu" role="menu">
+            <li>
+              <div class="" style="padding: 15px;">
+                <label for="range">Param: <span class="badge">{{action.range}}</span></label>
+                <input type="range" name="range"
+                min="0" max="255" value="0"
+                ng-model="action.range" ng-change="doSlider(device, action)" >
+              </div>
+            </li>
+          </ul>
         </div>
       </div>
+
+    </div>
+
+  </div>
+
+  <div class="col-md-3">
+    <h2>Events</h2>
+    <p class="help-block" ng-show="device.events.length === 0">No Events</p>
+
+    <div class="row pd-top20">
+
+      <div class="col-md-4" style="min-width: 100%">
+
+      <ul class="list-group">
+        <li class="list-group-item" ng-repeat="event in device.events">
+          <span class="badge">{{event.timesEmitted}}</span>
+          {{event.name}}
+        </li>
+      </ul>
+      </div>
+
     </div>
   </div>
+
+  <div class="modal fade" id="modal-devconfig" >
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+          <h4 class="modal-title">Device Configuration</h4>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6">
+
+              <h3>Name</h3>
+
+              <div class="form-group">
+                  <input class="form-control" type="textbox" id="devName" placeholder="{{device._defaultName}}" ng-model="newName">
+              </div>
+
+              <br>
+              <h3>Icon</h3>
+              <div class="form-group">
+                <button class="btn btn-lg btn-line-default" id="iconpicker"></button>
+              </div>
+
+            </div>
+          </div>
+          <p class="bg-danger" ng-show="devConfigError" >{{devConfigError}}</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+          <button class="btn btn-success" ng-click="updateDevice()">
+            Apply
+          </button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
+
+
 </div>

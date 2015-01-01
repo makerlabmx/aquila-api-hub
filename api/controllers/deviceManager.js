@@ -108,45 +108,64 @@ var DeviceManager = function()
 
 	this.pingQueue = async.queue(function(device, cb)
 		{
-			if(staticConfig.debug) console.log("Pinging ", device.class);
-			async.retry(3, function(callback){ mesh.ping(device.shortAddress, callback); }, function(err)
-				{
-					if(err)
-					{
-						if(staticConfig.debug) console.log("Ping err: ", err.message);
-						device._retriesInactive++;
-						if(staticConfig.debug) console.log(">>>>>>Retries inactive: ", device._retriesInactive);
-						if(device._retriesInactive > staticConfig.maxRetriesInactive)
-						{
-							// Device didn't respond, mark as inactive
-							device.active = false;
-							device._retriesInactive = 0;
-							device.save(function(err, device)
-								{
-									if(err) {cb(); return console.log(err.message);}
-									// Remove all interactions from this device:
-									Interaction.remove({"action_address": device.address}, function(err)
-									{
-										if(err) {cb(); return console.log("Error deleting all interactions from ", device.address, err);}
-										self.emit("deviceRemoved");
-										cb();
-									});
-								});
-						}
-						else
-						{
-							device.save(function(err, device)
-								{
-									if(err) console.log(err.message);
-									console.log(">>Device saved")
-									cb();
-								});
-							console.log(">>Saving device");
-						}
 
-					} else { device._retriesInactive = 0; device.save(); cb();}
-					//cb();
-				} );
+			// Reload device, for async issues
+			Device.findById(device._id, function(err, device)
+				{
+					var endThis = function()
+					{
+						device._waitingRefresh = false;
+						device.save(function(){ cb(); });
+					};
+
+					// don't ping again if still waiting refresh
+					if(err || device._waitingRefresh || !device.active) return cb();
+
+					device_waitingRefresh = true;
+					device.save(function(err)
+						{
+							if(err) endThis();
+
+							if(staticConfig.debug) console.log("Pinging ", device.class);
+							async.retry(3, function(callback){ mesh.ping(device.shortAddress, callback); }, function(err)
+								{
+									if(err)
+									{
+										if(staticConfig.debug) console.log("Ping err: ", err.message);
+										device._retriesInactive++;
+										if(staticConfig.debug) console.log(">>>>>>Retries inactive: ", device._retriesInactive);
+										if(device._retriesInactive > staticConfig.maxRetriesInactive && device.active)
+										{
+											// Device didn't respond, mark as inactive
+											device.active = false;
+											device._retriesInactive = 0;
+											device.save(function(err, device)
+												{
+													if(err) {endThis(); return console.log(err.message);}
+													// Remove all interactions from this device:
+													Interaction.remove({"action_address": device.address}, function(err)
+														{
+															if(err) {endThis(); return console.log("Error deleting all interactions from ", device.address, err);}
+															self.emit("deviceRemoved");
+															endThis();
+														});
+											});
+								}
+								else
+								{
+									device.save(function(err, device)
+										{
+											if(err) console.log(err.message);
+											endThis();
+										});
+							}
+
+						} else { device._retriesInactive = 0; device.save(function(){ endThis(); });}
+						} );
+
+						});
+				});
+
 		}, 1);
 
 	var onReady = function()
@@ -194,9 +213,9 @@ DeviceManager.prototype.refreshActiveDevices = function()
 
 		for(var i = 0; i < devices.length; i++)
 		{
-			if(!devices[i]._fetchComplete) self.fetchQueue.push(devices[i]);
+			//if(!devices[i]._fetchComplete) self.fetchQueue.push(devices[i]);
 			// Check if its alive
-			else if(devices[i].active && staticConfig.autoCheckAlive)
+			/*else*/ if(devices[i].active && staticConfig.autoCheckAlive)
 			{
 				self.pingQueue.push(devices[i]);
 			}
@@ -253,7 +272,7 @@ DeviceManager.prototype.deviceFetcher = function(srcAddr, euiAddr)
 						class: null,
 						name: null,
 						_defaultName: null,
-						active: false,
+						active: true,
 						actions: [],
 						events: [],
 						_fetchComplete: false,
@@ -261,7 +280,10 @@ DeviceManager.prototype.deviceFetcher = function(srcAddr, euiAddr)
 						_nEvents: null,
 						_nInteractions: null,
 						_maxInteractions: null,
-						_retriesInactive: 0
+						_retriesInactive: 0,
+						_waitingRefresh: false,
+						_retriesFetch: 0,
+						icon: "fa-lightbulb-o"
 						//_interactions: []
 					});
 				device.save(function(err, device)
@@ -276,25 +298,33 @@ DeviceManager.prototype.deviceFetcher = function(srcAddr, euiAddr)
 			else
 			{
 				// if not active, make it active and refresh interactions
-				if(!device.active && device._fetchComplete)
+				if(!device.active /*&& device._fetchComplete*/)
 				{
 					device.shortAddress = srcAddr;
 					device.active = true;
-					self.refreshInteractionsQueue.push(device, function()
+					device._retriesFetch = 0;
+					device._fetchComplete = false;
+
+					// always refresh everything:
+					device.save(function(err, device)
 						{
-							device.save(function(err, device)
-							{
-								if(err) return console.log("Error", err);
-								// Emit device added
-								self.emit("deviceAdded");
-							});
+							if(err) return console.log("Error", err);
+							self.fetchQueue.push(device);
 						});
 				}
 				if(!device._fetchComplete)
 				{
 					// retry fetch all
-					device.shortAddress = srcAddr;
-					self.fetchQueue.push(device);
+					device._retriesFetch++;
+					if(device._retriesFetch <= staticConfig.maxRetriesFetch)
+					{
+						device.save(function(err)
+							{
+								device.shortAddress = srcAddr;
+								self.fetchQueue.push(device);
+							});
+					}
+
 				}
 			}
 		});
@@ -507,8 +537,12 @@ DeviceManager.prototype.fetchName = function(device, callback)
 		if(packet.message.control.commandType === self.protocol.POST && packet.message.command[0] === self.protocol.COM_NAME)
 		{
 			self.protocol.removeListener(String(device.shortAddress), getCb);
-			device.name = packet.message.data.toString("utf8");
-			device._defaultName = device.name;
+			var newName = packet.message.data.toString("utf8");
+			if(device._defaultName !== newName)
+			{
+				device.name = newName;
+			}
+			device._defaultName = newName;
 			return callback(null);
 		}
 		//else callback(new Error("Unexpected message"));
@@ -633,6 +667,8 @@ DeviceManager.prototype.fetchActions = function(device, cb)
 	var self = this;
 	var fcns = [];
 
+	device.actions = [];
+
 	for(var i = 0; i < device._nActions; ++i)
 	{
 		(function()
@@ -685,6 +721,8 @@ DeviceManager.prototype.fetchEvents = function(device, cb)
 	//console.log("fetchEvents");
 	var self = this;
 	var fcns = [];
+
+	device.events = [];
 
 	for(var i = 0; i < device._nEvents; ++i)
 	{

@@ -2,36 +2,20 @@
 
   var app = angular.module('deviceController',['btford.socket-io']);
 
-
-  app.controller('DeviceDetailsController', [ '$http' , '$scope', '$routeParams','Device','Action', function($http, $scope, $routeParams,Device,Action){
-
-      $scope.device = Device.get({ id: $routeParams.device_id });
-
-      $scope.doAction = function(device, action){
-        Action.doit({ id: device._id, action: action });
-        //$http.get('/api/devices/' + $routeParams.device_id + '/action/' + String(action));
-      };
-
-      $scope.doSlider = function(device, action){
-        Action.range({ id: device._id, action: action.n, range: action.range });
-        //$http.get('/api/devices/' + device._id + '/action/' + String(action.n) + '/' + String(action.range));
-      };
-
-
-    }]);
-
-  app.controller('DeviceController', [ '$http' , '$scope', 'socketAquila','Device', function($http, $scope, socketAquila,Device){
+  app.controller('DeviceController', [ '$http' , '$scope', 'socketAquila','Device', 'Config', function($http, $scope, socketAquila,Device, Config){
       var aquila = this;
       $scope.devices=[];
 
-
-      aquila.classes = {};
-      aquila.sizeClases = 0;
-
-      //aquila.images=['fa-lightbulb-o','fa-plug','fa-bell'];
-      aquila.images=['fa-lightbulb-o','fa-lightbulb-o','fa-lightbulb-o','fa-lightbulb-o','fa-lightbulb-o','fa-lightbulb-o'];
+      $scope.showDisconnected = true;
 
       aquila.init = function (){
+
+        // get config
+        var config = Config.get({}, function()
+          {
+            $scope.showDisconnected = config.showDisconnected;
+          });
+
         loadMain();
 
         var deviceHandler = function(){
@@ -49,33 +33,13 @@
       };
 
       function loadMain(){
-        /*
-        $http.get('/api/reload').success(function(data){
-          console.log(data);
-        });
-        $http.get('/api/pan').success(function(data){
-          console.log(data);
-        });
-        $http.post('/api/pan',{"pan": 0xCA5A}).success(function(data){
-          console.log(data);
-        });
-        */
-        if(!aquila.classes) return;
         var devs = [];
         var devs = Device.all(function(){
           $scope.devices=[];
-          for(var i = 0; i < devs.length; i++){
-            if(devs[i].active)  {
-              if(!(devs[i].class in aquila.classes)){
-                var clase = {
-                  name: devs[i].class,
-                  image: aquila.images[aquila.sizeClases]
-                };
-                aquila.classes[clase.name] = clase;
-                aquila.sizeClases++;
-              }
-              devs[i].img= aquila.classes[devs[i].class].image;
-              devs[i].color = "color"+((i+1)%5);
+          for(var i = 0; i < devs.length; i++)
+          {
+            if(devs[i].active || $scope.showDisconnected)
+            {
               $scope.devices.push(devs[i]);
             }
           }
