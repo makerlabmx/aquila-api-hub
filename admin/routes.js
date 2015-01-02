@@ -1,6 +1,6 @@
 // admin/routes.js
 
-var express = express = require("express");
+var express = require("express");
 var mongoose = require("mongoose");
 var User = mongoose.model("User");
 
@@ -23,7 +23,7 @@ module.exports = function(app, passport)
 		}));
 
 	adminRouter.route("/signup")
-		.get(isLoggedIn, function(req, res) 
+		.get(isLoggedIn, function(req, res)
 		{
 			// render the page and pass in any flash data if it exists
 			res.render('admin/views/signup.ejs', { message: req.flash('signupMessage') });
@@ -34,7 +34,7 @@ module.exports = function(app, passport)
 			failureFlash : true // allow flash messages
 		}));
 
-	adminRouter.get("/", isLoggedIn, function(req, res) 
+	adminRouter.get("/", isLoggedIn, function(req, res)
 	{
 		User.find(function(err, users)
 			{
@@ -123,7 +123,7 @@ module.exports = function(app, passport)
 
 // route middleware to make sure a user is logged in
 function isLoggedIn(req, res, next) {
-	// if user is authenticated in the session, carry on 
+	// if user is authenticated in the session, carry on
 	if (req.isAuthenticated())
 		return next();
 

@@ -291,7 +291,7 @@ var Bridge = function(baudrate, port)
 
 					self.serialPort.on("data", function(data)
 						{
-							console.log("data received: ", Buffer(data.data).toString());
+							console.log("data received: ", new Buffer(data.data).toString());
 						});
 
 					self.serialPort.on("bridgeStarted", function()

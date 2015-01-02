@@ -13,7 +13,7 @@ var express = require("express"),
 	morgan = require("morgan");
 
 var argv = require("minimist")(process.argv.slice(2));
-var argHelp = "Use: aquila-server <options>\nOptions:\n\t--verbose\tDisplay verbose messages.\n\t--help\t\tDisplay this help text.\n\t--ssl\t\tStart with SSL.\n"
+var argHelp = "Use: aquila-server <options>\nOptions:\n\t--verbose\tDisplay verbose messages.\n\t--help\t\tDisplay this help text.\n\t--ssl\t\tStart with SSL.\n";
 
 // Display Help text on --help option
 if(argv.help)
@@ -64,7 +64,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 // required for passport
-app.use(session({ secret: 'e8b4b052c308c3d5c4c943f9c7ac09d7', resave: true, saveUninitialized: true })); // session secret
+var tokenConfig = require("./config/token");
+app.use(session({ secret: tokenConfig.secret, resave: true, saveUninitialized: true })); // session secret
 app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions
 app.use(flash()); // use connect-flash for flash messages stored in session
@@ -94,12 +95,6 @@ mongoose.connect(configDB.url, function(err, res)
 			res.render("main/index.html");
 		});
 
-		// Serial monitor dev test, TODO remove this
-		router.get("/console", function(req, res)
-		{
-			res.render("serialMonitor/index.html");
-		});
-
 		app.use(router);
 		// Load API routes passing app.
 		require("./api/routes")(app, passport);
@@ -119,10 +114,11 @@ mongoose.connect(configDB.url, function(err, res)
 			require("./api/controllers/config").init();
 
 			// launch server ==========================================================
+			var io = null;
 			if(argv.ssl)
 			{
 				var server = https.createServer(sslConfig, app);
-				var io = socket.listen(server);
+				io = socket.listen(server);
 				server.listen(port, function()
 				{
 					console.log("Aquila server running on https://localhost:" + port);
@@ -130,7 +126,7 @@ mongoose.connect(configDB.url, function(err, res)
 			}
 			else
 			{
-				var io = socket.listen(app.listen(port, function()
+				io = socket.listen(app.listen(port, function()
 				{
 					console.log("Aquila server running on http://localhost:" + port);
 				}));
@@ -138,7 +134,7 @@ mongoose.connect(configDB.url, function(err, res)
 
 			// Socket configuration
 			require("./api/sockets")(io, passport, deviceManager);
-		}
+		};
 
 		if(deviceManager.ready) onReady();
 		else deviceManager.on("ready", onReady);

@@ -65,7 +65,7 @@ var formatInteraction = function(interaction, callback)
 							active: false,
 							actions: [],
 							events: []
-						}
+						};
 					}
 
 					newInteraction.event_device = event_device;

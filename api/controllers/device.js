@@ -97,7 +97,7 @@ var deviceService = function(method, req, res)
 			if(status === services.R404) return res.status(404).send("Service not found in device");
 			if(status === services.R405) return res.status(405).send("Method not allowed in device");
 			if(status === services.R408) return res.status(408).send("Device Timeout");
-			if(status === services.R500) return res.status(500).send("Device Error")
+			if(status === services.R500) return res.status(500).send("Device Error");
 		}, req.body);
 	});
 };

@@ -8,8 +8,8 @@ var path = require("path");
 // get args for passing to aquila-server
 var args = process.argv.slice(2).join(" ");
 
-var home = process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
-var killall_mongod = (process.platform == 'win32') ? 'taskkill /F /IM mongod.exe' : 'killall mongod';
+var home = process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME'];
+var killall_mongod = (process.platform === 'win32') ? 'taskkill /F /IM mongod.exe' : 'killall mongod';
 
 echo("Aquila Server\n");
 echo("IMPORTANT: Make shure that the bridge is connected.\n");

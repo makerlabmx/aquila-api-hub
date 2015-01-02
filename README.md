@@ -1,8 +1,12 @@
-# Aquila API Hub Server
+# Aquila Server
 
-Aquila API and Web App for the Hub. Requires an Altair programmed as Bridge connected to the Hub.
+Aquila API Server and Web App for the Hub. Requires an Altair programmed as Bridge connected to the Hub.
 
-API documentation: http://docs.aquila1.apiary.io/
+This is part of the Aquila Internet of Things Plataform, for more info, see: http://www.aquila.io/en
+
+API documentation: http://docs.aquila2.apiary.io/
+
+**Note:** This version is compatible only with versions 0.3.0 or newer of the Aquila firmware libraries. Please update your devices accordingly.
 
 ## Dependencies:
 
@@ -26,10 +30,9 @@ API documentation: http://docs.aquila1.apiary.io/
 
 ### Linux (Ubuntu / Debian)
 
-1. build-essential: ``sudo apt-get install build-essential``
-2. git: ``sudo apt-get install git``
-3. Node.js v0.10.31 o superior:  http://nodejs.org/
-4. MongoDB: ``sudo apt-get install mongodb``
+1. build-essential and git: ``sudo apt-get install build-essential git``
+2. Node.js v0.10.31 o superior:  http://nodejs.org/
+3. MongoDB: ``sudo apt-get install mongodb``
 
 
 ## Installation
@@ -40,27 +43,38 @@ npm install aquila-server -g
 
 ## Use
 
+- Connect the Hub via USB
 - Start server:
 
-```
-aquila-server
-```
+  ```
+  aquila-server
+  ```
+
+  Or, with ssl (https):
+
+  ```
+  aquila-server --ssl
+  ```
+
+  **Note:** If you want to be really serious about security, you should first generate your own security keys, you can do this with the genSSLCert.sh script included in this repository. Also, you should change your token secret, found in config/token.js.
+
+
 
 - Access the web App from any browser:
 
-From local machine:
-```
-http://localhost:8080
-```
-From other machine on the network:
-```
-http://<your hub ip>:8080
-```
+  From local machine:
+  ```
+  http://localhost:8080
+  ```
+  From other machine on the network:
+  ```
+  http://<your hub ip>:8080
+  ```
 
 - Access the Admin interface (add users):
 
-```
-http://<your hub ip>:8080/admin
-```
+  ```
+  http://<your hub ip>:8080/admin
+  ```
 
-> Default User: ``Admin``, Password: ``Admin``
+  > Default User: ``Admin``, Password: ``Admin``

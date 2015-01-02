@@ -11,7 +11,7 @@
   }]);
 
   app.controller('ConsoleController', [ '$http' , '$scope', 'socketWSerial','socketAquila', 'Device', 'Config', function($http, $scope, socketWSerial, socketAquila, Device, Config){
-    self = this;
+    var self = this;
     self.output = '';
     self.input = '';
     self.deviceAddr = 0xFFFF;
@@ -110,7 +110,7 @@
     self.append = function(text)
     {
       // fix CR in pre
-      var text = text.replace("\r", "\n")
+      text = text.replace("\r", "\n");
       self.output += text;
       // scroll to bottom
       var outputArea = document.getElementById('console_output');

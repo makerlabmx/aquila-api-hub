@@ -34,7 +34,7 @@ var Services = function()
 		{
 			var data = self.parsePacket(packet);
 			// DEBUG
-			if(data) console.log("From ", data.srcAddr, ": ", Buffer(data.data).toString("utf8"));
+			if(data) console.log("From ", data.srcAddr, ": ", new Buffer(data.data).toString("utf8"));
 
 			if(data) self.emit("data", data);
 		});
@@ -90,9 +90,9 @@ Services.prototype.request = function(destAddr, method, name, callback, data)
 	// Check body length and fail if longer than expected
 	if(name.length + data.length > AQUILASERVICES_MAXDATASIZE) return callback(new Error("Data length is too long") );
 	// form packet struct
-	var packet = Buffer.concat([Buffer([AQUILASERVICES_VERSION, method, name.length, data.length]),
-								Buffer(name),
-								Buffer(data)]);
+	var packet = Buffer.concat([new Buffer([AQUILASERVICES_VERSION, method, name.length, data.length]),
+								new Buffer(name),
+								new Buffer(data)]);
 
 	// DEBUG
 	console.log(packet);
@@ -115,7 +115,7 @@ Services.prototype.request = function(destAddr, method, name, callback, data)
 					clearTimeout(tout);
 					// remove listener for only calling this once
 					self.removeListener("data", responseCb);
-					callback(null, packet.srcAddr, packet.method, Buffer(packet.data).toString("utf8"));
+					callback(null, packet.srcAddr, packet.method, new Buffer(packet.data).toString("utf8"));
 				}
 			}
 		};
@@ -137,8 +137,8 @@ Services.prototype.response = function(destAddr, status, data)
 	// Check body length and fail if longer than expected
 	if(data.length > AQUILASERVICES_MAXDATASIZE) return new Error("Data length is too long");
 	// form packet struct
-	var packet = Buffer.concat([Buffer([AQUILASERVICES_VERSION, status, 0, data.length]),
-															Buffer(data)]);
+	var packet = Buffer.concat([new Buffer([AQUILASERVICES_VERSION, status, 0, data.length]),
+															new Buffer(data)]);
 
 	mesh.bridge.sendData(mesh.getShortAddr(), destAddr,
 												AQUILASERVICES_ENDPOINT, AQUILASERVICES_ENDPOINT,

@@ -4,7 +4,7 @@
 
 	app.controller('ConfiguracionController', [ '$http' , '$scope', function($http, $scope)
 	{
-		config = this;
+		var config = this;
     config.pan = 0xCA5A;
 		config.panString = "CA5A";
 		config.secEnabled = false;
@@ -14,6 +14,7 @@
 		config.showError = false;
 		config.localIp = "";
 		config.extIp = "";
+		config.version = "";
 
   	/*$('#PANADDRESS').keyup(function()
 		{
@@ -27,6 +28,7 @@
 			config.getSec();
 			config.getShowDisconnected();
 			config.getIps();
+			config.getVersion();
 		};
 
 		config.displayError = function(show, msg)
@@ -39,7 +41,7 @@
 		{
   		$http.get('/api/pan').success(function(data, status, headers){
 			  config.pan = data.pan;
-			  config.panString = data.pan.toString(16).toUpperCase();;
+			  config.panString = data.pan.toString(16).toUpperCase();
 	    });
   	};
 
@@ -82,7 +84,7 @@
 				{
 					config.displayError(true, data);
 				});
-		}
+		};
 
 		config.getShowDisconnected = function()
 		{
@@ -113,9 +115,16 @@
 				{
 					config.localIp = data.localIp;
 					config.extIp = data.extIp;
-				}).error(function(data, status){console.log(data, status)});
+				}).error(function(data, status){console.log(data, status);});
 		};
 
+		config.getVersion = function()
+		{
+			$http.get('/api/version').success(function(data, status, headers)
+				{
+					config.version = data.version;
+				}).error(function(data, status){console.log(data, status);});
+		};
 
   }]);
 })();

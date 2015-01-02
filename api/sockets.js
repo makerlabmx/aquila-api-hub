@@ -65,4 +65,4 @@ module.exports = function(io, passport, deviceManager)
 					else wserial.send(data);
 				});
 		});
-}
+};

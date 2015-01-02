@@ -132,8 +132,8 @@ exports.setConfig = function(req, res)
 		if(req.body.secKey && req.body.secKey.length === 16) config.secKey = new Buffer(req.body.secKey);
 		if(typeof(req.body.pan) === "number" && req.body.pan >= 0 && req.body.pan <= 0xFFFF)
 		{ config.pan = req.body.pan; }
-		if(typeof(req.body.showDisconnected) === "boolean") { config.showDisconnected = req.body.showDisconnected }
-		if(typeof(req.body.language) === "string") { config.language = req.body.language }
+		if(typeof(req.body.showDisconnected) === "boolean") { config.showDisconnected = req.body.showDisconnected; }
+		if(typeof(req.body.language) === "string") { config.language = req.body.language; }
 
 		config.save(function(err)
 		{

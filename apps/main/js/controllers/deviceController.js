@@ -34,7 +34,7 @@
 
       function loadMain(){
         var devs = [];
-        var devs = Device.all(function(){
+        devs = Device.all(function(){
           $scope.devices=[];
           for(var i = 0; i < devs.length; i++)
           {

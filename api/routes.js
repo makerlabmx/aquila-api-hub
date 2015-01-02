@@ -1,11 +1,12 @@
 // api/routes.js
 
-var express = express = require("express");
+var express = require("express");
 var mongoose = require("mongoose");
 var expressJwt = require("express-jwt");
 var tokenConfig = require("./../config/token");
 var TokenCtrl = require("./controllers/token");
 var IpCtrl = require("./controllers/ip");
+var VerCtrl = require("./controllers/version.js");
 
 module.exports = function(app, passport)
 {
@@ -80,6 +81,10 @@ module.exports = function(app, passport)
 	// Server ip service
 	apiRouter.route("/ip")
 		.get(IpCtrl.getIp);
+
+	// Version service
+	apiRouter.route("/version")
+		.get(VerCtrl.getVersion);
 
 	// Make app use these routes
 	app.use("/api", apiRouter);

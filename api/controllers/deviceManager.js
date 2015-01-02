@@ -121,7 +121,7 @@ var DeviceManager = function()
 					// don't ping again if still waiting refresh, or is a inactive device and refreshInactive is false
 					if(!device || err || device._waitingRefresh || (!staticConfig.refreshInactive && !device.active) ) return cb();
 
-					device_waitingRefresh = true;
+					device._waitingRefresh = true;
 					device.save(function(err)
 						{
 							if(err) endThis();
@@ -185,7 +185,7 @@ var DeviceManager = function()
 
 		self.ready = true;
 		self.emit("ready");
-	}
+	};
 
 	if(mesh.ready) onReady();
 	else mesh.on("ready", onReady);

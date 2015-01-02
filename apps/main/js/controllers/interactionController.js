@@ -12,14 +12,7 @@
 
     this.init = function (){
       loadInter();
-      var devs = Device.all(function(){
-          $scope.devices=[];
-          for(var i = 0; i < devs.length; i++){
-            if(devs[i].active)  {
-              $scope.devices.push(devs[i]);
-            }
-          }
-      });
+
       var devs = $scope.devices_all = Device.all(function(){
           $scope.devices=[];
           for(var i = 0; i < devs.length; i++){
@@ -41,17 +34,17 @@
         socketAquila.removeListener('deviceAdded', deviceHandler);
         socketAquila.removeListener('deviceRemoved', deviceHandler);
       });
-    }
+    };
 
     $scope.newInteraction = function (){
-      $scope.title = "New Interaction"
+      $scope.title = "New Interaction";
       $scope.interaction = {};
       saveTrue();
       $('#modal-interaccion').modal('show');
-    }
+    };
 
     $scope.editInteraction = function (interaction){
-      $scope.title = "Edit Interaction"
+      $scope.title = "Edit Interaction";
       $scope.interaction = {};
       editTrue();
 
@@ -65,7 +58,7 @@
 
 
       $('#modal-interaccion').modal('show');
-    }
+    };
 
     $scope.deleteInteraction = function (interaction){
       var result = Interaction.delete({id:interaction._id}, null, function(){
@@ -74,7 +67,7 @@
       },function(data){
         $scope.error="Error: " + data.data;
       });
-    }
+    };
 
     $scope.saveInteraction = function (){
       //console.log($scope.interaction);
@@ -97,7 +90,7 @@
       },function(data){
         $scope.error="Error: " + data.data;
       });
-    }
+    };
 
     $scope.updateInteraction = function (){
       var entry =  new Entry();
@@ -108,7 +101,7 @@
         console.log("si se actualizo")
         $('#modal-interaccion').modal('hide');
       });
-    }
+    };
 
     function loadInter(){
       $scope.interactions=[];

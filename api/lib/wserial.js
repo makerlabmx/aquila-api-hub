@@ -21,7 +21,7 @@ var WSerial = function()
 			if(data)
 			{
 				// convert data to string
-				data.data = Buffer(data.data).toString("utf8");
+				data.data = new Buffer(data.data).toString("utf8");
 				self.emit("data", data);
 			}
 		});
