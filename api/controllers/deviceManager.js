@@ -119,7 +119,7 @@ var DeviceManager = function()
 					};
 
 					// don't ping again if still waiting refresh
-					if(err || device._waitingRefresh || !device.active) return cb();
+					if(!device || err || device._waitingRefresh || !device.active) return cb();
 
 					device_waitingRefresh = true;
 					device.save(function(err)

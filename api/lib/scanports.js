@@ -4,7 +4,7 @@ var async = require("async");
 var buffertools = require("buffertools");
 var os = require("os");
 
-var TIMEOUT = 1000;
+var TIMEOUT = 1200;
 
 var scanPorts = function(baudrate, callback)
 {
@@ -22,7 +22,7 @@ var scanPorts = function(baudrate, callback)
 			{
 				// Avoid Bluetooth tty ports as workaround for OSX kernel panics:
 				if(port.comName.indexOf("Bluetooth") !== -1) return cb();
-				
+
 				console.log("  *Trying:", port.comName);
 
 				var p = new SerialPort(port.comName,
