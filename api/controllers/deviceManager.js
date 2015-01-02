@@ -215,7 +215,8 @@ DeviceManager.prototype.refreshActiveDevices = function()
 		{
 			//if(!devices[i]._fetchComplete) self.fetchQueue.push(devices[i]);
 			// Check if its alive
-			/*else*/ if(devices[i].active && staticConfig.autoCheckAlive)
+			// Depending on refreshInactive option, check if device is active after pinging...
+			/*else*/ if( (staticConfig.refreshInactive || devices[i].active) && staticConfig.autoCheckAlive)
 			{
 				self.pingQueue.push(devices[i]);
 			}
