@@ -7,6 +7,8 @@
 		var config = this;
     config.pan = 0xCA5A;
 		config.panString = "CA5A";
+		config.channel = 26;
+		config.channels = range(11, 26, 1);
 		config.secEnabled = false;
 		config.secKey = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 		config.showDisconnected = true;
@@ -22,11 +24,17 @@
   	    $th.val( $th.val().replace(/[^a-zA-Z0-9]/g, function(str) { alert('You typed " ' + str + ' ".\n\nPlease use only letters and numbers.'); return ''; } ) );
   	});*/
 
+		function range(start, stop, step){
+			var a=[start], b=start;
+			while(b<stop){b+=step;a.push(b)}
+				return a;
+			};
+
 		config.init = function()
 		{
 			config.getPAN();
 			config.getSec();
-			config.getShowDisconnected();
+			config.getShowDisconnectedAndChan();
 			config.getIps();
 			config.getVersion();
 		};
@@ -60,6 +68,7 @@
 			});
   	};
 
+
 		config.getSec = function()
 		{
 			$http.get('/api/security').success(function(data, status, headers)
@@ -86,23 +95,26 @@
 				});
 		};
 
-		config.getShowDisconnected = function()
+		config.getShowDisconnectedAndChan = function()
 		{
 			$http.get('/api/config').success(function(data, status, headers)
 				{
 					config.showDisconnected = data.showDisconnected;
+					config.channel = data.channel;
 				});
 		};
 
-		config.setShowDisconnected = function()
+		config.setShowDisconnectedAndChan = function()
 		{
 			config.displayError(false);
 			var data = {
-				showDisconnected: config.showDisconnected
+				showDisconnected: config.showDisconnected,
+				channel: parseInt(config.channel)
 			};
 			$http.post('/api/config', data).success(function(data, status, headers)
 				{
 					config.showDisconnected = data.showDisconnected;
+					config.channel = data.channel;
 				}).error(function(data, status, headers)
 				{
 					config.displayError(true, data);

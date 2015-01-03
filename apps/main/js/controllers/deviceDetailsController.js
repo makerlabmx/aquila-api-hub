@@ -2,7 +2,7 @@
 
   var app = angular.module('deviceDetailsController',['btford.socket-io']);
 
-  app.controller('DeviceDetailsController', [ '$http' , '$scope', '$routeParams','Device','Action', 'socketAquila',  function($http, $scope, $routeParams,Device,Action,socketAquila)
+  app.controller('DeviceDetailsController', [ '$http' , '$scope', '$routeParams','Device','Action', 'socketAquila', '$location', function($http, $scope, $routeParams,Device,Action,socketAquila, $location)
     {
 
         $scope.showDetails = false;
@@ -116,6 +116,25 @@
         function(response)
         {
           $scope.devConfigError = response.data;
+        });
+    };
+
+    $scope.forgetDevice = function()
+    {
+      Device.forget({id: $scope.device._id}, function()
+        {
+          $('#modal-devconfig').on('hidden.bs.modal', function()
+            {
+              $location.path('/');
+              $scope.$apply();
+            });
+          $('#modal-devconfig').modal('hide');
+
+        },
+        function(response)
+        {
+          console.log(response.data);
+          $scope.devConfigError = "Error forgetting device.";
         });
     };
 

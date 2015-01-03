@@ -9,7 +9,7 @@ var MESH_ENDPOINT = 15;
 var MESH_CMD_GETEUI = 0;
 var MESH_CMD_RESEUI = 1;
 
-var MESH_PING_TIMEOUT = 500;
+var MESH_PING_TIMEOUT = 200;
 
 var Mesh = function()
 {

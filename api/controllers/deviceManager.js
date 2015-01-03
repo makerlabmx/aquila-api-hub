@@ -53,7 +53,7 @@ var verboseDebug = function(deviceManager)
 	{
 		console.log("Device removed");
 	});
-	deviceManager.on("event", function(device, eventN, param)
+	/*deviceManager.on("event", function(device, eventN, param)
 	{
 		console.log("					EVENT: ", eventN, " From Device: ", device.class, " With param: ", param);
 	});
@@ -66,7 +66,7 @@ var verboseDebug = function(deviceManager)
 	deviceManager.protocol.on("event", function(packet)
 		{
 			console.log("EVENT packet: ", packet);
-		});
+		});*/
 };
 
 var DeviceManager = function()
@@ -112,6 +112,8 @@ var DeviceManager = function()
 			// Reload device, for async issues
 			Device.findById(device._id, function(err, device)
 				{
+					if(staticConfig.debug) console.log("      >>>>Inside PingQueue of:", device.name, "is active: ", device.active, "waiting refresh:", device._waitingRefresh);
+
 					var endThis = function()
 					{
 						device._waitingRefresh = false;
@@ -132,8 +134,8 @@ var DeviceManager = function()
 									if(err)
 									{
 										if(staticConfig.debug) console.log("Ping err: ", err.message);
-										device._retriesInactive++;
-										if(staticConfig.debug) console.log(">>>>>>Retries inactive: ", device._retriesInactive);
+										if(device._retriesInactive <= staticConfig.maxRetriesInactive) device._retriesInactive++;
+										if(staticConfig.debug) console.log("-----------Retries inactive: ", device._retriesInactive);
 										if(device._retriesInactive > staticConfig.maxRetriesInactive && device.active)
 										{
 											// Device didn't respond, mark as inactive
@@ -150,18 +152,18 @@ var DeviceManager = function()
 															endThis();
 														});
 											});
-								}
-								else
-								{
-									device.save(function(err, device)
+										}
+										else
 										{
-											if(err) console.log(err.message);
-											endThis();
-										});
-							}
+											device.save(function(err, device)
+												{
+													if(err) console.log(err.message);
+													endThis();
+												});
+										}
 
-						} else { device._retriesInactive = 0; device.save(function(){ endThis(); });}
-						} );
+									} else { device._retriesInactive = 0; device.active = true; device.save(function(){ endThis(); });}
+								});
 
 						});
 				});
@@ -213,11 +215,15 @@ DeviceManager.prototype.refreshActiveDevices = function()
 
 		for(var i = 0; i < devices.length; i++)
 		{
+			if(staticConfig.debug) console.log("  >>>>Trying: ", devices[i].name);
 			//if(!devices[i]._fetchComplete) self.fetchQueue.push(devices[i]);
 			// Check if its alive
 			// Depending on refreshInactive option, check if device is active after pinging...
-			/*else*/ if( (staticConfig.refreshInactive || devices[i].active) && staticConfig.autoCheckAlive)
+			/*else*/
+			if( (staticConfig.refreshInactive || devices[i].active) && staticConfig.autoCheckAlive)
 			{
+				if(staticConfig.debug) console.log("    >>>>Pushing into pingQueue: ", devices[i].name);
+
 				self.pingQueue.push(devices[i]);
 			}
 		}
@@ -298,6 +304,10 @@ DeviceManager.prototype.deviceFetcher = function(srcAddr, euiAddr)
 			}
 			else
 			{
+				// null waiting refresh, because this is where wi get the response.
+				device._waitingRefresh = false;
+				device.save();
+
 				// if not active, make it active and refresh interactions
 				if(!device.active /*&& device._fetchComplete*/)
 				{

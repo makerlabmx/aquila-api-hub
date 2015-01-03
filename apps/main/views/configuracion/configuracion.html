@@ -1,4 +1,4 @@
-<div ng-controller="ConfiguracionController as config" ng-init="config.init()">
+<div ng-controller="ConfiguracionController as config" ng-init="config.init()" ng-class="{'content-body':userLogin}">
 	<p class="bg-danger" ng-show="config.showError" >{{config.errorMsg}}</p>
 	<div class="container">
 		<div class="row">
@@ -7,7 +7,8 @@
 					<h1>Configuration</h1>
 					<hr>
         	<h2>PAN</h2>
-					<p class="help-block">Hex number, from 0000 to FFFF.</p>
+
+					<p class="help-block">802.15.4 Subnetwork. Hex number, from 0000 to FFFF.</p>
 					<div class="form-group">
 						<div class="row">
 							<div class="col-md-4">
@@ -24,6 +25,27 @@
 							Set PAN
 						</button>
 					</div>
+
+					<hr>
+					<h2>Channel</h2>
+
+					<div class="form-group">
+						<p class="help-block">802.15.4 radio channel of the mesh network. (Default: 26)</p>
+						<div class="row">
+							<div class="col-md-4">
+								<select class="form-control" ng-model="config.channel" ng-options="channel for channel in config.channels">
+								</select>
+							</div>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<button type="button"	class="btn btn-outlined btn-success"
+						ng-click='config.setShowDisconnectedAndChan()' >
+						<i class="fa fa-check"></i>
+						Set Channel
+					</button>
+				</div>
 
 					<hr>
 					<h2>Security</h2>
@@ -119,7 +141,7 @@
 
 					<div class="form-group">
 						<button type="button"	class="btn btn-outlined btn-success"
-						ng-click='config.setShowDisconnected()' >
+						ng-click='config.setShowDisconnectedAndChan()' >
 							<i class="fa fa-check"></i>
 							Apply
 						</button>

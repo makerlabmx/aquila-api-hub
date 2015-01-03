@@ -53,8 +53,20 @@ exports.updateDevice = function(req, res)
 			{
 				if(err) return res.status(500).send(err.message);
 				res.status(201).jsonp(device);
+				deviceManager.emit("deviceAdded");
 			});
 	});
+};
+
+// DELETE - Forget device
+exports.forgetDevice = function(req, res)
+{
+	Device.findByIdAndRemove(req.params.id, queryFields, function(err, device)
+		{
+			if(err) return res.status(500).send(err.message);
+			res.status(204).send();
+			deviceManager.emit("deviceRemoved");
+		});
 };
 
 // GET - Execute an action with optional param

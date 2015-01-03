@@ -1,7 +1,7 @@
+<div ng-controller="InteractionController as inter" data-ng-init="inter.init()">
 
 
-
-<div class="page page-dashboard col-md-12" ng-controller="InteractionController as inter" data-ng-init="inter.init()">
+<div class="page page-dashboard col-md-12" ng-class="{'content-body':userLogin}">
 
 
 <div class="text-right">
@@ -39,66 +39,59 @@
 	</tbody>
 </table>
 
-
+</div>
 
 <div class="modal fade" id="modal-interaccion" >
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-        <h4 class="modal-title">{{title}}</h4>
-      </div>
-      <div class="modal-body">
-      	<div class="row">
-      		<div class="col-md-6">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<h4 class="modal-title">{{title}}</h4>
+			</div>
+			<div class="modal-body">
+				<div class="row">
+					<div class="col-md-6">
 
 
-      			<form role="form">
-				  <div class="form-group">
-				    <label for="whenDevice">When the Device:</label>
-				    <select class="form-control" name="whenDevice" ng-model="interaction.event" ng-options="device.name for device in devices_all"></select>
-				  </div>
-				  <div class="form-group">
-				    <label for="eventDevice">Emits:</label>
-				    <select class="form-control" name="eventDevice" ng-model="interaction.event_cuando" ng-options="action.name for action in interaction.event.events"></select>
-				  </div>
+						<form role="form">
+							<div class="form-group">
+								<label for="whenDevice">When the Device:</label>
+								<select class="form-control" name="whenDevice" ng-model="interaction.event" ng-options="device.name for device in devices_all"></select>
+							</div>
+							<div class="form-group">
+								<label for="eventDevice">Emits:</label>
+								<select class="form-control" name="eventDevice" ng-model="interaction.event_cuando" ng-options="action.name for action in interaction.event.events"></select>
+							</div>
 
-				  <div class="form-group">
-				    <label for="doDevice">Do in Device:</label>
-				    <select class="form-control" name="doDevice" ng-disabled="edit_element" ng-model="interaction.action" ng-options="device.name for device in devices"></select>
-				  </div>
+							<div class="form-group">
+								<label for="doDevice">Do in Device:</label>
+								<select class="form-control" name="doDevice" ng-disabled="edit_element" ng-model="interaction.action" ng-options="device.name for device in devices"></select>
+							</div>
 
-				  <div class="form-group">
-				    <label for="actionDevice">Action:</label>
-				    <select class="form-control" name="actionDevice" ng-model="interaction.action_hacer" ng-options="action.name for action in interaction.action.actions"></select>
-				  </div>
-
-
-				</form>
+							<div class="form-group">
+								<label for="actionDevice">Action:</label>
+								<select class="form-control" name="actionDevice" ng-model="interaction.action_hacer" ng-options="action.name for action in interaction.action.actions"></select>
+							</div>
 
 
-      		</div>
-      	</div>
-        <p class="bg-danger" ng-show="error" >{{error}}</p>
-      </div>
-      <div class="modal-footer">
-			<button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
-	  	<button class="btn btn-success" ng-show="edit_element" ng-click="updateInteraction()">
-	  		Update
-	  	</button>
-	    <button class="btn btn-success" ng-show="save_element" ng-click="saveInteraction()">
-	    	Save
-	    </button>
-      </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
+						</form>
+
+
+					</div>
+				</div>
+				<p class="bg-danger" ng-show="error" >{{error}}</p>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+				<button class="btn btn-success" ng-show="edit_element" ng-click="updateInteraction()">
+					Update
+				</button>
+				<button class="btn btn-success" ng-show="save_element" ng-click="saveInteraction()">
+					Save
+				</button>
+			</div>
+		</div><!-- /.modal-content -->
+	</div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
-
-
-
-
-  <!--
-  <pre>form = {{inter.interaccion | json}}</pre>
-	-->
 
 </div>

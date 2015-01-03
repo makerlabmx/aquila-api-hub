@@ -1,4 +1,4 @@
-<div class="page page-dashboard" ng-controller="DeviceController as main" ng-init="main.init()" >
+<div class="page page-dashboard" ng-controller="DeviceController as main" ng-init="main.init()" ng-class="{'content-body':userLogin}">
 	<div class="row" >
 		<div class="col-sm-6 col-md-3" ng-repeat="device in devices" >
       <a ng-href="/#device/{{device._id}}" >

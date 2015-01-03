@@ -6,7 +6,8 @@
         return $resource("/api/devices/:id", {id: "@id"}, {
             get: { method: 'GET'},
             all: {method:'GET', isArray:true},
-            put: { method: 'PUT' }
+            put: { method: 'PUT' },
+            forget: { method: 'DELETE' }
         });
     }]);
 

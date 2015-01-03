@@ -4,8 +4,8 @@ module.exports = {
 
 	// check online devices every 'refreshInterval' milliseconds
 	autoCheckAlive: true,
-	refreshInterval: 10000,
-	activeRefreshInterval: 1000,
+	refreshInterval: 30000,
+	activeRefreshInterval: 2000,
 	// Ping for Refresh known but inactive devices, or only active ones:
 	refreshInactive: true,
 	// Max number of retries after a device is marked as inactive:

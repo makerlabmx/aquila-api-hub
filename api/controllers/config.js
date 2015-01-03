@@ -9,6 +9,7 @@ var deviceCtrl = require("./device");
 var mesh = require("./../lib/mesh");
 
 var DEFAULT_PAN = 0xCA5A;
+var DEFAULT_CHANNEL = 26;
 
 var queryFields = "-__v";
 
@@ -24,6 +25,7 @@ exports.init = function()
 			{
 				var newConfig = new Config({
 					pan: DEFAULT_PAN,
+					channel: DEFAULT_CHANNEL,
 					secEnabled: false,
 					secKey: new Buffer([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]),
 					showDisconnected: true,
@@ -42,6 +44,7 @@ exports.init = function()
 				deviceManager.setPAN(config.pan);
 				mesh.setSecurityKey(config.secKey);
 				mesh.setSecurityEnabled(config.secEnabled);
+				mesh.setChannel(config.channel);
 			}
 		});
 };
@@ -134,6 +137,8 @@ exports.setConfig = function(req, res)
 		{ config.pan = req.body.pan; }
 		if(typeof(req.body.showDisconnected) === "boolean") { config.showDisconnected = req.body.showDisconnected; }
 		if(typeof(req.body.language) === "string") { config.language = req.body.language; }
+		if(typeof(req.body.channel) === "number" && req.body.channel >= 11 && req.body.channel <=26)
+		{ config.channel = req.body.channel; }
 
 		config.save(function(err)
 		{
@@ -141,6 +146,7 @@ exports.setConfig = function(req, res)
 			deviceManager.setPAN(config.pan);
 			mesh.setSecurityKey(config.secKey);
 			mesh.setSecurityEnabled(config.secEnabled);
+			mesh.setChannel(config.channel);
 			res.status(200).jsonp(config);
 		});
 	});

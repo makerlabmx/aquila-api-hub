@@ -6,6 +6,7 @@ var mongoose = require('mongoose'),
 var configSchema = new Schema(
 	{
 		pan: Number,
+		channel: Number,
 		secEnabled: Boolean,
 		secKey: Buffer,
 		showDisconnected: Boolean,

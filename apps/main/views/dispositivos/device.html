@@ -1,4 +1,6 @@
-<div class="page page-dashboard" ng-controller="DeviceDetailsController" ng-init="init()">
+<div ng-controller="DeviceDetailsController" ng-init="init()">
+
+<div class="page page-dashboard" ng-class="{'content-body':userLogin}">
 
   <div class="">
     <a href="/#"
@@ -98,42 +100,52 @@
     </div>
   </div>
 
-  <div class="modal fade" id="modal-devconfig" >
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-          <h4 class="modal-title">Device Configuration</h4>
-        </div>
-        <div class="modal-body">
-          <div class="row">
-            <div class="col-md-6">
+</div>
 
-              <h3>Name</h3>
+</div>
 
-              <div class="form-group">
-                  <input class="form-control" type="textbox" id="devName" placeholder="{{device._defaultName}}" ng-model="newName">
-              </div>
+<div class="modal fade" id="modal-devconfig" >
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title">Device Configuration</h4>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6">
 
-              <br>
-              <h3>Icon</h3>
-              <div class="form-group">
-                <button class="btn btn-lg btn-line-default" id="iconpicker"></button>
-              </div>
+            <h3>Name</h3>
 
+            <div class="form-group">
+              <input class="form-control" type="textbox" id="devName" placeholder="{{device._defaultName}}" ng-model="newName">
             </div>
-          </div>
-          <p class="bg-danger" ng-show="devConfigError" >{{devConfigError}}</p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
-          <button class="btn btn-success" ng-click="updateDevice()">
-            Apply
-          </button>
-        </div>
-      </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-  </div><!-- /.modal -->
 
+            <br>
+            <h3>Icon</h3>
+            <div class="form-group">
+              <button class="btn btn-lg btn-line-default" id="iconpicker"></button>
+            </div>
+
+            <br>
+            <h3>Advanced</h3>
+            <div class="form-group">
+              <button class="btn btn-danger" id="iconpicker" ng-click="forgetDevice()">Forget this Device</button>
+              <p class="help-block">This device won't appear any more until it is detected again, name and icon preferences will be lost.</p>
+            </div>
+
+          </div>
+        </div>
+        <p class="bg-danger" ng-show="devConfigError" >{{devConfigError}}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+        <button class="btn btn-success" ng-click="updateDevice()">
+          Apply
+        </button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
 
 </div>

@@ -34,7 +34,8 @@ module.exports = function(app, passport)
 
 	apiRouter.route("/devices/:id")
 		.get(DeviceCtrl.findById)
-		.put(DeviceCtrl.updateDevice);
+		.put(DeviceCtrl.updateDevice)
+		.delete(DeviceCtrl.forgetDevice);
 
 	apiRouter.route("/devices/:id/action/:action/:param?")
 		.get(DeviceCtrl.deviceAction);
