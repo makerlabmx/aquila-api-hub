@@ -6,7 +6,7 @@ This is part of the Aquila Internet of Things Plataform, for more info, see: htt
 
 API documentation: http://docs.aquila2.apiary.io/
 
-**Note:** This version is compatible only with versions 0.3.0 or newer of the Aquila firmware libraries. Please update your devices accordingly.
+**Note:** This version is compatible only with version of January 2015 or newer of the Aquila firmware libraries. Please update your devices accordingly.
 
 ## Dependencies:
 
