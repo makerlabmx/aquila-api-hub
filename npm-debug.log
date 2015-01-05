@@ -1,226 +1,102 @@
 0 info it worked if it ends with ok
-1 verbose cli [ 'node', '/usr/local/bin/npm', 'install', '-g', 'grunt' ]
+1 verbose cli [ 'node', '/usr/local/bin/npm', 'publish' ]
 2 info using npm@1.4.28
 3 info using node@v0.10.33
-4 verbose cache add [ 'grunt', null ]
-5 verbose cache add name=undefined spec="grunt" args=["grunt",null]
-6 verbose parsed url { protocol: null,
-6 verbose parsed url   slashes: null,
-6 verbose parsed url   auth: null,
-6 verbose parsed url   host: null,
-6 verbose parsed url   port: null,
-6 verbose parsed url   hostname: null,
-6 verbose parsed url   hash: null,
-6 verbose parsed url   search: null,
-6 verbose parsed url   query: null,
-6 verbose parsed url   pathname: 'grunt',
-6 verbose parsed url   path: 'grunt',
-6 verbose parsed url   href: 'grunt' }
-7 silly lockFile 20ff3fd8-grunt grunt
-8 verbose lock grunt /Users/rod/.npm/20ff3fd8-grunt.lock
-9 silly lockFile 20ff3fd8-grunt grunt
-10 silly lockFile 20ff3fd8-grunt grunt
-11 verbose addNamed [ 'grunt', '' ]
-12 verbose addNamed [ null, '*' ]
-13 silly lockFile 55f1ff24-grunt grunt@
-14 verbose lock grunt@ /Users/rod/.npm/55f1ff24-grunt.lock
-15 silly addNameRange { name: 'grunt', range: '*', hasData: false }
-16 verbose request where is /grunt
-17 verbose request registry https://registry.npmjs.org/
-18 verbose request id 8b238f6263e55baa
-19 verbose url raw /grunt
-20 verbose url resolving [ 'https://registry.npmjs.org/', './grunt' ]
-21 verbose url resolved https://registry.npmjs.org/grunt
-22 verbose request where is https://registry.npmjs.org/grunt
-23 info trying registry request attempt 1 at 13:51:28
-24 verbose etag "5TR2LN2UA0ZPXGV3QM00AABK1"
-25 http GET https://registry.npmjs.org/grunt
-26 http 200 https://registry.npmjs.org/grunt
-27 silly registry.get cb [ 200,
-27 silly registry.get   { date: 'Fri, 02 Jan 2015 19:51:28 GMT',
-27 silly registry.get     server: 'CouchDB/1.5.0 (Erlang OTP/R16B03)',
-27 silly registry.get     etag: '"EDQPOTRKCAPK6MG7C5HBWANV6"',
-27 silly registry.get     'content-type': 'application/json',
-27 silly registry.get     'cache-control': 'max-age=60',
-27 silly registry.get     'content-length': '87929',
-27 silly registry.get     'accept-ranges': 'bytes',
-27 silly registry.get     via: '1.1 varnish',
-27 silly registry.get     age: '52',
-27 silly registry.get     'x-served-by': 'cache-atl6223-ATL',
-27 silly registry.get     'x-cache': 'HIT',
-27 silly registry.get     'x-cache-hits': '1',
-27 silly registry.get     'x-timer': 'S1420228288.408558,VS0,VE1',
-27 silly registry.get     vary: 'Accept',
-27 silly registry.get     'keep-alive': 'timeout=10, max=50',
-27 silly registry.get     connection: 'Keep-Alive' } ]
-28 silly addNameRange number 2 { name: 'grunt', range: '*', hasData: true }
-29 silly addNameRange versions [ 'grunt',
-29 silly addNameRange   [ '0.1.0',
-29 silly addNameRange     '0.1.1',
-29 silly addNameRange     '0.1.2',
-29 silly addNameRange     '0.2.0',
-29 silly addNameRange     '0.2.1',
-29 silly addNameRange     '0.2.2',
-29 silly addNameRange     '0.2.3',
-29 silly addNameRange     '0.2.4',
-29 silly addNameRange     '0.2.5',
-29 silly addNameRange     '0.2.6',
-29 silly addNameRange     '0.2.7',
-29 silly addNameRange     '0.2.8',
-29 silly addNameRange     '0.2.9',
-29 silly addNameRange     '0.2.10',
-29 silly addNameRange     '0.2.11',
-29 silly addNameRange     '0.2.12',
-29 silly addNameRange     '0.2.13',
-29 silly addNameRange     '0.2.14',
-29 silly addNameRange     '0.2.15',
-29 silly addNameRange     '0.3.0',
-29 silly addNameRange     '0.3.1',
-29 silly addNameRange     '0.3.2',
-29 silly addNameRange     '0.3.3',
-29 silly addNameRange     '0.3.4',
-29 silly addNameRange     '0.3.5',
-29 silly addNameRange     '0.3.6',
-29 silly addNameRange     '0.3.7',
-29 silly addNameRange     '0.3.8',
-29 silly addNameRange     '0.3.9',
-29 silly addNameRange     '0.3.10',
-29 silly addNameRange     '0.3.11',
-29 silly addNameRange     '0.3.12',
-29 silly addNameRange     '0.3.13',
-29 silly addNameRange     '0.3.14',
-29 silly addNameRange     '0.3.15',
-29 silly addNameRange     '0.3.16',
-29 silly addNameRange     '0.3.17',
-29 silly addNameRange     '0.4.0',
-29 silly addNameRange     '0.4.1',
-29 silly addNameRange     '0.4.2',
-29 silly addNameRange     '0.4.3',
-29 silly addNameRange     '0.4.4',
-29 silly addNameRange     '0.4.5',
-29 silly addNameRange     '0.3.13-a',
-29 silly addNameRange     '0.4.0-a',
-29 silly addNameRange     '0.4.0-rc1',
-29 silly addNameRange     '0.4.0-rc2',
-29 silly addNameRange     '0.4.0-rc3',
-29 silly addNameRange     '0.4.0-rc4',
-29 silly addNameRange     '0.4.0-rc5',
-29 silly addNameRange     '0.4.0-rc6',
-29 silly addNameRange     '0.4.0-rc7',
-29 silly addNameRange     '0.4.0-rc8' ] ]
-30 verbose addNamed [ 'grunt', '0.4.5' ]
-31 verbose addNamed [ '0.4.5', '0.4.5' ]
-32 silly lockFile 81abf7ad-grunt-0-4-5 grunt@0.4.5
-33 verbose lock grunt@0.4.5 /Users/rod/.npm/81abf7ad-grunt-0-4-5.lock
-34 silly lockFile 81abf7ad-grunt-0-4-5 grunt@0.4.5
-35 silly lockFile 81abf7ad-grunt-0-4-5 grunt@0.4.5
-36 silly lockFile 55f1ff24-grunt grunt@
-37 silly lockFile 55f1ff24-grunt grunt@
-38 silly resolved [ { name: 'grunt',
-38 silly resolved     description: 'The JavaScript Task Runner',
-38 silly resolved     version: '0.4.5',
-38 silly resolved     author: { name: '"Cowboy" Ben Alman', url: 'http://benalman.com/' },
-38 silly resolved     homepage: 'http://gruntjs.com/',
-38 silly resolved     repository: { type: 'git', url: 'git://github.com/gruntjs/grunt.git' },
-38 silly resolved     bugs: { url: 'http://github.com/gruntjs/grunt/issues' },
-38 silly resolved     licenses: [ [Object] ],
-38 silly resolved     main: 'lib/grunt',
-38 silly resolved     scripts: { test: 'grunt test' },
-38 silly resolved     engines: { node: '>= 0.8.0' },
-38 silly resolved     keywords:
-38 silly resolved      [ 'task',
-38 silly resolved        'async',
-38 silly resolved        'cli',
-38 silly resolved        'minify',
-38 silly resolved        'uglify',
-38 silly resolved        'build',
-38 silly resolved        'lodash',
-38 silly resolved        'unit',
-38 silly resolved        'test',
-38 silly resolved        'qunit',
-38 silly resolved        'nodeunit',
-38 silly resolved        'server',
-38 silly resolved        'init',
-38 silly resolved        'scaffold',
-38 silly resolved        'make',
-38 silly resolved        'jake',
-38 silly resolved        'tool' ],
-38 silly resolved     dependencies:
-38 silly resolved      { async: '~0.1.22',
-38 silly resolved        'coffee-script': '~1.3.3',
-38 silly resolved        colors: '~0.6.2',
-38 silly resolved        dateformat: '1.0.2-1.2.3',
-38 silly resolved        eventemitter2: '~0.4.13',
-38 silly resolved        'findup-sync': '~0.1.2',
-38 silly resolved        glob: '~3.1.21',
-38 silly resolved        hooker: '~0.2.3',
-38 silly resolved        'iconv-lite': '~0.2.11',
-38 silly resolved        minimatch: '~0.2.12',
-38 silly resolved        nopt: '~1.0.10',
-38 silly resolved        rimraf: '~2.2.8',
-38 silly resolved        lodash: '~0.9.2',
-38 silly resolved        'underscore.string': '~2.2.1',
-38 silly resolved        which: '~1.0.5',
-38 silly resolved        'js-yaml': '~2.0.5',
-38 silly resolved        exit: '~0.1.1',
-38 silly resolved        getobject: '~0.1.0',
-38 silly resolved        'grunt-legacy-util': '~0.2.0',
-38 silly resolved        'grunt-legacy-log': '~0.1.0' },
-38 silly resolved     devDependencies:
-38 silly resolved      { temporary: '~0.0.4',
-38 silly resolved        'grunt-contrib-jshint': '~0.6.4',
-38 silly resolved        'grunt-contrib-nodeunit': '~0.2.0',
-38 silly resolved        'grunt-contrib-watch': '~0.5.3',
-38 silly resolved        difflet: '~0.2.3',
-38 silly resolved        semver: '2.1.0',
-38 silly resolved        shelljs: '~0.2.5' },
-38 silly resolved     _id: 'grunt@0.4.5',
-38 silly resolved     dist:
-38 silly resolved      { shasum: '56937cd5194324adff6d207631832a9d6ba4e7f0',
-38 silly resolved        tarball: 'http://registry.npmjs.org/grunt/-/grunt-0.4.5.tgz' },
-38 silly resolved     _from: 'grunt@',
-38 silly resolved     _npmVersion: '1.4.4',
-38 silly resolved     _npmUser: { name: 'cowboy', email: 'cowboy@rj3.net' },
-38 silly resolved     maintainers: [ [Object], [Object] ],
-38 silly resolved     directories: {},
-38 silly resolved     _shasum: '56937cd5194324adff6d207631832a9d6ba4e7f0',
-38 silly resolved     _resolved: 'https://registry.npmjs.org/grunt/-/grunt-0.4.5.tgz',
-38 silly resolved     readme: 'ERROR: No README data found!' } ]
-39 info install grunt@0.4.5 into /usr/local/lib
-40 info installOne grunt@0.4.5
-41 verbose lib/node_modules/grunt unbuild
-42 verbose tar unpack /Users/rod/.npm/grunt/0.4.5/package.tgz
-43 silly lockFile d04b7634-usr-local-lib-node-modules-grunt tar:///usr/local/lib/node_modules/grunt
-44 verbose lock tar:///usr/local/lib/node_modules/grunt /Users/rod/.npm/d04b7634-usr-local-lib-node-modules-grunt.lock
-45 silly lockFile 794d2a5b--rod-npm-grunt-0-4-5-package-tgz tar:///Users/rod/.npm/grunt/0.4.5/package.tgz
-46 verbose lock tar:///Users/rod/.npm/grunt/0.4.5/package.tgz /Users/rod/.npm/794d2a5b--rod-npm-grunt-0-4-5-package-tgz.lock
-47 silly gunzTarPerm modes [ '755', '644' ]
-48 error Error: EACCES, mkdir '/usr/local/lib/node_modules/grunt'
-48 error  { [Error: EACCES, mkdir '/usr/local/lib/node_modules/grunt']
-48 error   errno: 3,
-48 error   code: 'EACCES',
-48 error   path: '/usr/local/lib/node_modules/grunt',
-48 error   fstream_type: 'Directory',
-48 error   fstream_path: '/usr/local/lib/node_modules/grunt',
-48 error   fstream_class: 'DirWriter',
-48 error   fstream_stack:
-48 error    [ '/usr/local/lib/node_modules/npm/node_modules/fstream/lib/dir-writer.js:36:23',
-48 error      '/usr/local/lib/node_modules/npm/node_modules/mkdirp/index.js:46:53',
-48 error      'Object.oncomplete (fs.js:107:15)' ] }
-49 error Please try running this command again as root/Administrator.
-50 error System Darwin 14.0.0
-51 error command "node" "/usr/local/bin/npm" "install" "-g" "grunt"
-52 error cwd /Users/rod/sandbox/aquila-api-hub
-53 error node -v v0.10.33
-54 error npm -v 1.4.28
-55 error path /usr/local/lib/node_modules/grunt
-56 error fstream_path /usr/local/lib/node_modules/grunt
-57 error fstream_type Directory
-58 error fstream_class DirWriter
-59 error code EACCES
-60 error errno 3
-61 error stack Error: EACCES, mkdir '/usr/local/lib/node_modules/grunt'
-62 error fstream_stack /usr/local/lib/node_modules/npm/node_modules/fstream/lib/dir-writer.js:36:23
-62 error fstream_stack /usr/local/lib/node_modules/npm/node_modules/mkdirp/index.js:46:53
-62 error fstream_stack Object.oncomplete (fs.js:107:15)
-63 verbose exit [ 3, true ]
+4 verbose publish [ '.' ]
+5 verbose cache add [ '.', null ]
+6 verbose cache add name=undefined spec="." args=[".",null]
+7 verbose parsed url { protocol: null,
+7 verbose parsed url   slashes: null,
+7 verbose parsed url   auth: null,
+7 verbose parsed url   host: null,
+7 verbose parsed url   port: null,
+7 verbose parsed url   hostname: null,
+7 verbose parsed url   hash: null,
+7 verbose parsed url   search: null,
+7 verbose parsed url   query: null,
+7 verbose parsed url   pathname: '.',
+7 verbose parsed url   path: '.',
+7 verbose parsed url   href: '.' }
+8 silly lockFile 3a52ce78- .
+9 verbose lock . /Users/rod/.npm/3a52ce78-.lock
+10 verbose tar pack [ '/Users/rod/.npm/aquila-server/0.1.0/package.tgz', '.' ]
+11 verbose tarball /Users/rod/.npm/aquila-server/0.1.0/package.tgz
+12 verbose folder .
+13 info prepublish aquila-server@0.1.0
+14 silly lockFile 1f1177db-tar tar://.
+15 verbose lock tar://. /Users/rod/.npm/1f1177db-tar.lock
+16 silly lockFile 313329a9--aquila-server-0-1-0-package-tgz tar:///Users/rod/.npm/aquila-server/0.1.0/package.tgz
+17 verbose lock tar:///Users/rod/.npm/aquila-server/0.1.0/package.tgz /Users/rod/.npm/313329a9--aquila-server-0-1-0-package-tgz.lock
+18 silly lockFile 1f1177db-tar tar://.
+19 silly lockFile 1f1177db-tar tar://.
+20 silly lockFile 313329a9--aquila-server-0-1-0-package-tgz tar:///Users/rod/.npm/aquila-server/0.1.0/package.tgz
+21 silly lockFile 313329a9--aquila-server-0-1-0-package-tgz tar:///Users/rod/.npm/aquila-server/0.1.0/package.tgz
+22 silly lockFile b0cb2c02--npm-aquila-server-0-1-0-package /Users/rod/.npm/aquila-server/0.1.0/package
+23 verbose lock /Users/rod/.npm/aquila-server/0.1.0/package /Users/rod/.npm/b0cb2c02--npm-aquila-server-0-1-0-package.lock
+24 silly lockFile b0cb2c02--npm-aquila-server-0-1-0-package /Users/rod/.npm/aquila-server/0.1.0/package
+25 silly lockFile b0cb2c02--npm-aquila-server-0-1-0-package /Users/rod/.npm/aquila-server/0.1.0/package
+26 silly lockFile 3a52ce78- .
+27 silly lockFile 3a52ce78- .
+28 silly publish { name: 'aquila-server',
+28 silly publish   version: '0.1.0',
+28 silly publish   description: 'Aquila API and Web App server for the Hub.',
+28 silly publish   main: 'launcher.js',
+28 silly publish   author:
+28 silly publish    { name: 'Rodrigo Méndez',
+28 silly publish      email: 'rmendez@makerlab.mx',
+28 silly publish      url: 'http://aquila.io/' },
+28 silly publish   dependencies:
+28 silly publish    { async: '^0.9.0',
+28 silly publish      bcrypt: '^0.8.0',
+28 silly publish      'body-parser': '^1.9.0',
+28 silly publish      buffertools: '^2.1.2',
+28 silly publish      'connect-flash': '^0.1.1',
+28 silly publish      'cookie-parser': '^1.3.3',
+28 silly publish      ejs: '^1.0.0',
+28 silly publish      express: '^4.9.5',
+28 silly publish      'express-jwt': '^0.4.0',
+28 silly publish      'express-session': '^1.8.2',
+28 silly publish      ip: '^0.3.2',
+28 silly publish      jsonwebtoken: '^1.1.2',
+28 silly publish      'method-override': '^2.2.0',
+28 silly publish      minimist: '^1.1.0',
+28 silly publish      moira: '^1.1.2',
+28 silly publish      mongoose: '^3.8.16',
+28 silly publish      morgan: '^1.3.1',
+28 silly publish      passport: '^0.2.1',
+28 silly publish      'passport-http': '~0.2.2',
+28 silly publish      'passport-http-bearer': '^1.0.1',
+28 silly publish      'passport-local': '^1.0.0',
+28 silly publish      serialport: '^1.4.6',
+28 silly publish      shelljs: '^0.3.0',
+28 silly publish      'socket.io': '^1.1.0',
+28 silly publish      'socketio-jwt': '^2.3.5',
+28 silly publish      toobusy: '^0.2.4',
+28 silly publish      validator: '^3.18.0' },
+28 silly publish   devDependencies:
+28 silly publish    { grunt: '~0.4.5',
+28 silly publish      'grunt-cli': 'latest',
+28 silly publish      'grunt-contrib-jshint': 'latest' },
+28 silly publish   repository:
+28 silly publish    { type: 'git',
+28 silly publish      url: 'git://github.com/makerlabmx/aquila-api-hub.git' },
+28 silly publish   preferGlobal: 'true',
+28 silly publish   bin: { 'aquila-server': 'launcher.js' },
+28 silly publish   readme: '# Aquila Server\n\nAquila API Server and Web App for the Hub. Requires an Altair programmed as Bridge connected to the Hub.\n\nThis is part of the Aquila Internet of Things Plataform, for more info, see: http://www.aquila.io/en\n\nAPI documentation: http://docs.aquila2.apiary.io/\n\n**Note:** This version is compatible only with version of January 2015 or newer of the Aquila firmware libraries. Please update your devices accordingly.\n\n## Dependencies:\n\n### Windows\n\n>**Update:** Now, in Windows, you can use an installer that automatically install everything (except Visual Studio, you have to install it separately). Download it from here: [Installer](https://github.com/makerlabmx/aquila-tools-windows-installer).\n\n1. Git and Git bash http://git-scm.com/download/win\n2. Python 2.7 https://www.python.org/downloads/\n3. Microsoft Visual Studio C++ Express 2010 (Includes compilers needed for some dependencies when developing Node.js applications) http://go.microsoft.com/?linkid=9709958\n4. Node.js http://nodejs.org/\n5. MongoDB http://www.mongodb.org/downloads\n\n> **Note**: For any tutorial where we use the command line, we recommend using "Git Bash" instead of "cmd" from windows. "Git Bash" comes included with Git.\n\n### Mac OSX\n\n1. Git http://git-scm.com/download/mac\n2. Node.js http://nodejs.org/\n3. MongoDB http://www.mongodb.org/downloads\n\n### Linux (Ubuntu / Debian)\n\n1. build-essential and git: ``sudo apt-get install build-essential git``\n2. Node.js v0.10.31 o superior:  http://nodejs.org/\n3. MongoDB: ``sudo apt-get install mongodb``\n\n\n## Installation\n\n```\nnpm install aquila-server -g\n```\n\n## Use\n\n- Connect the Hub via USB\n- Start server:\n\n  ```\n  aquila-server\n  ```\n\n  Or, with ssl (https):\n\n  ```\n  aquila-server --ssl\n  ```\n\n  **Note:** If you want to be really serious about security, you should first generate your own security keys, you can do this with the genSSLCert.sh script included in this repository. Also, you should change your token secret, found in config/token.js.\n\n\n\n- Access the web App from any browser:\n\n  From local machine:\n  ```\n  http://localhost:8080\n  ```\n  From other machine on the network:\n  ```\n  http://<your hub ip>:8080\n  ```\n\n- Access the Admin interface (add users):\n\n  ```\n  http://<your hub ip>:8080/admin\n  ```\n\n  > Default User: ``Admin``, Password: ``Admin``\n',
+28 silly publish   readmeFilename: 'README.md',
+28 silly publish   gitHead: '90c51bbb229ffb8f2379d805757255121bd83ed4',
+28 silly publish   bugs: { url: 'https://github.com/makerlabmx/aquila-api-hub/issues' },
+28 silly publish   homepage: 'https://github.com/makerlabmx/aquila-api-hub',
+28 silly publish   _id: 'aquila-server@0.1.0',
+28 silly publish   scripts: {},
+28 silly publish   _shasum: '389772666fb6e102c579226c7672ac83de1bce4a',
+28 silly publish   _from: '.' }
+29 error need auth auth and email required for publishing
+29 error need auth You need to authorize this machine using `npm adduser`
+30 error System Darwin 14.0.0
+31 error command "node" "/usr/local/bin/npm" "publish"
+32 error cwd /Users/rod/sandbox/aquila-api-hub
+33 error node -v v0.10.33
+34 error npm -v 1.4.28
+35 error code ENEEDAUTH
+36 verbose exit [ 1, true ]

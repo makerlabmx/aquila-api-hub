@@ -99,11 +99,11 @@ var deviceService = function(method, req, res)
 		if(err) return res.status(500).send(err.message);
 		if(!device) return res.status(404).send("Invalid device id");
 
-		console.log(req.params.service);
+		//console.log(req.params.service);
 
 		services.request(device.shortAddress, method, req.params.service, function(err, srcAddr, status, data)
 		{
-			console.log(status, data);
+			//console.log(status, data);
 			if(err) return res.status(500).send(err.message);
 			if(status === services.R200) return res.status(200).type("application/json").send(data);
 			if(status === services.R404) return res.status(404).send("Service not found in device");

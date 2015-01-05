@@ -88,7 +88,7 @@ var DeviceManager = function()
 					if(err || alreadyFetched || !device) return callback();
 					self.fetchAll(device, function(err)
 						{
-							if(err) { console.log(err); console.log("Fetch queue error");}
+							if(err) { if(staticConfig.debug) {console.log(err); console.log("Fetch queue error");} }
 							else self.emit("deviceAdded");
 							//console.log("Close");
 							callback();
@@ -334,6 +334,11 @@ DeviceManager.prototype.deviceFetcher = function(srcAddr, euiAddr)
 								device.shortAddress = srcAddr;
 								self.fetchQueue.push(device);
 							});
+					}
+					else
+					{
+						// emit anyway, it should be a device without AquilaProtocol
+						self.emit("deviceAdded");
 					}
 
 				}

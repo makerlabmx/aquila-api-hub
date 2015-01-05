@@ -34,7 +34,7 @@ var Services = function()
 		{
 			var data = self.parsePacket(packet);
 			// DEBUG
-			if(data) console.log("From ", data.srcAddr, ": ", new Buffer(data.data).toString("utf8"));
+			//if(data) console.log("From ", data.srcAddr, ": ", new Buffer(data.data).toString("utf8"));
 
 			if(data) self.emit("data", data);
 		});
@@ -95,8 +95,8 @@ Services.prototype.request = function(destAddr, method, name, callback, data)
 								new Buffer(data)]);
 
 	// DEBUG
-	console.log(packet);
-	console.log(mesh.getShortAddr(), destAddr);
+	// console.log(packet);
+	// console.log(mesh.getShortAddr(), destAddr);
 
 	mesh.bridge.sendData(mesh.getShortAddr(), destAddr,
 						 AQUILASERVICES_ENDPOINT, AQUILASERVICES_ENDPOINT,
@@ -109,7 +109,7 @@ Services.prototype.request = function(destAddr, method, name, callback, data)
 			if(tout)
 			{
 				// If its from the expected address
-				console.log("Got packet:", packet);
+				//console.log("Got packet:", packet);
 				if(packet.srcAddr === destAddr)
 				{
 					clearTimeout(tout);
