@@ -9,6 +9,7 @@ var express = require("express"),
 	mongoose = require("mongoose"),
 	socket = require("socket.io"),
 	passport = require("passport"),
+	cors = require("cors");
 	morgan = require("morgan");
 
 var argv = require("minimist")(process.argv.slice(2));
@@ -50,12 +51,15 @@ var app = express();
 // Middlewares
 
 // Allow  CORS for client apps
+app.use(cors());
+/*
 app.use(function(req, res, next)
 {
 	res.header("Access-Control-Allow-Origin", "*");
 	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 	next();
 });
+*/
 
 // Verbose requests:
 if(argv.verbose) app.use(morgan('dev')); // log every request to the console
