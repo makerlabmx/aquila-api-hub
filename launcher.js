@@ -12,7 +12,7 @@ var home = process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME'];
 var killall_mongod = (process.platform === 'win32') ? 'taskkill /F /IM mongod.exe' : 'killall mongod';
 
 echo("Aquila Server\n");
-echo("IMPORTANT: Make shure that the bridge is connected.\n");
+echo("IMPORTANT: Make sure that the bridge is connected.\n");
 
 // cd to where this file lives
 cd(__dirname);

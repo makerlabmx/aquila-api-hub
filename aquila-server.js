@@ -8,7 +8,6 @@ var express = require("express"),
 	methodOverride = require("method-override"),
 	mongoose = require("mongoose"),
 	socket = require("socket.io"),
-	toobusy = require("toobusy"),
 	passport = require("passport"),
 	morgan = require("morgan");
 
@@ -49,13 +48,6 @@ require('./config/passport')(passport); // pass passport for configuration
 var app = express();
 
 // Middlewares
-app.use(function(req, res, next)
-	{
-		// check if we're toobusy() - note, this call is extremely fast, and returns
-		// state that is cached at a fixed interval
-		if (toobusy()) { res.status(503).send("Server is busy right now, try again later."); console.log("Busy"); }
-		else next();
-	});
 
 // Verbose requests:
 if(argv.verbose) app.use(morgan('dev')); // log every request to the console
