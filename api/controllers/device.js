@@ -99,18 +99,15 @@ var deviceService = function(method, req, res)
 		if(err) return res.status(500).send(err.message);
 		if(!device) return res.status(404).send("Invalid device id");
 
-		//console.log(req.params.service);
-
 		services.request(device.shortAddress, method, req.params.service, function(err, srcAddr, status, data)
 		{
-			//console.log(status, data);
 			if(err) return res.status(500).send(err.message);
 			if(status === services.R200) return res.status(200).type("application/json").send(data);
 			if(status === services.R404) return res.status(404).send("Service not found in device");
 			if(status === services.R405) return res.status(405).send("Method not allowed in device");
 			if(status === services.R408) return res.status(408).send("Device Timeout");
 			if(status === services.R500) return res.status(500).send("Device Error");
-		}, req.body);
+		}, JSON.stringify(req.body));
 	});
 };
 
