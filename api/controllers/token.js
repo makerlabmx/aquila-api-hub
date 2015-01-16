@@ -10,7 +10,7 @@ var User = require("./../../api/models/user");
 
 exports.retrieveToken = function(req, res)
 {
-	if(req.body.user === undefined || req.body.password === undefined) return res.send(401, 'Missing user or password');
+	if(req.body.user === undefined || req.body.password === undefined) return res.status(401).send('Missing user or password');
 	var user = req.body.user;
 	var password = req.body.password;
 
