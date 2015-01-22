@@ -2,7 +2,7 @@
 
 	var app = angular.module('configuracionController',[]);
 
-	app.controller('ConfiguracionController', [ '$http' , '$scope', function($http, $scope)
+	app.controller('ConfiguracionController', [ 'Config' , '$scope', function(Config, $scope)
 	{
 		var config = this;
     config.pan = 0xCA5A;
@@ -47,10 +47,11 @@
 
   	config.getPAN = function()
 		{
-  		$http.get('/api/pan').success(function(data, status, headers){
-			  config.pan = data.pan;
-			  config.panString = data.pan.toString(16).toUpperCase();
-	    });
+			Config.pan.get({}, function(data, status, headers)
+			{
+				config.pan = data.pan;
+				config.panString = data.pan.toString(16).toUpperCase();
+			});
   	};
 
   	config.setPAN = function()
@@ -59,10 +60,12 @@
       var data = {
         pan: parseInt(config.panString, 16)
       };
-      $http.post('/api/pan', data).success(function(data, status, headers){
-        config.pan = data.pan;
+
+			Config.pan.post({}, data, function(data, status, headers)
+			{
+				config.pan = data.pan;
 				config.panString = data.pan.toString(16).toUpperCase();
-      }).error(function(data, status, headers)
+			}, function(data, status, headers)
 			{
 				config.displayError(true, data);
 			});
@@ -71,11 +74,11 @@
 
 		config.getSec = function()
 		{
-			$http.get('/api/security').success(function(data, status, headers)
-				{
-					config.secEnabled = data.secEnabled;
-					config.secKey = data.secKey;
-				});
+			Config.security.get({}, function(data, status, headers)
+			{
+				config.secEnabled = data.secEnabled;
+				config.secKey = data.secKey;
+			});
 		};
 
 		config.setSec = function()
@@ -85,23 +88,24 @@
 				secEnabled: config.secEnabled,
 				secKey: config.secKey
 			};
-			$http.post('/api/security', data).success(function(data, status, headers)
-				{
-					config.secEnabled = data.secEnabled;
-					config.secKey = data.secKey;
-				}).error(function(data, status, headers)
-				{
-					config.displayError(true, data);
-				});
+
+			Config.security.post({}, data, function(data, status, headers)
+			{
+				config.secEnabled = data.secEnabled;
+				config.secKey = data.secKey;
+			}, function(data, status, headers)
+			{
+				config.displayError(true, data);
+			});
 		};
 
 		config.getShowDisconnectedAndChan = function()
 		{
-			$http.get('/api/config').success(function(data, status, headers)
-				{
-					config.showDisconnected = data.showDisconnected;
-					config.channel = data.channel;
-				});
+			Config.all.get({}, function(data, status, headers)
+			{
+				config.showDisconnected = data.showDisconnected;
+				config.channel = data.channel;
+			});
 		};
 
 		config.setShowDisconnectedAndChan = function()
@@ -111,31 +115,32 @@
 				showDisconnected: config.showDisconnected,
 				channel: parseInt(config.channel)
 			};
-			$http.post('/api/config', data).success(function(data, status, headers)
-				{
-					config.showDisconnected = data.showDisconnected;
-					config.channel = data.channel;
-				}).error(function(data, status, headers)
-				{
-					config.displayError(true, data);
-				});
+
+			Config.all.post({}, data, function(data, status, headers)
+			{
+				config.showDisconnected = data.showDisconnected;
+				config.channel = data.channel;
+			}, function(data, status, headers)
+			{
+				config.displayError(true, data);
+			});
 		};
 
 		config.getIps = function()
 		{
-			$http.get('/api/ip').success(function(data, status, headers)
-				{
-					config.localIp = data.localIp;
-					config.extIp = data.extIp;
-				}).error(function(data, status){console.log(data, status);});
+			Config.ip.get({}, function(data, status, headers)
+			{
+				config.localIp = data.localIp;
+				config.extIp = data.extIp;
+			}, function(data, status){console.log(data, status);});
 		};
 
 		config.getVersion = function()
 		{
-			$http.get('/api/version').success(function(data, status, headers)
-				{
-					config.version = data.version;
-				}).error(function(data, status){console.log(data, status);});
+			Config.version.get({}, function(data, status, headers)
+			{
+				config.version = data.version;
+			}, function(data, status){console.log(data, status);});
 		};
 
   }]);

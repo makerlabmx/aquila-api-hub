@@ -2,7 +2,7 @@
 
   var app = angular.module('sessionController',[]);
 
-  app.controller('SessionController', [ '$http' , '$scope','$window','$location','Token', function($http, $scope,$window,$location,Token){
+  app.controller('SessionController', [ '$scope', '$window', '$location', 'Token', function($scope, $window, $location, Token){
 
       $scope.user = {user: '', password: ''};
       $scope.message = '';

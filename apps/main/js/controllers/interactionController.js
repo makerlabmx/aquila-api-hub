@@ -2,7 +2,7 @@
 
   var app = angular.module('interactionController',[]);
 
-  app.controller('InteractionController', [ '$http' , '$scope', 'socketAquila','Device','Interaction', function($http, $scope, socketAquila,Device,Interaction){
+  app.controller('InteractionController', [ '$scope', 'socketAquila','Device','Interaction', function($scope,socketAquila,Device,Interaction){
     $scope.interactions = [];
     $scope.interaction = {};
     $scope.devices = [];

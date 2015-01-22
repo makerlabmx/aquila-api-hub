@@ -1,16 +1,8 @@
 (function(){
 
-  var app = angular.module('consoleController',['btford.socket-io']);
+  var app = angular.module('consoleController',[]);
 
-  app.factory('socketWSerial',['socketFactory','$window', function(socketFactory,$window){
-    var myIoSocket = io.connect('/wserial',{query: "token=" + $window.sessionStorage.token});
-    socket = socketFactory({
-      ioSocket: myIoSocket
-    });
-    return socket;
-  }]);
-
-  app.controller('ConsoleController', [ '$http' , '$scope', 'socketWSerial','socketAquila', 'Device', 'Config', function($http, $scope, socketWSerial, socketAquila, Device, Config){
+  app.controller('ConsoleController', [ '$scope', 'socketWSerial','socketAquila', 'Device', 'Config', function($scope, socketWSerial, socketAquila, Device, Config){
     var self = this;
     self.output = '';
     self.input = '';
@@ -75,11 +67,6 @@
 
     self.init = function()
     {
-      // get config
-      /*var config = Config.get({}, function()
-        {
-          self.showDisconnected = config.showDisconnected;
-        });*/
       fetchDevices();
 
       socketWSerial.on("data", self.dataHandler);

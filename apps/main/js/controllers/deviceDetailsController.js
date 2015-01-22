@@ -1,8 +1,8 @@
 (function(){
 
-  var app = angular.module('deviceDetailsController',['btford.socket-io']);
+  var app = angular.module('deviceDetailsController',[]);
 
-  app.controller('DeviceDetailsController', [ '$http' , '$scope', '$routeParams','Device','Action', 'socketAquila', '$location', function($http, $scope, $routeParams,Device,Action,socketAquila, $location)
+  app.controller('DeviceDetailsController', [ '$scope', '$routeParams','Device','Action', 'socketAquila', '$location', function($scope, $routeParams,Device,Action,socketAquila, $location)
     {
 
         $scope.showDetails = false;
@@ -87,13 +87,11 @@
     };
 
     $scope.doAction = function(device, action){
-      Action.doit({ id: device._id, action: action });
-      //$http.get('/api/devices/' + $routeParams.device_id + '/action/' + String(action));
+      Action.do({ id: device._id, action: action });
     };
 
     $scope.doSlider = function(device, action){
-      Action.range({ id: device._id, action: action.n, range: action.range });
-      //$http.get('/api/devices/' + device._id + '/action/' + String(action.n) + '/' + String(action.range));
+      Action.do({ id: device._id, action: action.n, param: action.range });
     };
 
     $scope.togglePrefs = function()

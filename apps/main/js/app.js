@@ -1,14 +1,25 @@
 (function(){
 
+  // Set your API server's url
+  // use null for automatically setting same origin
+  var server = null;
+
   var app = angular.module('aquila',
     [
       'sessionController','mainController','deviceController', 'deviceDetailsController', 'configuracionController','interactionController', 'consoleController',
-      'deviceFactory','tokenFactory','interactionFactory','configFactory',
+      'deviceFactory','tokenFactory','interactionFactory','configFactory','socketWSerialFactory','socketAquilaFactory',
       'ngRoute','btford.socket-io'
     ]
   );
 
-  app.config(['$routeProvider','$httpProvider',function($routeProvider, $httpProvider) {
+  app.config(['$routeProvider', '$httpProvider', '$sceDelegateProvider', function($routeProvider, $httpProvider, $sceDelegateProvider) {
+
+      $sceDelegateProvider.resourceUrlWhitelist([
+          // Allow same origin resource loads.
+          'self',
+          // Allow loading from our server.
+          server + '**'
+        ]);
 
       $httpProvider.defaults.headers.common['Content-Type'] = 'application/json; charset=utf-8';
       $httpProvider.defaults.headers.post['Content-Type'] = 'application/json; charset=utf-8';
@@ -65,7 +76,11 @@
   });
 
 
-  app.run( function($rootScope, $location,$window) {
+  app.run( function($rootScope, $location, $window) {
+    // Setting server URL global variable
+    $rootScope.server = server ? server : $window.location.origin;
+    if( $rootScope.server.substr($rootScope.server.length - 1) !== "/" ) $rootScope.server += "/";
+
     $rootScope.$on( "$routeChangeStart", function(event, next, current) {
       if($window.sessionStorage.token === undefined){
         $location.path('/login');

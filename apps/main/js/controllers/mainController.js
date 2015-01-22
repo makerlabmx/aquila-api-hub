@@ -2,7 +2,7 @@
 
   var app = angular.module('mainController',[]);
 
-  app.controller('MainController', [ '$http' , '$scope','$window','$location','Token', function($http, $scope,$window,$location,Token){
+  app.controller('MainController', [ '$scope', '$window', '$location', 'Token', 'Config', function($scope,$window,$location,Token,Config){
 
       $scope.logout = function(){
         delete $window.sessionStorage.token;
@@ -10,11 +10,11 @@
       };
 
       $scope.reload = function(){
-        $http.get('/api/reload');
+        Config.reload();
       };
 
       $scope.discover = function(){
-        $http.get('/api/discover');
+        Config.discover();
       };
 
       $scope.navClass = "";
@@ -35,14 +35,6 @@
         return route === $location.path();
       };
 
-  }]);
-
-  app.factory('socketAquila',['socketFactory','$window', function(socketFactory,$window){
-    var myIoSocket = io.connect('/',{query: "token=" + $window.sessionStorage.token});
-    socket = socketFactory({
-      ioSocket: myIoSocket
-    });
-    return socket;
   }]);
 
 })();
