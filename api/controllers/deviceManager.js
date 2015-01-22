@@ -12,7 +12,8 @@ var events = require("events");
 var async = require("async");
 var buffertools = require("buffertools");
 
-var staticConfig = require("./../../config/deviceManager.js");
+var configManager = require("./../../configManager");
+var staticConfig = require(configManager.deviceManagerPath);
 
 var COM_EUI = 14;
 

@@ -1,7 +1,8 @@
 // api/sockets.js
 
 var socketioJwt = require("socketio-jwt");
-var tokenConfig = require("./../config/token");
+var configManager = require("./../configManager");
+var tokenConfig = require(configManager.tokenPath);
 
 module.exports = function(io, passport, deviceManager)
 {

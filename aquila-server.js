@@ -9,8 +9,12 @@ var express = require("express"),
 	mongoose = require("mongoose"),
 	socket = require("socket.io"),
 	passport = require("passport"),
-	cors = require("cors");
-	morgan = require("morgan");
+	cors = require("cors"),
+	morgan = require("morgan"),
+	configManager = require("./configManager");
+
+// Initializa config files:
+configManager.checkConfigFiles();
 
 var argv = require("minimist")(process.argv.slice(2));
 var argHelp = "Use: aquila-server <options>\nOptions:\n\t--verbose\tDisplay verbose messages.\n\t--help\t\tDisplay this help text.\n\t--ssl\t\tStart with SSL.\n";
@@ -28,8 +32,8 @@ if(argv.ssl)
 	// For SSL support
 	var https = require("https");
 	var fs = require("fs");
-	var keyFile = "./config/ssl/rsaKey.pem";
-	var certFile = "./config/ssl/sslCert.crt";
+	var keyFile = configManager.rsaKeyPath;
+	var certFile = configManager.sslCertPath;
 	var sslConfig = {
 		key: fs.readFileSync(keyFile),
 		cert: fs.readFileSync(certFile)
@@ -42,7 +46,7 @@ var bodyParser   = require('body-parser');
 var session      = require('express-session');
 
 // configuration ===============================================================
-var configDB = require("./config/database.js");
+var configDB = require(configManager.databasePath);
 var port = process.env.PORT || 8080;
 require('./config/passport')(passport); // pass passport for configuration
 
@@ -68,7 +72,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 // required for passport
-var tokenConfig = require("./config/token");
+var tokenConfig = require(configManager.tokenPath);
 app.use(session({ secret: tokenConfig.secret, resave: true, saveUninitialized: true })); // session secret
 app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions

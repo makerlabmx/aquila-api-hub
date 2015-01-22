@@ -59,7 +59,8 @@ var SerialPort = Serial.SerialPort;
 require("buffertools").extend(); // extend Buffer.prototype
 var scanPorts = require("./scanports");
 var events = require("events");
-var config = require("./../../config/bridge");
+var configManager = require("./../../configManager");
+var config = require(configManager.bridgePath);
 var Packet = require("./meshPacket.js");
 
 // Serial timeout, used for clearing buffer if no char received in that time.

@@ -3,7 +3,8 @@
 var mongoose = require("mongoose");
 var expressJwt = require("express-jwt");
 var jwt = require("jsonwebtoken");
-var tokenConfig = require("./../../config/token");
+var configManager = require("./../../configManager");
+var tokenConfig = require(configManager.tokenPath);
 
 // User model
 var User = require("./../../api/models/user");
