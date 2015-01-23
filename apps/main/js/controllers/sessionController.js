@@ -9,11 +9,11 @@
 
       $scope.submit = function () {
         var data = Token.post({},$scope.user,function(){
-          $window.sessionStorage.token = data.token;
-          $window.sessionStorage.user = $scope.user.user;
+          $window.localStorage.token = data.token;
+          $window.localStorage.user = $scope.user.user;
           $location.path('/');
         },function(){
-          delete $window.sessionStorage.token;
+          delete $window.localStorage.token;
           $scope.error = 'Invalid User or Password';
         });
       };

@@ -59,7 +59,7 @@
     <div class="row pd-top20" ng-repeat="action in device.actions" >
       <div class="col-md-4" style="min-width: 100%">
         <div class="btn-group" ng-init="action.range = 0" style="min-width:40%">
-          <button type="button" class="btn btn-outlined btn-primary" ng-click="doAction(device, action.n)" ng-class="{disabled:device.active===false}" style="width:70%">{{action.name}}</button>
+          <button type="button" class="btn btn-outlined btn-primary" ng-click="doAction(device, action.n)" ng-class="{disabled:device.active===false}" style="min-width:70%">{{action.name}}</button>
           <button type="button" class="btn btn-outlined btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="false" ng-class="{disabled:device.active===false}">
             <span class="caret"></span>
             <span class="sr-only">Toggle Param</span>

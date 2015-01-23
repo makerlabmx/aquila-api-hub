@@ -57,18 +57,20 @@
     }
   ]);
 
-  app.factory('authInterceptor', function ($rootScope, $q, $window) {
+  app.factory('authInterceptor', function ($rootScope, $q, $window, $location) {
     return {
       request: function (config) {
         config.headers = config.headers || {};
-        if ($window.sessionStorage.token) {
-          config.headers.Authorization = 'Bearer ' + $window.sessionStorage.token;
+        if ($window.localStorage.token) {
+          config.headers.Authorization = 'Bearer ' + $window.localStorage.token;
         }
         return config;
       },
       responseError: function (rejection) {
         if (rejection.status === 401) {
           // handle the case where the user is not authenticated
+          delete $window.localStorage.token;
+          $location.path('/login');
         }
         return $q.reject(rejection);
       }
@@ -82,12 +84,12 @@
     if( $rootScope.server.substr($rootScope.server.length - 1) !== "/" ) $rootScope.server += "/";
 
     $rootScope.$on( "$routeChangeStart", function(event, next, current) {
-      if($window.sessionStorage.token === undefined){
+      if($window.localStorage.token === undefined){
         $location.path('/login');
         $rootScope.userLogin = false;
       }else{
         $rootScope.userLogin = true;
-        $rootScope.user = $window.sessionStorage.user;
+        $rootScope.user = $window.localStorage.user;
         $rootScope.user = $rootScope.user.charAt(0).toUpperCase() + $rootScope.user.slice(1);
       }
     });

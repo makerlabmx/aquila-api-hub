@@ -5,7 +5,7 @@
   app.controller('MainController', [ '$scope', '$window', '$location', 'Token', 'Config', function($scope,$window,$location,Token,Config){
 
       $scope.logout = function(){
-        delete $window.sessionStorage.token;
+        delete $window.localStorage.token;
         $location.path('/login');
       };
 
