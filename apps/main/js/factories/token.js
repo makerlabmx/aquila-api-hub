@@ -4,7 +4,7 @@
 
   app.factory('Token', ['$resource', '$rootScope', function($resource, $rootScope){
       return $resource($rootScope.server + "api/token", {}, {
-          post: { method:'POST' }
+          post: { method:'POST' , isArray: false }
       });
   }]);
 
