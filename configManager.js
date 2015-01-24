@@ -86,7 +86,8 @@ ConfigManager.prototype.checkConfigFiles = function()
 
       // Generating SSL certificate:
       var openSslConf = path.join(__dirname, "config/ssl/openssl.cnf");
-      var command = "openssl req -config " + openSslConf + " -new -key " + self.rsaKeyPath + " -out " + self.csrPath;
+      // IMPORTANT: openSslConf is between "quotes" for avoiding error on path with spaces.
+      var command = 'openssl req -config "' + openSslConf + '" -new -key ' + self.rsaKeyPath + ' -out ' + self.csrPath;
       exec(command);
       exec("openssl x509 -req -days 1024 -in " + self.csrPath + " -signkey " + self.rsaKeyPath + " -out " + self.sslCertPath);
 
