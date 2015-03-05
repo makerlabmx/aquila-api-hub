@@ -6,9 +6,9 @@
 
   var app = angular.module('aquila',
     [
-      'sessionController','mainController','deviceController', 'deviceDetailsController', 'configuracionController','interactionController', 'consoleController',
-      'deviceFactory','tokenFactory','interactionFactory','configFactory','socketWSerialFactory','socketAquilaFactory',
-      'ngRoute','btford.socket-io'
+      'sessionController','mainController', 'dashboardController', 'deviceController', 'deviceDetailsController', 'configuracionController','interactionController', 'taskController', 'consoleController',
+      'deviceFactory','tokenFactory','interactionFactory', 'taskFactory', 'configFactory','socketWSerialFactory','socketAquilaFactory',
+      'ngRoute','btford.socket-io', 'ui.bootstrap.datetimepicker'
     ]
   );
 
@@ -27,6 +27,13 @@
 
       $routeProvider.
         when('/', {
+          redirectTo: '/dashboard'
+        }).
+        when('/dashboard', {
+          templateUrl: 'main/views/dashboard/dashboard.html',
+          controller: 'DashboardController'
+        }).
+        when('/devices', {
           templateUrl: 'main/views/dispositivos/dispositivos.html',
           controller: 'DeviceController'
         }).
@@ -41,6 +48,10 @@
         when('/interactions', {
           templateUrl: 'main/views/interacciones/interacciones.html',
           controller: 'InteractionController'
+        }).
+        when('/tasks', {
+          templateUrl: 'main/views/tasks/tasks.html',
+          controller: 'TaskController'
         }).
         when('/configuration', {
           templateUrl: 'main/views/configuracion/configuracion.html',

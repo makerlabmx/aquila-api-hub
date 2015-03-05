@@ -5,7 +5,7 @@
 	app.controller('ConfiguracionController', [ 'Config' , '$scope', function(Config, $scope)
 	{
 		var config = this;
-    config.pan = 0xCA5A;
+    	config.pan = 0xCA5A;
 		config.panString = "CA5A";
 		config.channel = 26;
 		config.channels = range(11, 26, 1);
@@ -132,6 +132,7 @@
 			{
 				config.localIp = data.localIp;
 				config.extIp = data.extIp;
+				config.sysTime = moment(data.sysTime).format("MMMM Do YYYY, h:mm a");
 			}, function(data, status){console.log(data, status);});
 		};
 

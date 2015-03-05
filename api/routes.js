@@ -14,10 +14,12 @@ module.exports = function(app, passport)
 	// Import Models and Controllers
 	var DeviceModel = require("./models/device").Device(app, mongoose);
 	var InteractionModel = require("./models/interaction").Interaction(app, mongoose);
+	var TaskModel = require("./models/task")(app, mongoose);
 	var ConfigModel = require("./models/config")(app, mongoose);
 	var DeviceCtrl = require("./controllers/device");
 	var ConfigCtrl = require("./controllers/config");
 	var InteractionCtrl = require("./controllers/interaction");
+	var TaskCtrl = require("./controllers/task");
 	var WSerialCtrl = require("./controllers/wserial");
 
 	var apiRouter = express.Router();
@@ -56,6 +58,16 @@ module.exports = function(app, passport)
 		.get(InteractionCtrl.findById)
 		.put(InteractionCtrl.updateInteraction)
 		.delete(InteractionCtrl.deleteInteraction);
+
+	// Tasks
+	apiRouter.route("/tasks")
+		.get(TaskCtrl.findAllTasks)
+		.post(TaskCtrl.addTask);
+
+	apiRouter.route("/tasks/:id")
+		.get(TaskCtrl.findById)
+		.put(TaskCtrl.updateTask)
+		.delete(TaskCtrl.deleteTask);
 
 	// Utils
 	apiRouter.route("/pan")

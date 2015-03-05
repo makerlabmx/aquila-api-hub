@@ -118,7 +118,6 @@ exports.getConfig = function(req, res)
 	Config.findOne(null, queryFields, function(err, config)
 	{
 		if(err) return res.status(500).send(err.message);
-
 		res.status(200).jsonp(config);
 	});
 };

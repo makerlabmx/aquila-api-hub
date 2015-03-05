@@ -11,7 +11,8 @@ exports.getIp = function(req, res)
 
       var data = {
         localIp: localIp.address(),
-        extIp: ip
+        extIp: ip,
+        sysTime: new Date()
       };
 
       res.json(data);
