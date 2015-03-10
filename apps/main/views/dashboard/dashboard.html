@@ -1,1 +1,21 @@
-dashboard.html
+<div ng-controller="DashboardController" ng-init="init()">
+<div class="page page-dashboard" ng-class="{'content-body':userLogin}">
+
+	<div class="alert alert-danger" ng-show="error">{{error}}</div>
+
+	<div class="row" ng-repeat="device in devices">
+		<div class="col-md-4">
+			<section class="panel panel-box">
+                <div class="panel-left panel-item bg-reverse">
+                	<p class="size-h1">{{ device.name }}</p>
+                	<p class="text-muted">Consumo: {{ device.watts }} Watts <span ng-hide="device.active">(Desconectado)</span></p>
+                </div>
+                <div class="panel-right panel-item bg-warning">
+					<span href ng-click="toggle(device)"><i class="fa text-huge" ng-class="{'fa-toggle-on': device.state == true, 'fa-toggle-off': device.state == false}"></i></span>
+                </div>
+			</section>
+		</div>
+	</div>
+
+</div>
+</div>
