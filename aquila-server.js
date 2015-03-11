@@ -13,9 +13,6 @@ var express = require("express"),
 	morgan = require("morgan"),
 	configManager = require("./configManager");
 
-// Initializa config files:
-configManager.checkConfigFiles();
-
 var argv = require("minimist")(process.argv.slice(2));
 var argHelp = "Use: aquila-server <options>\nOptions:\n\t--verbose\tDisplay verbose messages.\n\t--help\t\tDisplay this help text.\n\t--ssl\t\tStart with SSL.\n";
 

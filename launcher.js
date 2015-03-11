@@ -33,6 +33,25 @@ var logpath = '"' + path.join(home, ".aquila-server/data/mongodb.log") + '"';
 echo("Starting Database...");
 exec("mongod --journal --dbpath " + dbpath + " --logpath " + logpath, { async: true });
 
+// Check for mongo's health
+var mongoose = require("mongoose"),
+    configManager = require("./configManager"),
+
+// Initializa config files:
+configManager.checkConfigFiles();
+
+var configDB = require(configManager.databasePath);
+
+mongoose.connect(configDB.url, function(err, res)
+{
+  if(err)
+  {
+    console.log("ERROR connecting to database, will try to restore database.");
+    exec("mongorestore --drop " + home + ".aquila-server/backup/aquila-server");
+  }
+  console.log("Database restored.");
+}
+
 // Start aquila-server
 echo("Starting Aquila Server...");
 exec("node aquila-server.js " + args, function(code, output)
