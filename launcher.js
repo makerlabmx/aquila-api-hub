@@ -51,27 +51,40 @@ mongoose.connect(configDB.url, function(err, res)
       {
         // Create aquila-server config dir if not exists
         mkdir("-p", path.join(home, ".aquila-server/data/db"));
-        console.log("Created database folder");
-        exec("mongod --journal --dbpath " + dbpath + " --logpath " + logpath, { async: true }, function()
-         {
-           console.log("Restoring database");
-           exec("mongorestore --drop " + path.join(home, ".aquila-server/backup/aquila-server"));
-           console.log("Database restored.");
-           // Start aquila-server
-           echo("Starting Aquila Server...");
-           exec("node aquila-server.js " + args, function(code, output)
-             {
-               exec(killall_mongod);
-             });
-         });
-      });
-  } else 
-  {
-    // Start aquila-server
-    echo("Starting Aquila Server...");
-    exec("node aquila-server.js " + args, function(code, output)
-      {
-        exec(killall_mongod);
+        console.log("Created new database folder");
+        exec("mongod --journal --dbpath " + dbpath + " --logpath " + logpath, { async: true });
+        var dbFlag = false;
+        var processID = 0;
+        while (!dbFlag)
+        {
+          processID = exec("pgrep mongod");
+          if (processID != 0)
+          {
+            console.log("Restoring database");
+            exec("mongorestore --drop " + path.join(home, ".aquila-server/backup/aquila-server"));
+            console.log("Database restored");
+            dbFlag = true;
+          }
+        }
+        // exec("mongod --journal --dbpath " + dbpath + " --logpath " + logpath, { async: true }, function()
+        //  {
+        //    console.log("Restoring database");
+        //    exec("mongorestore --drop " + path.join(home, ".aquila-server/backup/aquila-server"));
+        //    console.log("Database restored.");
+        //    // Start aquila-server
+        //    echo("Starting Aquila Server...");
+        //    exec("node aquila-server.js " + args, function(code, output)
+        //      {
+        //        exec(killall_mongod);
+        //      });
+        //  });
       });
   }
 });
+
+// Start aquila-server
+echo("Starting Aquila Server...");
+exec("node aquila-server.js " + args, function(code, output)
+  {
+    exec(killall_mongod);
+  });
