@@ -35,7 +35,7 @@ exec("mongod --journal --dbpath " + dbpath + " --logpath " + logpath, { async: t
 
 // Check for mongo's health
 var mongoose = require("mongoose"),
-    configManager = require("./configManager"),
+    configManager = require("./configManager");
 
 // Initializa config files:
 configManager.checkConfigFiles();
@@ -47,14 +47,31 @@ mongoose.connect(configDB.url, function(err, res)
   if(err)
   {
     console.log("ERROR connecting to database, will try to restore database.");
-    exec("mongorestore --drop " + home + ".aquila-server/backup/aquila-server");
-  }
-  console.log("Database restored.");
-}
-
-// Start aquila-server
-echo("Starting Aquila Server...");
-exec("node aquila-server.js " + args, function(code, output)
+    exec("rm -rf " + path.join(home, ".aquila-server/data/*"), function()
+      {
+        // Create aquila-server config dir if not exists
+        mkdir("-p", path.join(home, ".aquila-server/data/db"));
+        console.log("Created database folder");
+        exec("mongod --journal --dbpath " + dbpath + " --logpath " + logpath, { async: true }, function()
+         {
+           console.log("Restoring database");
+           exec("mongorestore --drop " + path.join(home, ".aquila-server/backup/aquila-server"));
+           console.log("Database restored.");
+           // Start aquila-server
+           echo("Starting Aquila Server...");
+           exec("node aquila-server.js " + args, function(code, output)
+             {
+               exec(killall_mongod);
+             });
+         });
+      });
+  } else 
   {
-    exec(killall_mongod);
-  });
+    // Start aquila-server
+    echo("Starting Aquila Server...");
+    exec("node aquila-server.js " + args, function(code, output)
+      {
+        exec(killall_mongod);
+      });
+  }
+});
