@@ -42,6 +42,31 @@ configManager.checkConfigFiles();
 
 var configDB = require(configManager.databasePath);
 
+var intervalID;
+
+var startAquila = function()
+  {
+    // Start aquila-server
+    echo("Starting Aquila Server...");
+    exec("node aquila-server.js " + args, function(code, output)
+      {
+        exec(killall_mongod);
+      });
+  };
+
+var checkConnectionWithDB = function(pingCode)
+{
+  pingCode = exec("nc -z localhost 27017").code;
+  if (pingCode == 0)
+  {
+    clearInterval(intervalID);
+    console.log("Restoring database");
+    exec("mongorestore --drop " + path.join(home, ".aquila-server/backup/aquila-server"));
+    console.log("Database restored");
+    startAquila();
+  }
+};
+
 mongoose.connect(configDB.url, function(err, res)
 {
   if(err)
@@ -53,38 +78,13 @@ mongoose.connect(configDB.url, function(err, res)
         mkdir("-p", path.join(home, ".aquila-server/data/db"));
         console.log("Created new database folder");
         exec("mongod --journal --dbpath " + dbpath + " --logpath " + logpath, { async: true });
-        var dbFlag = false;
-        var processID = 0;
-        while (!dbFlag)
-        {
-          processID = exec("pgrep mongod");
-          if (processID != 0)
-          {
-            console.log("Restoring database");
-            exec("mongorestore --drop " + path.join(home, ".aquila-server/backup/aquila-server"));
-            console.log("Database restored");
-            dbFlag = true;
-          }
-        }
-        // exec("mongod --journal --dbpath " + dbpath + " --logpath " + logpath, { async: true }, function()
-        //  {
-        //    console.log("Restoring database");
-        //    exec("mongorestore --drop " + path.join(home, ".aquila-server/backup/aquila-server"));
-        //    console.log("Database restored.");
-        //    // Start aquila-server
-        //    echo("Starting Aquila Server...");
-        //    exec("node aquila-server.js " + args, function(code, output)
-        //      {
-        //        exec(killall_mongod);
-        //      });
-        //  });
+        var pingCode = 1;
+        intervalID = setInterval(checkConnectionWithDB, 500, pingCode, intervalID);
       });
+  } else 
+  {
+    startAquila();
   }
+
 });
 
-// Start aquila-server
-echo("Starting Aquila Server...");
-exec("node aquila-server.js " + args, function(code, output)
-  {
-    exec(killall_mongod);
-  });
