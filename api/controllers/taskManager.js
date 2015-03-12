@@ -34,6 +34,7 @@ TaskManager.prototype.init = function()
 				Device.findById(task.device, function(err, device)
 				{
 					if(err) return console.log(err);
+					if(!device) return console.log("Not scheduling task:", task, "because device is not known.");
 					// Check if has dateRule or Recurrence rule (cannot be both)
 					if(task.dateRule instanceof Date)
 					{
@@ -41,6 +42,7 @@ TaskManager.prototype.init = function()
 						if(task.dateRule < new Date()) return;
 						var j = schedule.scheduleJob(task.dateRule, function()
 						{
+							if(!device) return; // if we deleted this device but the schedule persisted
 							console.log(Date(), "--- Doing task", device.shortAddress, task.dateRule);
 							if(deviceManager.ready) deviceManager.requestAction(device.shortAddress, task.action, task.param);
 						});
@@ -50,6 +52,7 @@ TaskManager.prototype.init = function()
 					{
 						var j = schedule.scheduleJob(task.recurrenceRule, function()
 						{
+							if(!device) return; // if we deleted this device but the schedule persisted
 							console.log(Date(), "--- Doing task", device.shortAddress, task.recurrenceRule);
 							if(deviceManager.ready) deviceManager.requestAction(device.shortAddress, task.action, task.param);
 						});

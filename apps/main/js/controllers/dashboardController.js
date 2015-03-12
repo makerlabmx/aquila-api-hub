@@ -9,6 +9,8 @@
 		$scope.state = true;
 		$scope.error = null;
 
+    var stateUpdateInterval = null;
+
 		var retryAction = function(action, numTimes)
 		{
 			return $q.when().then(action)
@@ -29,6 +31,7 @@
 				console.log(res);
 				device.state = res.isOn;
         device.watts = Math.floor(res.watts);
+        if(!res.isOn) device.watts = 0;
 				$scope.error = null;
 
 			  }, function(err)
@@ -48,6 +51,7 @@
 				console.log(res);
 				device.state = res.isOn;
         device.watts = Math.floor(res.watts);
+        if(!res.isOn) device.watts = 0;
 				$scope.error = null;
         if(devices && devices.length)
         {
@@ -94,7 +98,7 @@
 		  getDevices();
 
 		  // update state each n seconds:
-		  setInterval(function(){ $scope.updateStates(); }, 3000);
+		  stateUpdateInterval = setInterval(function(){ $scope.updateStates(); }, 3000);
 
 		  socketAquila.on('deviceAdded', getDevices);
 		  socketAquila.on('deviceRemoved', getDevices);
@@ -105,6 +109,7 @@
 		  	socketAquila.removeListener('deviceAdded', getDevices);
 		  	socketAquila.removeListener('deviceRemoved', getDevices);
         socketAquila.removeListener('event', $scope.updateStates);
+        clearInterval(stateUpdateInterval);
 		  });
 		};
 

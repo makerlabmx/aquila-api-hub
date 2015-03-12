@@ -92,15 +92,28 @@ exports.deviceAction = function(req, res)
 	});
 };
 
+var devicesWaiting = [];
+
 var deviceService = function(method, req, res)
 {
 	Device.findById(req.params.id, function(err, device)
 	{
+		if(devicesWaiting.indexOf(device._id) > -1)
+		{
+			// Device is bussy responding
+			return res.status(503).send("Device busy");
+		}
+		devicesWaiting.push(device._id);
+
 		if(err) return res.status(500).send(err.message);
 		if(!device) return res.status(404).send("Invalid device id");
 
 		services.request(device.shortAddress, method, req.params.service, function(err, srcAddr, status, data)
 		{
+			// remove from devicesWaiting
+			var index = devicesWaiting.indexOf(device._id);
+			if(index > -1) devicesWaiting.splice(index, 1);
+
 			if(err) return res.status(500).send(err.message);
 			if(status === services.R200) return res.status(200).type("application/json").send(data);
 			if(status === services.R404) return res.status(404).send("Service not found in device");

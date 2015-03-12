@@ -269,6 +269,15 @@ var Bridge = function(baudrate, port)
 {
 	var self = this;
 
+	// Serial Write buffer control
+	self.sending = false;
+	self.writeBuffer = [];
+	self.on("ready", function()
+	{
+		// Making sure we don't forget to send anything
+		setInterval(function(){ self.writeNow(); }, 1000);
+	});
+
 	self.fake = config.fake;
 	if(self.fake) return self.emit("ready");
 
@@ -449,18 +458,41 @@ Bridge.prototype.sendData = function(srcAddr, dstAddr, srcEndpoint, dstEndpoint,
 
 	this.write(frame);
 
+	if(config.debug)
+	{
+		console.log("Sending:", frame);
+	}
+
 };
 
 // If still sending, wait and then send
 Bridge.prototype.write = function(data)
 {
 	var self = this;
+
+	self.writeBuffer.push(data);
+	self.writeNow();
+
+};
+
+Bridge.prototype.writeNow = function()
+{
+	var self = this;
+	// Nothing to do here
+	if(self.writeBuffer.length <= 0) return;
+	// We are busy, do nothing
+	if(self.sending) return;
+	self.sending = true;
+
 	// do nothing if we are in fake mode
-	if(self.fake) return;
+	if(self.fake) { self.sending = false; return; }
 	self.serialPort.drain(function()
 		{
-			self.serialPort.write(data);
+			self.serialPort.write(self.writeBuffer.shift());
+			self.sending = false;
+			if(self.writeBuffer.length > 0) self.writeNow();
 		});
-};
+
+}
 
 module.exports = Bridge;
