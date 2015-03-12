@@ -42,11 +42,12 @@ configManager.checkConfigFiles();
 
 var configDB = require(configManager.databasePath);
 
+// ID for the interval timer
 var intervalID;
 
+// Starts the aquila server
 var startAquila = function()
   {
-    // Start aquila-server
     echo("Starting Aquila Server...");
     exec("node aquila-server.js " + args, function(code, output)
       {
@@ -54,9 +55,10 @@ var startAquila = function()
       });
   };
 
+// Checks if the database if accepting connections
 var checkConnectionWithDB = function(callback)
   {
-    var pingCode = exec("nc -z localhost 27017").code; //Checks if mongodb is accepting connections
+    var pingCode = exec("nc -z localhost 27017").code;
     if (pingCode == 0)
     {
       clearInterval(intervalID);
@@ -64,6 +66,7 @@ var checkConnectionWithDB = function(callback)
     }
   };
 
+// Restores the database's backup in case something went wrong
 var restoreDatabase = function()
   {
     console.log("Restoring database");
@@ -72,6 +75,8 @@ var restoreDatabase = function()
     startAquila();
   };
 
+
+// Connects to mongoose
 var connectMongoose = function()
 {
   mongoose.connect(configDB.url, function(err, res)
