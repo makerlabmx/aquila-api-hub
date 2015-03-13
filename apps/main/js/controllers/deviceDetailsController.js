@@ -123,7 +123,7 @@
         {
           $('#modal-devconfig').on('hidden.bs.modal', function()
             {
-              $location.path('/');
+              $location.path('/devices');
               $scope.$apply();
             });
           $('#modal-devconfig').modal('hide');

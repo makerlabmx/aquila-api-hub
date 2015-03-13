@@ -98,7 +98,7 @@
 		  getDevices();
 
 		  // update state each n seconds:
-		  stateUpdateInterval = setInterval(function(){ $scope.updateStates(); }, 3000);
+		  stateUpdateInterval = setInterval(function(){ $scope.updateStates(); }, 5000);
 
 		  socketAquila.on('deviceAdded', getDevices);
 		  socketAquila.on('deviceRemoved', getDevices);
