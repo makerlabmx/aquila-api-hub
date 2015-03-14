@@ -44,9 +44,7 @@ var configDB = require(configManager.databasePath);
 
 // ID's for the interval timer
 var intervalID;
-var intervalIDMongoose;
 
-var intervalChosen = 0;
 
 // Starts the aquila server
 var startAquila = function()
@@ -64,16 +62,8 @@ var checkConnectionWithDB = function(callback)
     var pingCode = exec("nc -z localhost 27017").code;
     if (pingCode == 0)
     {
-      if (intervalChosen == 0)
-      {
         clearInterval(intervalID);
-        clearInterval(intervalIDMongoose);
         callback();
-      } else if (intervalChosen == 1)
-      {
-        clearInterval(intervalIDMongoose);
-        callback();
-      }
     }
   };
 
@@ -90,7 +80,6 @@ var restoreDatabase = function()
 // Connects to mongoose
 var connectMongoose = function()
 {
-  intervalChosen == 1;
   mongoose.connect(configDB.url, function(err, res)
   {
     if(err)
@@ -102,7 +91,6 @@ var connectMongoose = function()
           mkdir("-p", path.join(home, ".aquila-server/data/db"));
           console.log("Created new database folder");
           exec("mongod --journal --dbpath " + dbpath + " --logpath " + logpath, { async: true });
-          intervalChosen = 0;
           intervalID = setInterval(checkConnectionWithDB, 500, restoreDatabase);
         });
     } else 
@@ -113,6 +101,4 @@ var connectMongoose = function()
   });
 };
 
-intervalIDMongoose = setInterval(checkConnectionWithDB, 500, connectMongoose);
-
-
+connectMongoose();
