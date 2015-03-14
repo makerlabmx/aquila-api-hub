@@ -67,6 +67,7 @@ var checkConnectionWithDB = function(callback)
       if (intervalChosen == 0)
       {
         clearInterval(intervalID);
+        clearInterval(intervalIDMongoose);
         callback();
       } else if (intervalChosen == 1)
       {
