@@ -67,11 +67,12 @@ var checkConnectionWithDB = function(callback)
       if (intervalChosen == 0)
       {
         clearInterval(intervalID);
+        callback();
       } else if (intervalChosen == 1)
       {
         clearInterval(intervalIDMongoose);
+        callback();
       }
-      callback();
     }
   };
 
