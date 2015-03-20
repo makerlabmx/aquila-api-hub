@@ -160,10 +160,10 @@ Mesh.prototype.getSecurityEnabled = function()
 	return this.securityEnabled;
 };
 
-Mesh.prototype.sendPacket = function(packet)
+Mesh.prototype.sendPacket = function(packet, callback)
 {
 	var self = this;
-	self.bridge.sendData(packet.srcAddr, packet.dstAddr, packet.srcEndpoint, packet.dstEndpoint, packet.data);
+	self.bridge.sendData(packet.srcAddr, packet.dstAddr, packet.srcEndpoint, packet.dstEndpoint, packet.data, callback);
 };
 
 Mesh.prototype.announce = function(dest)

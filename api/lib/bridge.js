@@ -165,7 +165,7 @@ var bridgeParser = function()
 					data = data.slice(INDEX_CMD);
 					try
 					{
-						emmiter.emit("success");
+						emmiter.emit("confirm", null);
 					}
 					catch(err){}
 					break;
@@ -174,7 +174,7 @@ var bridgeParser = function()
 					data = data.slice(INDEX_CMD);
 					try
 					{
-						emmiter.emit("error");
+						emmiter.emit("confirm", new Error("Send Error"));
 					}
 					catch(err){}
 					break;
@@ -270,12 +270,17 @@ var Bridge = function(baudrate, port)
 	var self = this;
 
 	// Serial Write buffer control
-	self.sending = false;
+	self.writing = false;
 	self.writeBuffer = [];
+	// Send request buffer control
+	self.sending = false;
+	self.sendBuffer = [];
+
 	self.on("ready", function()
 	{
 		// Making sure we don't forget to send anything
-		setInterval(function(){ self.writeNow(); }, 1000);
+		// BAD IDEA, causes double transmissions, or not...?
+		//setInterval(function(){ self.writeNow(); }, 1000);
 	});
 
 	self.fake = config.fake;
@@ -308,13 +313,10 @@ var Bridge = function(baudrate, port)
 						{
 							console.log("Bridge Started");
 						});
-					self.serialPort.on("success", function()
+					self.serialPort.on("confirm", function(status)
 						{
-							console.log("Data Transmit Success");
-						});
-					self.serialPort.on("error", function()
-						{
-							console.log("Data Transmit Error");
+							if(status) console.log("Data Transmit Success");
+							else console.log("Data Transmit Error");
 						});
 					self.serialPort.on("promSetConfirm", function(isProm)
 						{
@@ -446,8 +448,9 @@ Bridge.prototype.setSecurityKey = function(key)
 };
 
 // data format: array (or buffer?)
-Bridge.prototype.sendData = function(srcAddr, dstAddr, srcEndpoint, dstEndpoint, data)
+Bridge.prototype.sendData = function(srcAddr, dstAddr, srcEndpoint, dstEndpoint, data, callback)
 {
+	var self = this;
 	if(!data) return;
 	// Dummy lqi and rssi (bridge doesnt care about this on transmit, just for completness):
 	var lqi = 0xFF;
@@ -456,12 +459,59 @@ Bridge.prototype.sendData = function(srcAddr, dstAddr, srcEndpoint, dstEndpoint,
 	var frame = Buffer.concat([ PREAMBLE, new Buffer([ CMD_DATA, lqi, rssi, srcAddr&0xFF, (srcAddr>>8)&0xFF,
 								dstAddr&0xFF, (dstAddr>>8)&0xFF, srcEndpoint, dstEndpoint, data.length ]), data ]);
 
-	this.write(frame);
+	self.sendBuffer.push({data: frame, callback: callback});
+	self.sendDataNow();
 
-	if(config.debug)
+};
+
+Bridge.prototype.sendDataNow = function()
+{
+	var self = this;
+
+	// Nothing to do here
+	if(self.sendBuffer.length <= 0) return;
+	// Check if a send confirmation if pending
+	if(self.sending) return;
+	self.sending = true;
+
+	// Get request from buffer
+	var request = self.sendBuffer.shift();
+
+	// Prepare for confirmation
+	var tout = null;
+	var confirmCb = function(status)
 	{
-		console.log("Sending:", frame);
-	}
+		if(tout)
+		{
+			clearTimeout(tout);
+			self.serialPort.removeListener("confirm", confirmCb);
+			self.sending = false;
+
+			if(config.debug) console.log(status);
+
+			if(request.callback) request.callback(status);
+			// Send any other pending requests
+			if(self.sendBuffer.length > 0) self.sendDataNow();
+		}
+	};
+
+	tout = setTimeout(function()
+	{
+		tout = null;
+		self.serialPort.removeListener("confirm", confirmCb);
+		self.sending = false;
+
+		if(config.debug) console.log(status);
+
+		if(request.callback) request.callback(new Error("Send Timeout"));
+		// Send any other pending requests
+		if(self.sendBuffer.length > 0) self.sendDataNow();
+	}, TIMEOUT);
+
+	self.serialPort.on("confirm", confirmCb);
+
+	// Finally, really send to bridge
+	self.write(request.data);
 
 };
 
@@ -478,18 +528,24 @@ Bridge.prototype.write = function(data)
 Bridge.prototype.writeNow = function()
 {
 	var self = this;
+
 	// Nothing to do here
 	if(self.writeBuffer.length <= 0) return;
 	// We are busy, do nothing
-	if(self.sending) return;
-	self.sending = true;
+	if(self.writing) return;
+	self.writing = true;
 
 	// do nothing if we are in fake mode
-	if(self.fake) { self.sending = false; return; }
+	if(self.fake) { self.writing = false; return; }
+
 	self.serialPort.drain(function()
 		{
-			self.serialPort.write(self.writeBuffer.shift());
-			self.sending = false;
+			var data = self.writeBuffer.shift();
+			self.serialPort.write(data);
+
+			if(config.debug) console.log("Sending:", data);
+
+			self.writing = false;
 			if(self.writeBuffer.length > 0) self.writeNow();
 		});
 

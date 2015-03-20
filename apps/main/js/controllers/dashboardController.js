@@ -34,36 +34,57 @@
         if(!res.isOn) device.watts = 0;
 				$scope.error = null;
 
+        var index = $scope.devices.indexOf(device);
+        if(index > -1) $scope.devices[index].active = true;
+
 			  }, function(err)
 			  {
 				$scope.error = "Error en la comuniación con el dispositivo " + device.name + ": " + err.data;
 			  }).$promise;
-			}, 3);
+			}, 1);
 		};
 
 		$scope.updateState = function(device, devices)
 		{
-		  retryAction(function(){
-        console.log("fetching");
-
-			  return Service.get({id: device._id, service: "relay"}, function(res)
-			  {
-				console.log(res);
-				device.state = res.isOn;
-        device.watts = Math.floor(res.watts);
-        if(!res.isOn) device.watts = 0;
-				$scope.error = null;
+      // If disconnected, don't fetch and pass to the next
+      if(!device.active)
+      {
         if(devices && devices.length)
         {
           device = devices.pop();
           $scope.updateState(device, devices);
         }
+        return;
+      }
+
+		  retryAction(function(){
+        console.log("fetching");
+
+			  return Service.get({id: device._id, service: "relay"}, function(res)
+			  {
+  				console.log(res);
+
+  				device.state = res.isOn;
+          device.watts = Math.floor(res.watts);
+          if(!res.isOn) device.watts = 0;
+  				$scope.error = null;
+          if(devices && devices.length)
+          {
+            device = devices.pop();
+            $scope.updateState(device, devices);
+          }
 
 			  }, function(err)
 			  {
+          console.log(err);
+          if(err.data === "Send Error" || err.data === "Send Timeout")
+          {
+            var index = $scope.devices.indexOf(device);
+            if(index > -1) $scope.devices[index].active = false;
+          }
 				      //$scope.error = "Error en la comuniación con el dispositivo " + device.name + ": " + err.data;
 			  }).$promise;
-			}, 3);
+			}, 1);
 		};
 
 		$scope.updateStates = function()

@@ -103,14 +103,14 @@ Protocol.prototype.parsePacket = function(packet)
 
 };
 
-Protocol.prototype.send = function(protoPacket)
+Protocol.prototype.send = function(protoPacket, callback)
 {
 	mesh.bridge.sendData(protoPacket.srcAddr, protoPacket.destAddr,
 						 PROTOCOL_ENDPOINT, PROTOCOL_ENDPOINT,
-						 protoPacket.message.getRaw());
+						 protoPacket.message.getRaw(), callback);
 };
 
-Protocol.prototype.sendAck = function(destAddr)
+Protocol.prototype.sendAck = function(destAddr, callback)
 {
 	var self = this;
 	var pkt = new ProtoPacket();
@@ -118,10 +118,10 @@ Protocol.prototype.sendAck = function(destAddr)
 	pkt.srcAddr = mesh.getShortAddr();
 	pkt.message.control.commandType = ProtoPacket.CMD_ACK;
 
-	this.send(pkt);
+	this.send(pkt, callback);
 };
 
-Protocol.prototype.sendNAck = function(destAddr)
+Protocol.prototype.sendNAck = function(destAddr, callback)
 {
 	var self = this;
 	var pkt = new ProtoPacket();
@@ -129,11 +129,11 @@ Protocol.prototype.sendNAck = function(destAddr)
 	pkt.srcAddr = mesh.getShortAddr();
 	pkt.message.control.commandType = ProtoPacket.CMD_NACK;
 
-	this.send(pkt);
+	this.send(pkt, callback);
 };
 
 // destAddr, action and param  must be numbers.
-Protocol.prototype.requestAction = function(destAddr, action, param)
+Protocol.prototype.requestAction = function(destAddr, action, param, callback)
 {
 	var self = this;
 	var pkt = new ProtoPacket();
@@ -149,11 +149,11 @@ Protocol.prototype.requestAction = function(destAddr, action, param)
 	pkt.message.command = new Buffer(1);
 	pkt.message.command.writeUInt8(action, 0);
 
-	this.send(pkt);
+	this.send(pkt, callback);
 };
 
 // Data must be a buffer
-Protocol.prototype.requestGet = function(destAddr, command, param, data)
+Protocol.prototype.requestGet = function(destAddr, command, param, data, callback)
 {
 	var self = this;
 	var pkt = new ProtoPacket();
@@ -174,11 +174,11 @@ Protocol.prototype.requestGet = function(destAddr, command, param, data)
 	pkt.message.command = new Buffer(1);
 	pkt.message.command.writeUInt8(command, 0);
 
-	this.send(pkt);
+	this.send(pkt, callback);
 };
 
 // Data must be a buffer
-Protocol.prototype.requestPost = function(destAddr, command, param, data)
+Protocol.prototype.requestPost = function(destAddr, command, param, data, callback)
 {
 	var self = this;
 	var pkt = new ProtoPacket();
@@ -199,11 +199,11 @@ Protocol.prototype.requestPost = function(destAddr, command, param, data)
 	pkt.message.command = new Buffer(1);
 	pkt.message.command.writeUInt8(command, 0);
 
-	this.send(pkt);
+	this.send(pkt, callback);
 };
 
 // Data must be a buffer
-Protocol.prototype.requestCustom = function(destAddr, data)
+Protocol.prototype.requestCustom = function(destAddr, data, callback)
 {
 	var self = this;
 	var pkt = new ProtoPacket();
@@ -216,7 +216,7 @@ Protocol.prototype.requestCustom = function(destAddr, data)
 		pkt.message.data = data;
 	}
 
-	this.send(pkt);
+	this.send(pkt, callback);
 };
 
 module.exports = Protocol;

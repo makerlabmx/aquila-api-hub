@@ -12,7 +12,7 @@ module.exports = {
 	maxRetriesInactive: 1,
 	maxRetriesFetch: 3,
 	//Advanced options, modify only if you know what you are doing:
-	timeout: 100,
+	timeout: 200,
 	longTimeout: 1000,
 	debug: false
 

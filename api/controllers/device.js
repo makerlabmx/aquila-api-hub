@@ -114,7 +114,28 @@ var deviceService = function(method, req, res)
 			/*var index = devicesWaiting.indexOf(device._id);
 			if(index > -1) devicesWaiting.splice(index, 1);*/
 
-			if(err) return res.status(500).send(err.message);
+			if(err)
+			{
+				//console.log(err.message);
+				/*if(err.message === "Send Timeout" || err.message === "Send Error")
+				{
+					// HOTFIX: Mark as inactive on error.
+					device.active = false;
+					device.save(function(err, device)
+					{
+						deviceManager.emit("deviceRemoved");
+					});
+				}*/
+				return res.status(500).send(err.message);
+			}
+			else
+			{
+				/*device.active = true;
+				device.save(function(err, device)
+				{
+					deviceManager.emit("deviceAdded");
+				});*/
+			}
 			if(status === services.R200) return res.status(200).type("application/json").send(data);
 			if(status === services.R404) return res.status(404).send("Service not found in device");
 			if(status === services.R405) return res.status(405).send("Method not allowed in device");

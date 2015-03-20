@@ -18,6 +18,9 @@ var Services = function()
 {
 	var self = this;
 
+	self.requestPending = false;
+	self.requestBuffer = [];
+
 	// request methods
 	self.GET = 0x00;
 	self.PUT = 0x01;
@@ -94,44 +97,67 @@ Services.prototype.request = function(destAddr, method, name, callback, data)
 								new Buffer(name),
 								new Buffer(data)]);
 
-	// DEBUG
-	// console.log(packet);
-	// console.log(mesh.getShortAddr(), destAddr);
+	self.requestBuffer.push({destAddr: destAddr, packet: packet, callback: callback});
+	self.requestNow();
 
-	mesh.bridge.sendData(mesh.getShortAddr(), destAddr,
-						 AQUILASERVICES_ENDPOINT, AQUILASERVICES_ENDPOINT,
-						 packet);
-
-	var tout = null;
-
-	var responseCb = function(packet)
-		{
-			if(tout)
-			{
-				// If its from the expected address
-				//console.log("Got packet:", packet);
-				if(packet.srcAddr === destAddr)
-				{
-					clearTimeout(tout);
-					// remove listener for only calling this once
-					self.removeListener("data", responseCb);
-					callback(null, packet.srcAddr, packet.method, new Buffer(packet.data).toString("utf8"));
-				}
-			}
-		};
-
-	tout = setTimeout(function()
-		{
-			tout = null;
-			// Remove callback from event
-			self.removeListener("data", responseCb);
-			callback(new Error("Timeout") );
-		}, AQUILASERVICES_TIMEOUT);
-
-	self.on("data", responseCb);
 };
 
-Services.prototype.response = function(destAddr, status, data)
+Services.prototype.requestNow = function()
+{
+	var self = this;
+
+	if(self.requestBuffer.length <= 0) return;
+	if(self.requestPending) return;
+	self.requestPending = true;
+
+	var request = self.requestBuffer.shift();
+
+	mesh.bridge.sendData(mesh.getShortAddr(), request.destAddr,
+						 AQUILASERVICES_ENDPOINT, AQUILASERVICES_ENDPOINT,
+						 request.packet, function(err)
+						{
+							if(err)
+							{
+								self.requestPending = false;
+								if(self.requestBuffer.length > 0) self.requestNow();
+								return request.callback(err);
+							}
+
+							var tout = null;
+
+							var responseCb = function(packet)
+								{
+									if(tout)
+									{
+										// If its from the expected address
+										//console.log("Got packet:", packet);
+										if(packet.srcAddr === request.destAddr)
+										{
+											self.requestPending = false;
+											clearTimeout(tout);
+											// remove listener for only calling this once
+											self.removeListener("data", responseCb);
+											request.callback(null, packet.srcAddr, packet.method, new Buffer(packet.data).toString("utf8"));
+											if(self.requestBuffer.length > 0) self.requestNow();
+										}
+									}
+								};
+
+							tout = setTimeout(function()
+								{
+									self.requestPending = false;
+									tout = null;
+									// Remove callback from event
+									self.removeListener("data", responseCb);
+									request.callback(new Error("Timeout") );
+									if(self.requestBuffer.length > 0) self.requestNow();
+								}, AQUILASERVICES_TIMEOUT);
+
+							self.on("data", responseCb);
+						});
+};
+
+Services.prototype.response = function(destAddr, status, data, callback)
 {
 	var self = this;
 	// Check body length and fail if longer than expected
@@ -142,7 +168,7 @@ Services.prototype.response = function(destAddr, status, data)
 
 	mesh.bridge.sendData(mesh.getShortAddr(), destAddr,
 												AQUILASERVICES_ENDPOINT, AQUILASERVICES_ENDPOINT,
-												packet);
+												packet, callback);
 };
 
 
