@@ -27,7 +27,7 @@
 
       $routeProvider.
         when('/', {
-          redirectTo: '/dashboard'
+          redirectTo: '/devices'
         }).
         when('/dashboard', {
           templateUrl: 'main/views/dashboard/dashboard.html',
