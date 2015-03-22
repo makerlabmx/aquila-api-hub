@@ -4,6 +4,7 @@
 require("shelljs/global");
 var config = require("shelljs").config;
 var path = require("path");
+var configManager = require("./configManager");
 
 // get args for passing to aquila-server
 var args = process.argv.slice(2).join(" ");
@@ -32,6 +33,9 @@ var dbpath = '"' + path.join(home, ".aquila-server/data/db") + '"';
 var logpath = '"' + path.join(home, ".aquila-server/data/mongodb.log") + '"';
 echo("Starting Database...");
 exec("mongod --journal --dbpath " + dbpath + " --logpath " + logpath, { async: true });
+
+// Initialize config files:
+configManager.checkConfigFiles();
 
 // Start aquila-server
 echo("Starting Aquila Server...");
