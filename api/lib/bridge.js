@@ -315,8 +315,8 @@ var Bridge = function(baudrate, port)
 						});
 					self.serialPort.on("confirm", function(status)
 						{
-							if(status) console.log("Data Transmit Success");
-							else console.log("Data Transmit Error");
+							if(status) console.log("Data Transmit Error");
+							else console.log("Data Transmit Success");
 						});
 					self.serialPort.on("promSetConfirm", function(isProm)
 						{
