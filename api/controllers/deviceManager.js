@@ -240,13 +240,20 @@ DeviceManager.prototype.eventHandler = function(packet)
 	var param = null;
 	if(hasParam) param = packet.message.param[0];
 
-	var EUIAddr = packet.message.data;
+	var EUIAddr = packet.message.data.slice(0, 8);
+	var eName = "";
+
+	if(packet.message.data[8] !== undefined)
+	{
+		var eNameLen = packet.message.data[8];
+		eName = packet.message.data.slice(9, 9 + eNameLen).toString("utf8");
+	}
 
 	var query = Device.where({ address: EUIAddr });
 	query.findOne(function(err, device)
 		{
 			if(err) return console.log(err.message);
-			if(device) self.emit("event", device, eventN, param);
+			if(device) self.emit("event", device, eventN, param, eName);
 		});
 };
 
