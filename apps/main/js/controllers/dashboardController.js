@@ -34,8 +34,8 @@
         if(!res.isOn) device.watts = 0;
 				$scope.error = null;
 
-        var index = $scope.devices.indexOf(device);
-        if(index > -1) $scope.devices[index].active = true;
+        //var index = $scope.devices.indexOf(device);
+        //if(index > -1) $scope.devices[index].active = true;
 
 			  }, function(err)
 			  {
@@ -79,8 +79,8 @@
           console.log(err);
           if(err.data === "Send Error" || err.data === "Send Timeout")
           {
-            var index = $scope.devices.indexOf(device);
-            if(index > -1) $scope.devices[index].active = false;
+            //var index = $scope.devices.indexOf(device);
+            //if(index > -1) $scope.devices[index].active = false;
           }
 				      //$scope.error = "Error en la comuniación con el dispositivo " + device.name + ": " + err.data;
 			  }).$promise;
