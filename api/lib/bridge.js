@@ -1,554 +1,420 @@
-/*
- *	802.15.4 Dongle interface utility.
- *	Transfers 802.15.4 LWM packet frames to and from a USB Dongle via a serial port bridge.
- *
- *	Author: Rodrigo Méndez Gamboa, rmendez@makerlab.mx
- *
- *	Serial Bridge Protocol: [PREAMBLE] COMMAND [Command specific]
- *		[PREAMBLE]: 0xAA 0x55 0xAA 0x55
- *
- *	Comands:
- *		CMD_DATA: 			[Command specific] = lqi rssi srcAddr(16) dstAddr(16) srcEndpoint dstEndpoint frameSize [MAC Frame]
- *		CMD_SET_PROM:		[Command specific] = PROM*				*0 or 1
- *		CMD_SET_PAN:		[Command specific] = [PAN*]				*len = 2 (16 bit), lsb first
- *		CMD_SET_CHAN:		[Command specific] = CHAN*				*11 - 24
- *		CMD_START																					*Sent on bridge start or reset and in response to CMD_PING
- *		CMD_SET_SHORT_ADDR:	[Command specific] = [ADDR*]	*len = 2 (16 bit), lsb first
- *		//CMD_SET_LONG_ADDR:	[Command specific] = [ADDR*]*len = 8 (64 bit), lsb first
- *		CMD_PING:																					*Sent by PC, response is CMD_START
- *		CMD_SUCESS:																				*Sent on data transmit success
- *		CMD_ERROR:																				*Sent on data tranmit error
- *		CMD_GET_LONG_ADDR:																*Get bridge MAC address
- *		CMD_GET_SECURITY:																	*Get if security enabled
- *		CMD_SET_SECURITY: [Command specific] = ENABLED*		*0 or 1
- *		CMD_SET_KEY:			[Command specific] = [SEC_KEY*]	*len = 16 (128 bit), automatically enables security and responds with security enabled
- */
-
- /*
-	New Data Format 10/11/14: Now we are using LWM, thus all MAC processing is done in the uC, we only send relevant data to PC.
-		lqi rssi srcAddr(16) dstAddr(16) srcEndpoint dstEndpoint frameSize [LWM Data]
- */
+"use strict";
 
 /*
- *	Communication Secuence Diagrams:
+ *  802.15.4 Dongle interface utility.
+ *  Transfers 802.15.4 LWM packet frames to and from a USB Dongle via a serial port bridge.
  *
- *	PC 	| CMD_PING	------> | Bridge
- *		| <------ CMD_START	|
- *		|					|
+ *  Author: Rodrigo Méndez Gamboa, rmendez@makerlab.mx
  *
- *	PC 	| CMD_DATA	------------------> | Bridge
- *		| <-- CMD_SUCCESS or CMD_ERROR	|
- *		|								|
+ *  Update: 24/04/15: Changed encapsulation protocol to SLIP (RFC 1055)(http://en.wikipedia.org/wiki/Serial_Line_Internet_Protocol),
+ *                    added 16bit CRC to end of packet
  *
- *	PC 	| CMD_SET_*	------------------> | Bridge
- *		| <--- CMD_SET_* (Confirmation)	|
- *		|								|
+ *  Serial packet: [SLIP END (0xC0)][DATA (SLIP Escaped)][SLIP END (0xC0)]
+ *  DATA packet: [Command][Command specific][CRC (16bit)]
  *
- *	On Data reception:
- * 	PC 	| <------ CMD_DATA 	| Bridge
- *		|					|
+ *  Comands:
+ *      CMD_DATA:           [Command specific] = lqi rssi srcAddr(16) dstAddr(16) srcEndpoint dstEndpoint frameSize [MAC Frame]
+ *      CMD_ACK:            [Command specific] = RSSI                                               *Sent on data transmit success
+ *      CMD_NACK:           [Command specific] = CAUSE                                              *Sent on data tranmit error
+ *      CMD_GET_OPT:        [Command specific] = PROM* PAN_LOW PAN_HIGH CHAN**  ADDR_LOW ADDR_HIGH  *Returns the current options
+ *      CMD_SET_OPT:        [Command specific] = PROM* PAN_LOW PAN_HIGH CHAN**  ADDR_LOW ADDR_HIGH  *0 or 1, **11-26
+ *      CMD_GET_SECURITY:   [Command specific] = ENABLED                                            *Get if security enabled
+ *      CMD_SET_SECURITY:   [Command specific] = ENABLED [SEC_KEY](16 byte, 128 bit)                *Set if security enabled and key
+ *      CMD_START                                                                                   *Sent on bridge start or reset and in response to CMD_PING
+ *      CMD_PING:                                                                                   *Sent by PC, response is CMD_START
+ *      CMD_GET_LONG_ADDR:                                                                          *Get bridge MAC address
+ */
+
+
+/*
+ *  Communication Secuence Diagrams:
  *
- *	On Bridge Startup:
- *	PC 	| <------ CMD_START	| Bridge
- *		|					|
+ *  PC  | CMD_PING  ------> | Bridge
+ *      | <------ CMD_START |
+ *      |                   |
+ *
+ *  PC  | CMD_DATA  ------------------> | Bridge
+ *      | <-- CMD_ACK or CMD_NACK       |
+ *      |                               |
+ *
+ *  PC  | CMD_SET_* ------------------> | Bridge
+ *      | <--- CMD_SET_* (Confirmation) |
+ *      |                               |
+ *
+ *  On Data reception:
+ *  PC  | <------ CMD_DATA  | Bridge
+ *      |                   |
+ *
+ *  On Bridge Startup:
+ *  PC  | <------ CMD_START | Bridge
+ *      |                   |
  *
  */
 
-var Serial = require("serialport");
-var SerialPort = Serial.SerialPort;
-require("buffertools").extend(); // extend Buffer.prototype
-var scanPorts = require("./scanports");
+// TODO: Add routine for checking if bridge is still alive, and update settings if restarted
+
+var util = require("util");
+var SerialTransport  = require("./serialTransport");
 var events = require("events");
+var scanPorts = require("./scanports");
 var configManager = require("./../../configManager");
 var config = require(configManager.bridgePath);
 var Packet = require("./meshPacket.js");
 
-// Serial timeout, used for clearing buffer if no char received in that time.
-var TIMEOUT = 1000;
+var TIMEOUT = 500;
 
-// Bridge Protocol Constants:
-var PREAMBLE 						= new Buffer([0xAA, 0x55, 0xAA, 0x55]);
-var CMD_DATA 						= 0x00;
-var CMD_SET_PROM 				= 0x01;
-var CMD_SET_PAN 				= 0x02;
-var CMD_SET_CHAN 				= 0x03;
-var CMD_START 					= 0x04;
-var CMD_SET_SHORT_ADDR 	= 0x05;
-var CMD_SET_LONG_ADDR 	= 0x06;
-var CMD_PING 						= 0x07;
-var CMD_SUCCESS 				= 0x08;
-var CMD_ERROR 					= 0x09;
-var CMD_GET_LONG_ADDR 	= 0x0A;
-var CMD_GET_SECURITY 		= 0x0B;
-var CMD_SET_SECURITY 		= 0x0C;
-var CMD_SET_KEY 				= 0x0D;
+// Constants:
+var CMD_DATA            = 0;
+var CMD_ACK             = 1;
+var CMD_NACK            = 2;
+var CMD_GET_OPT         = 3;
+var CMD_SET_OPT         = 4;
+var CMD_GET_SECURITY    = 5;
+var CMD_SET_SECURITY    = 6;
+var CMD_START           = 7;
+var CMD_PING            = 8;
+var CMD_GET_LONG_ADDR   = 9;
+var CMD_SET_LONG_ADDR   = 10;
 
-var INDEX_CMD 				= PREAMBLE.length;
-var INDEX_LQI 				= PREAMBLE.length + 1;
-var INDEX_RSSI 				= PREAMBLE.length + 2;
-var INDEX_SRCADDRLOW 	= PREAMBLE.length + 3;
-var INDEX_SRCADDRHI 	= PREAMBLE.length + 4;
-var INDEX_DSTADDRLOW 	= PREAMBLE.length + 5;
-var INDEX_DSTADDRHI 	= PREAMBLE.length + 6;
-var INDEX_SRCEND 			= PREAMBLE.length + 7;
-var INDEX_DSTEND 			= PREAMBLE.length + 8;
-var INDEX_SIZE 				= PREAMBLE.length + 9;
+// Indexes
+var COMMAND     = 0;
+var OPT_PROM    = 1;
+var OPT_PANL    = 2;
+var OPT_PANH    = 3;
+var OPT_CHAN    = 4;
+var OPT_ADDRL   = 5;
+var OPT_ADDRH   = 6;
+var SEC_EN      = 1;
+var SEC_KEY     = 2;
 
-var bridgeParser = function()
-{
-	var data = new Buffer(0);
-	var timeoutFnc = null;
-	return function(emmiter, buffer)
-	{
-
-		if(timeoutFnc) clearTimeout(timeoutFnc);
-		timeoutFnc = setTimeout(function(){
-			data = new Buffer(0);
-		}, TIMEOUT);
-
-		data = data.concat(buffer);
-
-		var start = data.indexOf(PREAMBLE);
-		while(start !== -1)
-		{
-			// Get rid of garbage data
-			data = data.slice(start);
-
-			// For checking wich command
-			if(data.length < PREAMBLE.length + 1) return;
-
-			switch(data[INDEX_CMD])
-			{
-				case CMD_DATA:
-					// Checking if we have lqi, rssi, size, etc. already
-					if(data.length < PREAMBLE.length + 10) return;
-					var lqi =  data[INDEX_LQI];
-					var rssi = data[INDEX_RSSI];
-					var srcAddr = data[INDEX_SRCADDRLOW];
-					srcAddr |= (data[INDEX_SRCADDRHI] << 8);
-					var dstAddr = data[INDEX_DSTADDRLOW];
-					dstAddr |= (data[INDEX_DSTADDRHI] << 8);
-					var srcEndpoint = data[INDEX_SRCEND];
-					var dstEndpoint = data[INDEX_DSTEND];
-					var size = data[INDEX_SIZE];
-
-					// Checking if we have the whole message:
-					if(data.length < PREAMBLE.length + 10 + size) return;
-					var frame = data.slice(INDEX_SIZE + 1);
-					var frameArray = [];
-
-					for(var i = 0; i < size; i++)
-					{
-						frameArray.push(frame[i]);
-					}
-
-					//Cleaning data:
-					data = data.slice(INDEX_SIZE + size + 1);
-					try
-					{
-						emmiter.emit("data", new Packet(lqi, rssi, srcAddr, dstAddr, srcEndpoint, dstEndpoint, size, frameArray));
-					}
-					catch(err){}
-
-					break;
-
-				case CMD_START:
-					data = data.slice(INDEX_CMD);
-					try
-					{
-						emmiter.emit("bridgeStarted");
-					}
-					catch(err){}
-					break;
-
-				case CMD_SUCCESS:
-					data = data.slice(INDEX_CMD);
-					try
-					{
-						emmiter.emit("confirm", null);
-					}
-					catch(err){}
-					break;
-
-				case CMD_ERROR:
-					data = data.slice(INDEX_CMD);
-					try
-					{
-						emmiter.emit("confirm", new Error("Send Error"));
-					}
-					catch(err){}
-					break;
-
-				case CMD_SET_PROM:
-					if(data.length < PREAMBLE.length + 2) return;
-					var prom = data[INDEX_CMD + 1];
-					prom = prom!==0?true:false;
-					data = data.slice(INDEX_CMD + 1);
-					try
-					{
-						emmiter.emit("promSetConfirm", prom);
-					}
-					catch(err){}
-					break;
-
-				case CMD_SET_PAN:
-					if(data.length < PREAMBLE.length + 3) return;
-					var low = data[INDEX_CMD + 1];
-					var high = data[INDEX_CMD + 2];
-					var pan = low | (high << 8);
-					data = data.slice(INDEX_CMD + 2);
-					try
-					{
-						emmiter.emit("panSetConfirm", pan);
-					}
-					catch(err){}
-					break;
-
-				case CMD_SET_CHAN:
-					if(data.length < PREAMBLE.length + 2) return;
-					var chan = data[INDEX_CMD + 1];
-					data = data.slice(INDEX_CMD + 1);
-					try
-					{
-						emmiter.emit("chanSetConfirm", chan);
-					}
-					catch(err){}
-					break;
-
-				case CMD_SET_SHORT_ADDR:
-					if(data.length < PREAMBLE.length + 3) return;
-					var low = data[INDEX_CMD + 1];
-					var high = data[INDEX_CMD + 2];
-					var addr = low | (high << 8);
-					data = data.slice(INDEX_CMD + 2);
-					try
-					{
-						emmiter.emit("shortAddrSetConfirm", addr);
-					}
-					catch(err){}
-					break;
-
-				case CMD_SET_LONG_ADDR:
-					if(data.length < PREAMBLE.length + 9) return;
-					var addr = [];
-					for(var i = 1; i < 9; i++)
-					{
-						addr.push(data[INDEX_CMD + i]);
-					}
-					data = data.slice(INDEX_CMD + 8);
-					try
-					{
-						emmiter.emit("longAddrSetConfirm", addr);
-					}
-					catch(err){}
-					break;
-
-				case CMD_GET_SECURITY:
-					if(data.length < PREAMBLE.length + 2) return;
-					var secEn = data[INDEX_CMD + 1];
-					secEn = secEn!==0?true:false;
-					data = data.slice(INDEX_CMD + 1);
-					try
-					{
-						emmiter.emit("securityConfirm", secEn);
-					}
-					catch(err){}
-					break;
-
-				default:
-					data = data.slice(INDEX_CMD);
-					break;
-			}
-			start = data.indexOf(PREAMBLE);
-		}
-
-	};
-};
+var D_LQI       = 1;
+var D_RSSI      = 2;
+var D_SRCADDRL  = 3;
+var D_SRCADDRH  = 4;
+var D_DSTADDRL  = 5;
+var D_DSTADDRH  = 6;
+var D_SRCEP     = 7;
+var D_DSTEP     = 8;
+var D_SIZE      = 9;
+var D_DATA      = 10;
 
 var Bridge = function(baudrate, port)
 {
-	var self = this;
+    var self = this;
 
-	// Serial Write buffer control
-	self.writing = false;
-	self.writeBuffer = [];
-	// Send request buffer control
-	self.sending = false;
-	self.sendBuffer = [];
+    self.transport = null;
+    self.longAddress = new Buffer([0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
 
-	self.on("ready", function()
-	{
-		// Making sure we don't forget to send anything
-		// BAD IDEA, causes double transmissions, or not...?
-		//setInterval(function(){ self.writeNow(); }, 1000);
-	});
+    self.currentSecurity = {
+        enabled: false,
+        key: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    };
+    self.currentOptions = {
+        prom: false,
+        pan: 0xCA5A,
+        chan: 26,
+        addr: 0x00FF
+    };
 
-	self.fake = config.fake;
-	if(self.fake) return self.emit("ready");
+    self.waitingResponse = false;
+    self.buffer = [];
 
-	if(baudrate === undefined) var baudrate = config.baudrate;
-	if(port === undefined) var port = config.port;
+    if(baudrate === undefined) var baudrate = config.baudrate;
+    if(port === undefined) var port = config.port;
 
-	var init = function(path)
-		{
-			self.serialPort = new SerialPort(path,
-			{
-				baudrate: baudrate,
-				parser: bridgeParser()
-			});
+    var init = function(port)
+    {
+        self.transport = new SerialTransport(baudrate, port);
+        self.transport.on("ready", function()
+            {
 
-			self.serialPort.on("open", function()
-			{
-				if(config.debug)
-				{
-					console.log("Bridge port open");
-					// data returned as LWM frame array
+            });
+        self.transport.on("data", function(data)
+            {
+                self.parse(data);
+            });
+        // Debug
+        self.transport.on("crcError", function(){ console.log("crcError") });
+        self.transport.on("framingError", function(){ console.log("framingError") });
+        self.transport.on("escapeError", function(){ console.log("escapeError") });
+        // 
+    };
 
-					self.serialPort.on("data", function(data)
-						{
-							console.log("data received: ", new Buffer(data.data).toString());
-						});
+    self.on("longAddressSet", function()
+        {
+            console.log("ready");
 
-					self.serialPort.on("bridgeStarted", function()
-						{
-							console.log("Bridge Started");
-						});
-					self.serialPort.on("confirm", function(status)
-						{
-							if(status) console.log("Data Transmit Error");
-							else console.log("Data Transmit Success");
-						});
-					self.serialPort.on("promSetConfirm", function(isProm)
-						{
-							console.log("Prom Confirm: ", isProm);
-						});
-					self.serialPort.on("panSetConfirm", function(pan)
-						{
-							console.log("Pan Confirm: ", pan);
-						});
-					self.serialPort.on("chanSetConfirm", function(chan)
-						{
-							console.log("Channel Confirm: ", chan);
-						});
-					self.serialPort.on("shortAddrSetConfirm", function(addr)
-						{
-							console.log("Short Address Confirm: ", addr);
-						});
-					self.serialPort.on("longAddrSetConfirm", function(addr)
-						{
-							console.log("Long Address Confirm: ", addr);
-						});
-				}
+            self.emit("ready");
+        });
 
-				self.emit("ready");
-			});
-		};
-
-	if(port) init(port);
-	else scanPorts(baudrate, init);
+    if(port) init(port);
+    else scanPorts(baudrate, function(port)
+        {
+            init(port);
+        });
 };
 
-Bridge.prototype.__proto__ = events.EventEmitter.prototype;
+util.inherits(Bridge, events.EventEmitter);
 
-Bridge.prototype.ping = function()
+Bridge.prototype.parse = function(data)
 {
-	var frame = Buffer.concat([PREAMBLE, new Buffer([CMD_PING])]);
-	this.write(frame);
-};
 
-// isProm format: bool
-Bridge.prototype.setPromiscuous = function(isProm)
-{
-	var param = null;
-	if(isProm === true) param = 0x01;
-	else if(isProm === false) param = 0x00;
+    console.log(data);
 
-	if(param !== null)
-	{
-		var frame = Buffer.concat([PREAMBLE, new Buffer([CMD_SET_PROM, param])]);
-		this.write(frame);
-	}
-};
+    var self = this;
 
-// pan format: 16 bit number, example: 0xCA5A
-Bridge.prototype.setPan = function(pan)
-{
-	if(typeof(pan) !== "undefined")
-	{
-		var low = pan & 0xFF;
-		var high = (pan >>> 8) & 0xFF;
-		var frame = Buffer.concat([PREAMBLE, new Buffer([CMD_SET_PAN, low, high])]);
-		this.write(frame);
-	}
-};
+    if(data.length <= 0) return;
 
-// chan format: number from 11 to 26
-Bridge.prototype.setChannel = function(chan)
-{
-	if(chan >= 11 && chan <= 26)
-	{
-		var frame = Buffer.concat([PREAMBLE, new Buffer([CMD_SET_CHAN ,chan])]);
-		this.write(frame);
-	}
-};
+    var responseCmds = [CMD_ACK, CMD_NACK, CMD_SET_OPT, CMD_SET_SECURITY, CMD_START, CMD_SET_LONG_ADDR];
 
-// address format: 16 bit number, example: 0xFA2B
-Bridge.prototype.setShortAddress = function(shortAddr)
-{
-	if(shortAddr)
-	{
-		var low = shortAddr & 0xFF;
-		var high = (shortAddr >>> 8) & 0xFF;
-		var frame = Buffer.concat([PREAMBLE, new Buffer([CMD_SET_SHORT_ADDR, low, high]) ]);
-		this.write(frame);
-	}
-};
+    if(data[COMMAND] === CMD_DATA)
+    {
+        if(data.length < 10) return;
+        var lqi, rssi, srcAddr, dstAddr, srcEndpoint, dstEndpoint, size, frame;
+        lqi         = data[D_LQI];
+        rssi        = data[D_RSSI];
+        srcAddr     = data[D_SRCADDRL];
+        srcAddr     |= (data[D_SRCADDRH] << 8);
+        dstAddr     = data[D_DSTADDRL];
+        dstAddr     |= (data[D_DSTADDRH] << 8);
+        srcEndpoint = data[D_SRCEP];
+        dstEndpoint = data[D_DSTEP];
+        size        = data[D_SIZE];
 
-// address format: 8 byte array (64 bit address), lsb first.
-Bridge.prototype.setLongAddress = function(longAddr)
-{
-	if(longAddr.length === 8)
-	{
-		var cmd = [CMD_SET_LONG_ADDR];
-		cmd = cmd.concat(longAddr);
-		var frame = Buffer.concat( [PREAMBLE, new Buffer(cmd) ] );
-		this.write(frame);
-	}
-};
+        if(data.length < 10 + size) return;
+        frame = data.slice(10, 10 + size);
 
-Bridge.prototype.getLongAddress = function()
-{
-	var cmd = [CMD_GET_LONG_ADDR];
-	var frame = Buffer.concat( [PREAMBLE, new Buffer(cmd) ] );
-	this.write(frame);
-};
+        self.emit("data", new Packet(lqi, rssi, srcAddr, dstAddr, srcEndpoint, dstEndpoint, size, frame));
+    }
 
-Bridge.prototype.setSecurityEnabled = function(enabled)
-{
-	var param = null;
-	if(enabled === true) param = 0x01;
-	else if(enabled === false) param = 0x00;
+    if( responseCmds.indexOf(data[COMMAND]) != -1 )
+    {
+        self.emit("response", data);
+    }
 
-	if(param !== null)
-		{
-			var frame = Buffer.concat([PREAMBLE, new Buffer([CMD_SET_SECURITY, param])]);
-			this.write(frame);
-		}
-};
-
-
-// key must be 16 byte array
-Bridge.prototype.setSecurityKey = function(key)
-{
-	if(key.length === 16)
-	{
-		var frame = Buffer.concat([PREAMBLE, new Buffer([CMD_SET_KEY]), new Buffer(key)]);
-		this.write(frame);
-	}
-};
-
-// data format: array (or buffer?)
-Bridge.prototype.sendData = function(srcAddr, dstAddr, srcEndpoint, dstEndpoint, data, callback)
-{
-	var self = this;
-	if(!data) return;
-	// Dummy lqi and rssi (bridge doesnt care about this on transmit, just for completness):
-	var lqi = 0xFF;
-	var rssi = 0xFF;
-
-	var frame = Buffer.concat([ PREAMBLE, new Buffer([ CMD_DATA, lqi, rssi, srcAddr&0xFF, (srcAddr>>8)&0xFF,
-								dstAddr&0xFF, (dstAddr>>8)&0xFF, srcEndpoint, dstEndpoint, data.length ]), data ]);
-
-	self.sendBuffer.push({data: frame, callback: callback});
-	self.sendDataNow();
+    if(data[COMMAND] === CMD_SET_LONG_ADDR)
+    {
+        if(data.length < 9) return;
+        self.longAddress = data.slice(1, 9);
+        self.emit("longAddressSet", self.longAddress);        
+    }
 
 };
 
-Bridge.prototype.sendDataNow = function()
+Bridge.prototype.request = function(payload, callback)
 {
-	var self = this;
+    var self = this;
+    self.buffer.push({
+        payload: payload,
+        callback: callback
+    });
+    self.requestNow();
+};
 
-	// Nothing to do here
-	if(self.sendBuffer.length <= 0) return;
-	// Check if a send confirmation if pending
-	if(self.sending) return;
-	self.sending = true;
+Bridge.prototype.requestNow = function()
+{
+    var self = this;
+    // Nothing to send
+    if(self.buffer.length <= 0) return;
+    // We are busy, do nothing
+    if(self.waitingResponse) return;
 
-	// Get request from buffer
-	var request = self.sendBuffer.shift();
+    self.waitingResponse = true;
+    var dat = self.buffer.shift();
+    var payload = dat.payload;
+    var callback = dat.callback;
 
-	// Prepare for confirmation
-	var tout = null;
-	var confirmCb = function(status)
-	{
-		if(tout)
-		{
-			clearTimeout(tout);
-			self.serialPort.removeListener("confirm", confirmCb);
-			self.sending = false;
+    // Wait response or timeout
+    var tout = null;
+    var confirmCb = function(data)
+    {
+        if(tout)
+        {
+            clearTimeout(tout);
+            self.removeListener("response", confirmCb);
+            self.waitingResponse = false;
 
-			if(config.debug) console.log(status);
+            if(callback) callback(null, data);
 
-			if(request.callback) request.callback(status);
-			// Send any other pending requests
-			if(self.sendBuffer.length > 0) self.sendDataNow();
-		}
-	};
+            // Send any other pending requests
+            self.requestNow();
+        }
+    };
 
-	tout = setTimeout(function()
-	{
-		tout = null;
-		self.serialPort.removeListener("confirm", confirmCb);
-		self.sending = false;
+    tout = setTimeout(function()
+        {
+            tout = null;
+            self.removeListener("response", confirmCb);
+            self.waitingResponse = false;
 
-		if(config.debug) console.log(status);
+            if(callback) callback(new Error("Send Timeout"));
 
-		if(request.callback) request.callback(new Error("Send Timeout"));
-		// Send any other pending requests
-		if(self.sendBuffer.length > 0) self.sendDataNow();
-	}, TIMEOUT);
+            // Send any other pending requests
+            self.requestNow();
 
-	self.serialPort.on("confirm", confirmCb);
+        }, TIMEOUT);
 
-	// Finally, really send to bridge
-	self.write(request.data);
+    self.on("response", confirmCb);
+
+    // Really send
+    self.transport.write(payload);
 
 };
 
-// If still sending, wait and then send
-Bridge.prototype.write = function(data)
+// callback(err, status)
+Bridge.prototype.sendData = function(packet, callback)
 {
-	var self = this;
+    var self = this;
 
-	self.writeBuffer.push(data);
-	self.writeNow();
-
+    var frame = Buffer.concat([ new Buffer( [CMD_DATA, packet.lqi, packet.rssi, 
+                                            packet.srcAddr&0xFF, (packet.srcAddr>>8)&0xFF,
+                                            packet.dstAddr&0xFF, (packet.dstAddr>>8)&0xFF, 
+                                            packet.srcEndpoint, packet.dstEndpoint, packet.size] ),
+                                new Buffer( packet.data )]);
+    self.request(frame, function(err, data)
+        {
+            if(!callback) return;
+            if(err) return callback(err);
+            if(data[COMMAND] === CMD_ACK)
+            {
+                var rssi = data[1];
+                callback(null, rssi)
+            }
+            else if(data[COMMAND] === CMD_NACK)
+            {
+                var cause = data[1];
+                // Cause, see LWM specification for values
+                callback(new Error("NACK"), cause);
+            }
+            else
+            {
+                callback(new Error("Unexpected response"));
+            }
+        });
 };
 
-Bridge.prototype.writeNow = function()
+Bridge.prototype.ping = function(callback)
 {
-	var self = this;
+    this.request([CMD_PING], function(err, data)
+        {
+            if(!callback) return;
+            if(err) return callback(err);
+            if(data[COMMAND] === CMD_START) callback(null);
+            else callback(new Error("Unexpected response"));
+        });
+};
 
-	// Nothing to do here
-	if(self.writeBuffer.length <= 0) return;
-	// We are busy, do nothing
-	if(self.writing) return;
-	self.writing = true;
+Bridge.prototype.setOptions = function(options, callback)
+{
+    this.currentOptions = options;
 
-	// do nothing if we are in fake mode
-	if(self.fake) { self.writing = false; return; }
+    console.log(options);
 
-	self.serialPort.drain(function()
-		{
-			var data = self.writeBuffer.shift();
-			self.serialPort.write(data);
+    var payload = new Buffer([  CMD_SET_OPT, options.prom, options.pan&0xFF, (options.pan>>8)&0xFF, 
+                                options.chan, options.addr&0xFF, (options.addr>>8)&0xFF]);
 
-			if(config.debug) console.log("Sending:", data);
+    this.request(payload, function(err, data)
+        {
+            if(!callback) return;
+            if(err) return callback(err);
+            if(data[COMMAND] === CMD_SET_OPT) 
+            {
+                if(data.length < 7) return callback(new Error("Corrupted response"));
+                var opts = {
+                    prom: data[OPT_PROM],
+                    pan: data[OPT_PANL] | (data[OPT_PANH] << 8),
+                    chan: data[OPT_CHAN],
+                    addr: data[OPT_ADDRL] | (data[OPT_ADDRH] << 8)
+                };
+                callback(null, opts);
+            }
+            else callback(new Error("Unexpected response"));
+        });
+};
 
-			self.writing = false;
-			if(self.writeBuffer.length > 0) self.writeNow();
-		});
+Bridge.prototype.getOptions = function(callback)
+{
+    this.request([CMD_GET_OPT], function(err, data)
+        {
+            if(!callback) return;
+            if(err) return callback(err);
+            if(data[COMMAND] === CMD_SET_OPT)
+            {
+                if(data.length < 7) return callback(new Error("Corrupted response"));
+                var opts = {
+                    prom: data[OPT_PROM],
+                    pan: data[OPT_PANL] | (data[OPT_PANH] << 8),
+                    chan: data[OPT_CHAN],
+                    addr: data[OPT_ADDRL] | (data[OPT_ADDRH] << 8)
+                };
+                callback(null, opts);
+            }
+            else callback(new Error("Unexpected response"));
+        });
+};
 
-}
+Bridge.prototype.setSecurity = function(options, callback)
+{
+    // options = { enabled: true, key: [...] }
+    this.currentSecurity = options;
+
+    var payload = Buffer.concat([ new Buffer([CMD_SET_SECURITY, options.enabled]), new Buffer(options.key) ]);
+
+    var self = this;
+    this.request(payload, function(err, data)
+        {
+            if(!callback) return;
+            if(err) return callback(err);
+            if(data[COMMAND] === CMD_SET_SECURITY) 
+            {
+                if(data.length < 2) return callback(new Error("Corrupted response"));
+
+                var sec = {
+                    enabled: data[SEC_EN],
+                    key: self.currentSecurity.key
+                };
+
+                callback(null, sec);
+            }
+            else callback(new Error("Unexpected response"));
+        });
+};
+
+Bridge.prototype.getSecurity = function(callback)
+{
+    var self = this;
+    this.request([CMD_GET_SECURITY], function(err, data)
+        {
+            if(!callback) return;
+            if(err) return callback(err);
+            if(data[COMMAND] === CMD_SET_SECURITY) 
+            {
+                if(data.length < 2) return callback(new Error("Corrupted response"));
+
+                var sec = {
+                    enabled: data[SEC_EN],
+                    key: self.currentSecurity.key
+                };
+
+                callback(null, sec);
+            }
+            else callback(new Error("Unexpected response"));
+        });
+};
+
+Bridge.prototype.getLongAddress = function(callback)
+{
+    this.request([CMD_GET_LONG_ADDR], function(err, data)
+        {
+            if(!callback) return;
+            if(err) return callback(err);
+            if(data[COMMAND] === CMD_SET_LONG_ADDR) 
+            {
+                if(data.length < 9) return callback(new Error("Corrupted response"));
+                callback(null, data.slice(1, 9));
+            }
+            else callback(new Error("Unexpected response"));
+        });
+};
 
 module.exports = Bridge;

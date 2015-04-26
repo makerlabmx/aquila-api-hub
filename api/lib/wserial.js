@@ -5,6 +5,7 @@
 
 var mesh = require("./mesh");
 var events = require("events");
+var Packet = require("./meshPacket.js");
 
 var WSERIAL_ENDPOINT = 14;
 var WSERIAL_MAXDATA = mesh.AQUILAMESH_MAXPAYLOAD;
@@ -41,9 +42,11 @@ WSerial.prototype.send = function(data)
 		var chunk = remaining.slice(0, WSERIAL_MAXDATA - 1);
 		remaining = remaining.slice(WSERIAL_MAXDATA - 1);
 
-		mesh.bridge.sendData(mesh.localAddr, data.dstAddr,
-			WSERIAL_ENDPOINT, WSERIAL_ENDPOINT,
+		var packet = new Packet(0xFF, 0xFF, mesh.localAddr, data.dstAddr,
+			WSERIAL_ENDPOINT, WSERIAL_ENDPOINT, chunk.length,
 			chunk);
+
+		mesh.sendPacket(packet);
 	}
 
 };

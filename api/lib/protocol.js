@@ -7,6 +7,7 @@
 var mesh = require("./mesh");
 var ProtoPacket = require("./protoPacket");
 var events = require("events");
+var Packet = require("./meshPacket.js");
 
 var PROTOCOL_ENDPOINT = 13;
 var PROTOCOL_VERSION = ProtoPacket.PROTOCOL_VERSION;
@@ -105,9 +106,12 @@ Protocol.prototype.parsePacket = function(packet)
 
 Protocol.prototype.send = function(protoPacket, callback)
 {
-	mesh.bridge.sendData(protoPacket.srcAddr, protoPacket.destAddr,
-						 PROTOCOL_ENDPOINT, PROTOCOL_ENDPOINT,
-						 protoPacket.message.getRaw(), callback);
+	var data = protoPacket.message.getRaw();
+	var packet = new Packet(0xFF, 0xFF, protoPacket.srcAddr, protoPacket.destAddr,
+						 PROTOCOL_ENDPOINT, PROTOCOL_ENDPOINT, data.length,
+						 data);
+
+	mesh.sendPacket(packet, callback);
 };
 
 Protocol.prototype.sendAck = function(destAddr, callback)

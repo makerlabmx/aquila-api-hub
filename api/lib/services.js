@@ -5,6 +5,7 @@
 
 var mesh = require("./mesh");
 var events = require("events");
+var Packet = require("./meshPacket.js");
 
 var AQUILASERVICES_ENDPOINT = 12;
 var AQUILASERVICES_VERSION = 1;
@@ -112,9 +113,11 @@ Services.prototype.requestNow = function()
 
 	var request = self.requestBuffer.shift();
 
-	mesh.bridge.sendData(mesh.getShortAddr(), request.destAddr,
-						 AQUILASERVICES_ENDPOINT, AQUILASERVICES_ENDPOINT,
-						 request.packet, function(err)
+	var pkt = new Packet(0xFF, 0xFF, mesh.getShortAddr(), request.destAddr,
+						 AQUILASERVICES_ENDPOINT, AQUILASERVICES_ENDPOINT, request.packet.length,
+						 request.packet);
+
+	mesh.sendPacket(pkt, function(err)
 						{
 							if(err)
 							{
@@ -166,9 +169,11 @@ Services.prototype.response = function(destAddr, status, data, callback)
 	var packet = Buffer.concat([new Buffer([AQUILASERVICES_VERSION, status, 0, data.length]),
 															new Buffer(data)]);
 
-	mesh.bridge.sendData(mesh.getShortAddr(), destAddr,
-												AQUILASERVICES_ENDPOINT, AQUILASERVICES_ENDPOINT,
-												packet, callback);
+	var pkt = new Packet(0xFF, 0xFF, mesh.getShortAddr(), destAddr,
+												AQUILASERVICES_ENDPOINT, AQUILASERVICES_ENDPOINT, packet.length,
+												packet);
+
+	mesh.sendPacket(pkt, callback);
 };
 
 

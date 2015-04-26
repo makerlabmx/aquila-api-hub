@@ -259,7 +259,15 @@ DeviceManager.prototype.eventHandler = function(packet)
 
 var arrayToHexString = function(arry)
 {
-	var str = arry.map(function(x)
+	// For buffer compat:
+	var ar = [];
+
+	for(var i = 0; i < arry.length; i++)
+	{
+		ar.push(arry[i]);
+	}
+
+	var str = ar.map(function(x)
 	{
 		x = x.toString(16).toUpperCase();
 		x = ("00"+x).substr(-2);
