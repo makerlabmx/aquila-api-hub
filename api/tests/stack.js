@@ -1,3 +1,5 @@
+"use strict";
+
 var mesh = require("./../lib/mesh");
 var Protocol = require("./../lib/protocol");
 

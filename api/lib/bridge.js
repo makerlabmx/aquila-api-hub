@@ -120,8 +120,8 @@ var Bridge = function(baudrate, port)
     self.waitingResponse = false;
     self.buffer = [];
 
-    if(baudrate === undefined) var baudrate = config.baudrate;
-    if(port === undefined) var port = config.port;
+    if(baudrate === undefined) baudrate = config.baudrate;
+    if(port === undefined) port = config.port;
 
     var init = function(port)
     {
@@ -129,16 +129,16 @@ var Bridge = function(baudrate, port)
         self.transport.on("ready", function()
             {
                 // For when the bridge is not automatically restarted
-                setTimeout(function(){self.getLongAddress()}, 1500);
+                setTimeout(function(){self.getLongAddress();}, 1500);
             });
         self.transport.on("data", function(data)
             {
                 self.parse(data);
             });
 
-            self.transport.on("crcError", function(){ logger.warn("crcError", data) });
-            self.transport.on("framingError", function(data){ logger.warn("framingError", data) });
-            self.transport.on("escapeError", function(data){ logger.warn("escapeError", data) });
+            self.transport.on("crcError", function(data){ logger.warn("crcError", data); });
+            self.transport.on("framingError", function(data){ logger.warn("framingError", data); });
+            self.transport.on("escapeError", function(data){ logger.warn("escapeError", data); });
     };
 
     self.on("longAddressSet", function()
@@ -209,7 +209,7 @@ Bridge.prototype.parse = function(data)
         self.emit("data", new Packet(lqi, rssi, srcAddr, dstAddr, srcEndpoint, dstEndpoint, size, frame));
     }
 
-    if( responseCmds.indexOf(data[COMMAND]) != -1 )
+    if( responseCmds.indexOf(data[COMMAND]) !== -1 )
     {
         self.emit("response", data);
     }
@@ -300,7 +300,7 @@ Bridge.prototype.sendData = function(packet, callback)
             if(data[COMMAND] === CMD_ACK)
             {
                 var rssi = data[1];
-                callback(null, rssi)
+                callback(null, rssi);
             }
             else if(data[COMMAND] === CMD_NACK)
             {

@@ -1,3 +1,5 @@
+"use strict";
+
 // api/models/user.js
 
 var mongoose = require("mongoose");

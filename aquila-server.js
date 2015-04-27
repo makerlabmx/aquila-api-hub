@@ -1,4 +1,6 @@
-#! /usr/bin/env node
+#!/usr/bin/env node
+"use strict";
+
 // server.js
 
 // set up ======================================================================
@@ -53,14 +55,6 @@ var app = express();
 
 // Allow  CORS for client apps
 app.use(cors());
-/*
-app.use(function(req, res, next)
-{
-	res.header("Access-Control-Allow-Origin", "*");
-	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-	next();
-});
-*/
 
 // Verbose requests:
 if(argv.verbose) app.use(morgan('dev')); // log every request to the console

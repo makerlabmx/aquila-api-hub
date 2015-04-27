@@ -1,3 +1,5 @@
+"use strict";
+
 // api/models/task.js
 
 var mongoose = require("mongoose"),

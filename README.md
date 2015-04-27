@@ -6,7 +6,7 @@ This is part of the Aquila Internet of Things Plataform, for more info, see: htt
 
 API documentation: http://docs.aquila2.apiary.io/
 
-**Note:** This version is compatible only with version of January 2015 or newer of the Aquila firmware libraries. Please update your devices accordingly.
+**Note:** This version is compatible only with version of May 2015 or newer of the Aquila firmware libraries. Please update your devices accordingly.
 
 ## Dependencies:
 
@@ -31,7 +31,7 @@ API documentation: http://docs.aquila2.apiary.io/
 ### Linux (Ubuntu / Debian)
 
 1. build-essential and git: ``sudo apt-get install build-essential git``
-2. Node.js v0.10.31 o superior:  http://nodejs.org/
+2. Node.js v0.10.35 or newer (Not tested with versions v0.12.x):  http://nodejs.org/
 3. MongoDB: ``sudo apt-get install mongodb``
 
 

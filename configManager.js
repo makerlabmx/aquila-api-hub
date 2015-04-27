@@ -1,3 +1,5 @@
+"use strict";
+
 // configManager.js
 /*
   Checks whether configs files are correctly installed in ~/.aquila-server

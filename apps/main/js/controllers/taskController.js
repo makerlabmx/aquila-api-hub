@@ -22,7 +22,7 @@
   	$scope.selectedDay = "0";
 
   	$scope.months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-  	$scope.selectedMonth = "0"
+  	$scope.selectedMonth = "0";
 
   	$scope.init = function()
   	{
@@ -261,7 +261,7 @@
   			{
   				$scope.loadTasks();
   			});
-  	}
+  	};
 
   }]);
 

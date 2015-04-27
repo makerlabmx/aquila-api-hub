@@ -1,3 +1,5 @@
+"use strict";
+
 // api/models/device.js
 
 var mongoose = require("mongoose"),

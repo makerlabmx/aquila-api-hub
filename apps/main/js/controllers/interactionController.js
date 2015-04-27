@@ -49,7 +49,7 @@
       editTrue();
 
       console.log(interaction);
-      console.log()
+      console.log();
       $scope.interaction.event = interaction.event_device;
       $scope.interaction.action = interaction.action_device;
 
@@ -98,7 +98,7 @@
       entry.action = inter.interaccion.action_hacer.n ;
       entry.address = inter.interaccion.dev_cuando.address ;
       Aq(inter.interaccion.dev_hacer.address).editEntry(inter.interaccion.n,entry, function(){
-        console.log("si se actualizo")
+        console.log("si se actualizo");
         $('#modal-interaccion').modal('hide');
       });
     };

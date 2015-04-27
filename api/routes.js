@@ -1,3 +1,5 @@
+"use strict";
+
 // api/routes.js
 
 var express = require("express");

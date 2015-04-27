@@ -1,3 +1,5 @@
+"use strict";
+
 // admin/routes.js
 
 var express = require("express");

@@ -23,7 +23,7 @@
       {
         if($scope.navClass !== "on-canvas")
         {
-          $scope.navClass = "on-canvas"
+          $scope.navClass = "on-canvas";
         }
         else
         {

@@ -1,3 +1,5 @@
+"use strict";
+
 // api/sockets.js
 
 var socketioJwt = require("socketio-jwt");

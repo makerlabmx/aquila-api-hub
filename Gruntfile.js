@@ -11,7 +11,8 @@ module.exports = function(grunt) {
       files: [
         '**/*.js',
         '!node_modules/**/*',
-        '!apps/main/bower_components/**/*'
+        '!apps/main/bower_components/**/*',
+        '!apps/freeboard/**/*'
       ],
       options: {
         jshintrc: '.jshintrc'
