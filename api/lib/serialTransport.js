@@ -105,6 +105,20 @@ var SerialTransport = function(baudrate, port)
 
 util.inherits(SerialTransport, events.EventEmitter);
 
+SerialTransport.prototype.close = function(callback)
+{
+    var self = this;
+    self.serialPort.flush(function(err)
+    {
+        if(err) return callback(err);
+        self.serialPort.drain(function(err)
+        {
+            if(err) return callback(err);
+            self.serialPort.close(function(){ callback(); });
+        });
+    });
+};
+
 SerialTransport.prototype.write = function(data)
 {
     var self = this;

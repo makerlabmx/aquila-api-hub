@@ -4,6 +4,7 @@
  *	Author: Rodrigo Méndez Gamboa, rmendez@makerlab.mx
  */
 
+var util = require("util");
 var mesh = require("./mesh");
 var ProtoPacket = require("./protoPacket");
 var events = require("events");
@@ -76,7 +77,7 @@ var Protocol = function()
 	});
 };
 
-Protocol.prototype.__proto__ = events.EventEmitter.prototype;
+util.inherits(Protocol, events.EventEmitter);
 
 Protocol.prototype.parsePacket = function(packet)
 {

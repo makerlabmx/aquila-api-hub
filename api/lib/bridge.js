@@ -51,7 +51,7 @@
  *
  */
 
-// TODO: Add routine for checking if bridge is still alive, and update settings if restarted
+// TODO: Add routine for checking if bridge is still alive
 
 var util = require("util");
 var SerialTransport  = require("./serialTransport");
@@ -102,6 +102,7 @@ var Bridge = function(baudrate, port)
 {
     var self = this;
 
+    self.ready = false;
     self.transport = null;
     self.longAddress = new Buffer([0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
 
@@ -127,24 +128,38 @@ var Bridge = function(baudrate, port)
         self.transport = new SerialTransport(baudrate, port);
         self.transport.on("ready", function()
             {
-
+                // For when the bridge is not automatically restarted
+                setTimeout(function(){self.getLongAddress()}, 1500);
             });
         self.transport.on("data", function(data)
             {
                 self.parse(data);
             });
-        // Debug
-        self.transport.on("crcError", function(){ console.log("crcError") });
-        self.transport.on("framingError", function(){ console.log("framingError") });
-        self.transport.on("escapeError", function(){ console.log("escapeError") });
-        // 
+
+        if(config.debug)
+        {
+            self.transport.on("crcError", function(){ console.log("crcError", data) });
+            self.transport.on("framingError", function(data){ console.log("framingError", data) });
+            self.transport.on("escapeError", function(data){ console.log("escapeError", data) });
+        }
     };
 
     self.on("longAddressSet", function()
         {
-            console.log("ready");
-
-            self.emit("ready");
+            if(!self.ready)
+            {
+                self.ready = true;
+                self.emit("ready");
+            }
+            else
+            {
+                // If we got longAddressSet confirm and wasn't expecting it,
+                // the bridge could have just been restarted.
+                // Proceed reconfiguring
+                if(config.debug) console.log("Bridge restarted");
+                self.setOptions(self.currentOptions);
+                self.setSecurity(self.currentSecurity);
+            }       
         });
 
     if(port) init(port);
@@ -159,7 +174,7 @@ util.inherits(Bridge, events.EventEmitter);
 Bridge.prototype.parse = function(data)
 {
 
-    console.log(data);
+    if(config.debug) console.log("Got data:", data);
 
     var self = this;
 
@@ -307,8 +322,6 @@ Bridge.prototype.ping = function(callback)
 Bridge.prototype.setOptions = function(options, callback)
 {
     this.currentOptions = options;
-
-    console.log(options);
 
     var payload = new Buffer([  CMD_SET_OPT, options.prom, options.pan&0xFF, (options.pan>>8)&0xFF, 
                                 options.chan, options.addr&0xFF, (options.addr>>8)&0xFF]);

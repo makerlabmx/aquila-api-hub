@@ -1,7 +1,9 @@
+"use strict";
+
+var SerialTransport = require("./serialTransport");
 var Serial = require("serialport");
 var SerialPort = Serial.SerialPort;
 var async = require("async");
-var buffertools = require("buffertools");
 var os = require("os");
 
 var TIMEOUT = 1200;
@@ -10,8 +12,8 @@ var scanPorts = function(baudrate, callback)
 {
 	console.log("Searching for bridge...");
 
-	var expectedMessage = new Buffer([0xAA, 0x55, 0xAA, 0x55, 0x04]);
-	var ping = new Buffer([0xAA, 0x55, 0xAA, 0x55, 0x07]);
+	var CMD_START = 0x07;
+	var CMD_PING = 0x08;
 
 	Serial.list(function (err, ports)
 	{
@@ -25,50 +27,38 @@ var scanPorts = function(baudrate, callback)
 
 				console.log("  *Trying:", port.comName);
 
-				var p = new SerialPort(port.comName,
-					{
-						baudrate: baudrate
-					}, true, function(err)
-					{
-						if(err) { /*console.log(err);*/ return cb(); }
+				var transport = new SerialTransport(baudrate, port.comName);
 
+				transport.on("error", function(err)
+					{
+						if(err) return cb(err);
+					});
+
+				transport.on("ready", function()
+					{
 						var timeout = setTimeout(function()
 							{
-								p.drain(function(err)
-									{
-										if(err) return cb(err);
-										p.close(function(){ cb(); });
-									});
+								transport.close(function(){ cb(); });
 							}, TIMEOUT);
 
-						p.on("data", function(data)
+						transport.on("data", function(data)
 							{
-								// only compare first 5 bytes, same lenght as expectedMessage
-								if(buffertools.compare(data.slice(0, 5), expectedMessage) === 0)
+								if(data[0] === CMD_START)
 								{
 									clearTimeout(timeout);
 									console.log("Found bridge in ", port.comName);
-
-									p.flush(function(err)
-									{
-										p.drain(function(err)
+									transport.close(function(err)
 										{
-											p.close(function(err)
-											{
-												foundPort = p.path;
-												cb("found");
-											});
+											transport = null;
+											if(err) return cb(err);
+											foundPort = port.comName;
+											setTimeout(function(){cb("found");}, 1000);
+											
 										});
-									});
 								}
 							});
 
-							// Wait if already sending then send ping
-							p.drain(function()
-								{
-									p.write(ping);
-								});
-
+						transport.write(new Buffer([CMD_PING]));
 					});
 
 			}, function(err)

@@ -1,5 +1,6 @@
 // api/controllers/deviceManager.js
 
+var util = require("util");
 var mongoose = require("mongoose");
 var Device = mongoose.model("Device");
 var Action = mongoose.model("Action");
@@ -194,7 +195,7 @@ var DeviceManager = function()
 	else mesh.on("ready", onReady);
 };
 
-DeviceManager.prototype.__proto__ = events.EventEmitter.prototype;
+util.inherits(DeviceManager, events.EventEmitter);
 
 DeviceManager.prototype.setActiveRefresh = function(active)
 {
