@@ -1,8 +1,11 @@
+"use strict";
+
 // services.js
 /*
 	Javascript implementation of Aquila Services
 */
 
+var util = require("util");
 var mesh = require("./mesh");
 var events = require("events");
 var Packet = require("./meshPacket.js");
@@ -49,7 +52,7 @@ var Services = function()
 		});
 };
 
-Services.prototype.__proto__ = events.EventEmitter.prototype;
+util.inherits(Services, events.EventEmitter);
 
 Services.prototype.parsePacket = function(packet)
 {

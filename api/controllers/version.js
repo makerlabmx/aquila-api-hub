@@ -1,3 +1,5 @@
+"use strict";
+
 // version.js
 
 var pjson = require("./../../package.json");

@@ -1,3 +1,5 @@
+"use strict";
+
 // api/controllers/interaction.js
 
 var mongoose = require("mongoose");

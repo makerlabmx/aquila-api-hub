@@ -1,3 +1,5 @@
+"use strict";
+
 // api/controllers/task.js
 
 var mongoose = require("mongoose");

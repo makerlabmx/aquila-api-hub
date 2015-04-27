@@ -1,3 +1,5 @@
+"use strict";
+
 /*
  *	ProtoPacket
  *	Protocol Packet representation

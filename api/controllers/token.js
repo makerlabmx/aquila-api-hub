@@ -1,3 +1,5 @@
+"use strict";
+
 // api/controllers/token.js
 
 var mongoose = require("mongoose");

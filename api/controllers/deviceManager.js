@@ -1,3 +1,5 @@
+"use strict";
+
 // api/controllers/deviceManager.js
 
 var util = require("util");

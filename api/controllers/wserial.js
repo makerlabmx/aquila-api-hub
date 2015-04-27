@@ -1,3 +1,5 @@
+"use strict";
+
 // api/controllers/wserial.js
 
 var wserial = require("./../lib/wserial");

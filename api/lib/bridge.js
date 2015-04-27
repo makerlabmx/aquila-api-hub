@@ -51,8 +51,6 @@
  *
  */
 
-// TODO: Add routine for checking if bridge is still alive
-
 var util = require("util");
 var SerialTransport  = require("./serialTransport");
 var events = require("events");
@@ -60,8 +58,10 @@ var scanPorts = require("./scanports");
 var configManager = require("./../../configManager");
 var config = require(configManager.bridgePath);
 var Packet = require("./meshPacket.js");
+var logger = require("./bridgeLogger");
 
 var TIMEOUT = 500;
+var CHECK_ALIVE_INTERVAL = 60000;
 
 // Constants:
 var CMD_DATA            = 0;
@@ -136,12 +136,9 @@ var Bridge = function(baudrate, port)
                 self.parse(data);
             });
 
-        if(config.debug)
-        {
-            self.transport.on("crcError", function(){ console.log("crcError", data) });
-            self.transport.on("framingError", function(data){ console.log("framingError", data) });
-            self.transport.on("escapeError", function(data){ console.log("escapeError", data) });
-        }
+            self.transport.on("crcError", function(){ logger.warn("crcError", data) });
+            self.transport.on("framingError", function(data){ logger.warn("framingError", data) });
+            self.transport.on("escapeError", function(data){ logger.warn("escapeError", data) });
     };
 
     self.on("longAddressSet", function()
@@ -150,13 +147,23 @@ var Bridge = function(baudrate, port)
             {
                 self.ready = true;
                 self.emit("ready");
+                logger.info("Bridge ready");
+
+                // Periodically check if still alive
+                setInterval(function()
+                    {
+                        self.ping(function(err)
+                            {
+                                if(err) logger.error("Bridge not responding", String(err));
+                            });
+                    }, CHECK_ALIVE_INTERVAL);
             }
             else
             {
                 // If we got longAddressSet confirm and wasn't expecting it,
                 // the bridge could have just been restarted.
                 // Proceed reconfiguring
-                if(config.debug) console.log("Bridge restarted");
+                logger.info("Bridge restarted");
                 self.setOptions(self.currentOptions);
                 self.setSecurity(self.currentSecurity);
             }       

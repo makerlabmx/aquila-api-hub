@@ -22,6 +22,7 @@ var ConfigManager = function()
   self.csrPath = path.join(self.sslPath, "csr.pem");
   self.rsaKeyPath = path.join(self.sslPath, "rsaKey.pem");
   self.sslCertPath = path.join(self.sslPath, "sslCert.crt");
+  self.logPath = path.join(self.home, ".aquila-server/logs");
 };
 
 
@@ -36,6 +37,9 @@ ConfigManager.prototype.checkConfigFiles = function()
 
   // Create aquila-server config dir if not exists
   mkdir("-p", path.join(self.home, ".aquila-server/ssl"));
+
+  // create logs dir if not exists
+  mkdir("-p", self.logPath);
 
   // Check bridge.js
   if( !test("-e", self.bridgePath) )

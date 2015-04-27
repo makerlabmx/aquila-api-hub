@@ -1,3 +1,5 @@
+"use strict";
+
 // meshPacket.js
 // Represents a LWM packet
 var Packet = function(lqi, rssi, srcAddr, dstAddr, srcEndpoint, dstEndpoint, size, data)

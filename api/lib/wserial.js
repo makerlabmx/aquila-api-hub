@@ -1,8 +1,11 @@
+"use strict";
+
 // wserial.js
 /*
 	Javascript implementation of Altair's WSerial library.
 */
 
+var util = require("util");
 var mesh = require("./mesh");
 var events = require("events");
 var Packet = require("./meshPacket.js");
@@ -28,7 +31,7 @@ var WSerial = function()
 		});
 };
 
-WSerial.prototype.__proto__ = events.EventEmitter.prototype;
+util.inherits(WSerial, events.EventEmitter);
 
 WSerial.prototype.send = function(data)
 {

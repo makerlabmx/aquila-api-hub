@@ -1,3 +1,5 @@
+"use strict";
+
 /*
  *	Protocol
  *	Action and Event based automation protocol.

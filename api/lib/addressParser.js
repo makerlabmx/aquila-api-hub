@@ -1,3 +1,5 @@
+"use strict";
+
 var buffertools = require("buffertools");
 /*
 	Parses protocol addresses from string to Buffer and backwards.

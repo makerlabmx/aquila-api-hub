@@ -1,3 +1,5 @@
+"use strict";
+
 // api/controllers/ip.js
 
 var localIp = require("ip");
