@@ -31,7 +31,8 @@ var scanPorts = function(baudrate, callback)
 
 				transport.on("error", function(err)
 					{
-						if(err) return cb(err);
+						// Do nothing, we don't want to stop if we encounter an ocupied port
+						transport.close(function(){ cb(); });
 					});
 
 				transport.on("ready", function()

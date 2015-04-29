@@ -101,6 +101,11 @@ var SerialTransport = function(baudrate, port)
         self.emit("ready");
     });
 
+    self.serialPort.on("error", function(err)
+    {
+        self.emit("error", err);
+    });
+
 };
 
 util.inherits(SerialTransport, events.EventEmitter);
