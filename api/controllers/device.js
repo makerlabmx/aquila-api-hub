@@ -6,7 +6,6 @@ var mongoose = require("mongoose");
 var Device = mongoose.model("Device");
 var deviceManager = require("./deviceManager");
 var validator = require("validator");
-var services = require("./../lib/services");
 
 var queryFields = "-_fetchComplete -_nActions -_nEvents -_nInteractions -_maxInteractions -__v -events._id -actions._id -_retriesInactive -_waitingRefresh -_retriesFetch";
 
@@ -89,7 +88,8 @@ exports.deviceAction = function(req, res)
 				action <= 255)) return res.status(500).send();
 		if(param !== null  && !(param >= 0 && param <= 255)) return res.status(500).send();
 
-		deviceManager.requestAction(device.shortAddress, action, param);
+		// TODO: return result
+		deviceManager.requestAction(device._id, action, param);
 		res.status(204).send();
 	});
 };
@@ -110,7 +110,7 @@ var deviceService = function(method, req, res)
 		if(err) return res.status(500).send(err.message);
 		if(!device) return res.status(404).send("Invalid device id");
 
-		services.request(device.shortAddress, method, req.params.service, function(err, srcAddr, status, data)
+		deviceManager.requestService(device._id, method, req.params.service, function(err, srcAddr, status, data)
 		{
 			// remove from devicesWaiting
 			/*var index = devicesWaiting.indexOf(device._id);
@@ -138,31 +138,31 @@ var deviceService = function(method, req, res)
 					deviceManager.emit("deviceAdded");
 				});*/
 			}
-			if(status === services.R200) return res.status(200).type("application/json").send(data);
-			if(status === services.R404) return res.status(404).send("Service not found in device");
-			if(status === services.R405) return res.status(405).send("Method not allowed in device");
-			if(status === services.R408) return res.status(408).send("Device Timeout");
-			if(status === services.R500) return res.status(500).send("Device Error");
+			if(status === deviceManager.services.R200) return res.status(200).type("application/json").send(data);
+			if(status === deviceManager.services.R404) return res.status(404).send("Service not found in device");
+			if(status === deviceManager.services.R405) return res.status(405).send("Method not allowed in device");
+			if(status === deviceManager.services.R408) return res.status(408).send("Device Timeout");
+			if(status === deviceManager.services.R500) return res.status(500).send("Device Error");
 		}, JSON.stringify(req.body));
 	});
 };
 
 exports.deviceServiceGet = function(req, res)
 {
-	deviceService(services.GET, req, res);
+	deviceService(deviceManager.services.GET, req, res);
 };
 
 exports.deviceServicePost = function(req, res)
 {
-	deviceService(services.POST, req, res);
+	deviceService(deviceManager.services.POST, req, res);
 };
 
 exports.deviceServicePut = function(req, res)
 {
-	deviceService(services.PUT, req, res);
+	deviceService(deviceManager.services.PUT, req, res);
 };
 
 exports.deviceServiceDelete = function(req, res)
 {
-	deviceService(services.DELETE, req, res);
+	deviceService(deviceManager.services.DELETE, req, res);
 };

@@ -14,6 +14,7 @@ var VerCtrl = require("./controllers/version.js");
 module.exports = function(app, passport)
 {
 	// Import Models and Controllers
+	var TransportModel = require("./models/transport")(app, mongoose);
 	var DeviceModel = require("./models/device").Device(app, mongoose);
 	var InteractionModel = require("./models/interaction").Interaction(app, mongoose);
 	var TaskModel = require("./models/task")(app, mongoose);

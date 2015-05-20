@@ -5,6 +5,7 @@
 var socketioJwt = require("socketio-jwt");
 var configManager = require("./../configManager");
 var tokenConfig = require(configManager.tokenPath);
+var deviceManager = require("./controllers/deviceManager");
 
 module.exports = function(io, passport, deviceManager)
 {
@@ -22,7 +23,7 @@ module.exports = function(io, passport, deviceManager)
 
 			// When someone connects, discover devices again.
 			deviceManager.discover();
-			deviceManager.setActiveRefresh(true);
+			//deviceManager.setActiveRefresh(true);
 
 			deviceManager.on("deviceDiscovered", function()
 			{
@@ -48,24 +49,23 @@ module.exports = function(io, passport, deviceManager)
 			{
 				connectionCounter--;
 				//console.log(">>>>>>>Connections: ", connectionCounter);
-				if(connectionCounter === 0) deviceManager.setActiveRefresh(false);
+				//if(connectionCounter === 0) deviceManager.setActiveRefresh(false);
 			});
 
 		});
 
-	var wserial = require("./lib/wserial");
-
 	io.of("/wserial").on("connection", function(socket)
 		{
-			wserial.on("data", function(data)
+			deviceManager.on("wserialData", function(err, data)
 				{
-					socket.emit("data", data);
+					var pkt = { dstAddr: data.device, data: data.data };
+					socket.emit("data", pkt);
 				});
 
 			socket.on("data", function(data)
 				{
 					if(data.dstAddr === undefined || data.data === undefined) socket.emit("err", "Missing dstAddr or data");
-					else wserial.send(data);
+					else deviceManager.sendWSerial(data.dstAddr, data.data);
 				});
 		});
 };

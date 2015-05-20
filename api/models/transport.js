@@ -6,6 +6,10 @@ var mongoose = require("mongoose"),
     Schema   = mongoose.Schema;
 
 var transportSchema = new Schema(
-    {
-        active: Boolean,
+    {	
+    	_id: String,
+    	type: String,
+        active: Boolean
     });
+
+module.exports = mongoose.model("Transport", transportSchema);

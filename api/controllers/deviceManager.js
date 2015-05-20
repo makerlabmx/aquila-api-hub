@@ -1,6 +1,5 @@
 "use strict";
-
-// api/controllers/deviceManager.js
+// deviceManager.js
 
 var util = require("util");
 var mongoose = require("mongoose");
@@ -9,999 +8,311 @@ var Action = mongoose.model("Action");
 var Event = mongoose.model("Event");
 var Interaction = mongoose.model("Interaction");
 
-var Protocol = require("./../lib/protocol");
-var mesh = require("./../lib/mesh");
 var events = require("events");
 var async = require("async");
-var buffertools = require("buffertools");
+var mqtt = require("mqtt");
+var transport = require("./transport");
 
 var configManager = require("./../../configManager");
 var staticConfig = require(configManager.deviceManagerPath);
 
-var COM_EUI = 14;
-
 /*
-	DeviceManager:
-		- Obtains all the info of the devices in the Aquila network.
-		- Manages the subnetwork (PAN)
-		- Sends messages to devices
-		- Receives events from devices
-	Queues:
-		fetchQueue: fetches devices and interactions of each, one at a time
-		refreshInteractionsQueue: deletes and refetches all interactions of one device
-		pingQueue: Pings every device one at a time, if it doesn't get response, marks it as not active and deletes its interactions.
+    Device manager:
 
-	Responds to events:
-		Protocol post with COM_CLASS, calls device fetcher.
-		Protocol event, emits event with device, eventN and param (null if there isn't param).
-		Calls ping every staticConfig.refreshInterval ms if staticConfig.autoCheckAlive
+    Events:
+        deviceAdded                 (device discovered or becomes active)
+        deviceRemoved                   (device becomes inactive)
+        event(device, eventN, param)    (when a device emits an event)
 
-	Emits events:
-		deviceDiscovered	(when a device is firts known, but hasn't been fetched)
-		deviceAdded			(when a device is fully fetched or made active)
-		deviceRemoved		(when a device fails Ping and is marked inactive)
-		event(device, eventN, param) (when a device emits an event)
-*/
+    MQTT topics:
+    in      /announce   {"device": "<MAC>", "transport": ... }
+    in      /disconnect {"device": "<MAC>"}
+    in      /event      {"device": "<MAC>", "name": "<Event name>", "n": <event number>, "param": <param or null> }
+    out     /action     {"device": "<MAC>", "n": <action number>, "param": <param or null> }
+    in      /action     {"device": "<MAC>", "confirm": <true or false>, "message": "<optional cause>" }
+    out     /service    {"device": "<MAC>", "name": "<Service Name>", "method": "<GET, POST, PUT or DELETE>", "data": <Buffer data> }
+    in      /service    {"device": "<MAC>", "status": <Status code>, "data": <Buffer data> }
+    out     /wserial    {"device": "<MAC>", "data": <Buffer data> }
+    in      /wserial    {"device": "<MAC>", "data": <Buffer data> }
+    out     /discover
+    out     /ping       {"device": "<MAC>"}
+    in      /ping       {"device": "<MAC>", "transport": ...}
 
-var verboseDebug = function(deviceManager)
+    Notes:
+        /action, /service requests, limit one at a time
+        
+ */
+
+var TIMEOUT = 500;
+
+var onWithTimeout = function(emitter, event, timeout, callback)
 {
-	deviceManager.on("deviceDiscovered", function()
-	{
-		console.log("Device discovered");
-	});
-	deviceManager.on("deviceAdded", function()
-	{
-		console.log("Device added");
-	});
-	deviceManager.on("deviceRemoved", function()
-	{
-		console.log("Device removed");
-	});
-	/*deviceManager.on("event", function(device, eventN, param)
-	{
-		console.log("					EVENT: ", eventN, " From Device: ", device.class, " With param: ", param);
-	});
+    var tout = null;
 
-	deviceManager.protocol.on("post", function(packet)
-		{
-			console.log("POST packet: ", packet);
-		});
+    var cb = function(err, res)
+    {
+        if(!callback) callback = function(){};
+        if(tout) { 
+            clearTimeout(tout); 
+            tout = null;
+            if(err) return callback(err);
+            callback(null, res);
+        }
+    };
 
-	deviceManager.protocol.on("event", function(packet)
-		{
-			console.log("EVENT packet: ", packet);
-		});*/
+    var onTout = function()
+    {
+        if(tout === null) return;
+        tout = null;
+
+        emitter.removeListener(event, cb);
+        if(callback) callback(new Error("Timeout"));
+    };
+
+    tout = setTimeout(onTout, timeout);
+
+    emitter.on(event, cb);
 };
 
 var DeviceManager = function()
 {
-	var self = this;
-	this.protocol = new Protocol();
-	self.ready = false;
+    var self = this;
+    self.ready = false;
+    self.client = mqtt.connect("mqtt://localhost:1883");
 
-	this.refreshInterval = null;
+    self.services = {};
+    // request methods
+    self.services.GET = 0x00;
+    self.services.PUT = 0x01;
+    self.services.POST = 0x02;
+    self.services.DELETE = 0x03;
+    // responses
+    self.services.R200 = 0x04;   // OK
+    self.services.R404 = 0x05;   // Service not found
+    self.services.R405 = 0x06;   // Method not allowed
+    self.services.R408 = 0x07;   // Timeout
+    self.services.R500 = 0x08;   // Service error
 
-	this.fetchQueue = async.queue(function(device, callback)
-		{
-			//console.log("Open");
-			// Update device to check if not already fetched
-			Device.findById(device._id, function(err, device)
-				{
-					var alreadyFetched = false;
-					if(device) alreadyFetched = device._fetchComplete;
-					if(err || alreadyFetched || !device) return callback();
-					self.fetchAll(device, function(err)
-						{
-							if(err) { if(staticConfig.debug) {console.log(err); console.log("Fetch queue error");} }
-							else self.emit("deviceAdded");
-							//console.log("Close");
-							callback();
-						});
-				});
+    self.client.on("connect", function()
+    {
+        self.client.subscribe("announce");
+        self.client.subscribe("disconnect");
+        self.client.subscribe("event");
+        self.client.subscribe("action");
+        self.client.subscribe("service");
+        self.client.subscribe("wserial");
+        self.client.subscribe("ping");
 
-		}, 1);
+        self.ready = true;
+        self.emit("ready");
+    });
 
-	this.refreshInteractionsQueue = async.queue(function(device, callback)
-		{
-			self.fetchInteractions(device, function(err)
-						{
-							if(err) console.log(err);
-							callback();
-						});
-		}, 1);
+    self.client.on("message", function(topic, message)
+        {
+            try
+            {
+                message = JSON.parse(message.toString('utf8'));
+            }
+            catch(e)
+            {
+                return;
+            }
+            if(topic === "announce") self.onAnnounce(message);
+            if(topic === "disconnect") self.onDisconnect(message);
+            if(topic === "event") self.onEvent(message);
+            if(topic === "action") self.onAction(message);
+            if(topic === "service") self.onService(message);
+            if(topic === "wserial") self.onWSerial(message);
+            if(topic === "ping") self.onPing(message);
 
-	this.pingQueue = async.queue(function(device, cb)
-		{
-
-			// Reload device, for async issues
-			Device.findById(device._id, function(err, device)
-				{
-					if(staticConfig.debug) console.log("      >>>>Inside PingQueue of:", device.name, "is active: ", device.active, "waiting refresh:", device._waitingRefresh);
-
-					var endThis = function()
-					{
-						device._waitingRefresh = false;
-						device.save(function(){ cb(); });
-					};
-
-					// don't ping again if still waiting refresh, or is a inactive device and refreshInactive is false
-					if(!device || err || device._waitingRefresh || (!staticConfig.refreshInactive && !device.active) ) return cb();
-
-					device._waitingRefresh = true;
-					device.save(function(err)
-						{
-							if(err) endThis();
-
-							if(staticConfig.debug) console.log("Pinging ", device.class);
-							async.retry(3, function(callback){ mesh.ping(device.shortAddress, callback); }, function(err)
-								{
-									if(err)
-									{
-										if(staticConfig.debug) console.log("Ping err: ", err.message);
-										if(device._retriesInactive <= staticConfig.maxRetriesInactive) device._retriesInactive++;
-										if(staticConfig.debug) console.log("-----------Retries inactive: ", device._retriesInactive);
-										if(device._retriesInactive > staticConfig.maxRetriesInactive && device.active)
-										{
-											// Device didn't respond, mark as inactive
-											device.active = false;
-											device._retriesInactive = 0;
-											device.save(function(err, device)
-												{
-													if(err) {endThis(); return console.log(err.message);}
-													// Remove all interactions from this device:
-													Interaction.remove({"action_address": device.address}, function(err)
-														{
-															if(err) {endThis(); return console.log("Error deleting all interactions from ", device.address, err);}
-															self.emit("deviceRemoved");
-															endThis();
-														});
-											});
-										}
-										else
-										{
-											device.save(function(err, device)
-												{
-													if(err) console.log(err.message);
-													endThis();
-												});
-										}
-
-									} else { device._retriesInactive = 0; device.active = true; device.save(function(){ endThis(); });}
-								});
-
-						});
-				});
-
-		}, 1);
-
-	var onReady = function()
-	{
-		if(staticConfig.debug) console.log("Starting bridge...");
-
-		// Device adding manager
-		mesh.on("gotAnnounce", self.deviceFetcher.bind(self));
-
-		// Device Event handling:
-		self.protocol.on("event", self.eventHandler.bind(self));
-
-		// Housekeeping, check incomplete devices, check if still alive
-		self.refreshInterval = setInterval(self.refreshActiveDevices.bind(self), staticConfig.refreshInterval);
-
-		if(staticConfig.debug) verboseDebug(self);
-
-		self.ready = true;
-		self.emit("ready");
-	};
-
-	if(mesh.ready) onReady();
-	else mesh.on("ready", onReady);
+        });
 };
 
 util.inherits(DeviceManager, events.EventEmitter);
 
-DeviceManager.prototype.setActiveRefresh = function(active)
+DeviceManager.prototype.onAnnounce = function(message)
 {
-	var self = this;
-	var refreshInterval = staticConfig.refreshInterval;
-	if(active) refreshInterval = staticConfig.activeRefreshInterval;
+    var self = this;
+    if(typeof(message.device) !== "string") return;
 
-	clearInterval(self.refreshInterval);
-	self.refreshInterval = setInterval(self.refreshActiveDevices.bind(self), refreshInterval);
+    Device.findById(message.device, function(err, device)
+        {
+            if(err) return console.log(err);
+            if(!device)
+            {
+                // Create new device
+                device = new Device(
+                    {
+                        _id: message.device,
+                        transport: { 
+                            transportId: message.transport.transportId,
+                            type: message.transport.type,
+                            hwAddress: new Buffer(message.transport.hwAddress),
+                            shortAddress: String(message.transport.shortAddress)
+                            },
+                        class: message.class,
+                        name: message.name,
+                        _defaultName: message.name,
+                        active: true,
+                        actions: message.actions,
+                        events: message.events,
+                        services: message.services,
+                        icon: "fa-lightbulb-o"
+                    });
+            }
+            else
+            {
+                // Reload and mark active
+                device.transport = { 
+                            transportId: message.transport.transportId,
+                            type: message.transport.type,
+                            hwAddress: new Buffer(message.transport.hwAddress),
+                            shortAddress: String(message.transport.shortAddress)
+                            };
+                device.class = message.class;
+                device._defaultName = message.name;
+                device.active = true;
+                device.actions = message.actions;
+                device.events = message.events;
+                device.services = message.services;
+            }
+
+            device.save(function(err, device)
+                {
+                    if(err) return console.log("Error", err);
+                    self.emit("deviceAdded");
+                });
+        });
+
 };
 
-DeviceManager.prototype.refreshActiveDevices = function()
+DeviceManager.prototype.onDisconnect = function(message)
 {
-	var self = this;
-	if(staticConfig.debug) console.log("Refreshing Active Devices... ");
-	Device.find(function(err, devices)
-	{
-		if(err) return console.log(err);
+    var self = this;
+    if(typeof(message.device) !== "string") return;
 
-		for(var i = 0; i < devices.length; i++)
-		{
-			if(staticConfig.debug) console.log("  >>>>Trying: ", devices[i].name);
-			//if(!devices[i]._fetchComplete) self.fetchQueue.push(devices[i]);
-			// Check if its alive
-			// Depending on refreshInactive option, check if device is active after pinging...
-			/*else*/
-			if( (staticConfig.refreshInactive || devices[i].active) && staticConfig.autoCheckAlive)
-			{
-				if(staticConfig.debug) console.log("    >>>>Pushing into pingQueue: ", devices[i].name);
+    Device.findById(message.device, function(err, device)
+        {
+            if(err) return console.log(err);
+            if(!device) return;
 
-				self.pingQueue.push(devices[i]);
-			}
-		}
-	});
+            device.active = false;
+
+            device.save(function(err, device)
+                {
+                    if(err) return console.log("Error", err);
+                    self.emit("deviceRemoved");
+                });
+        });
 };
 
-DeviceManager.prototype.eventHandler = function(packet)
+DeviceManager.prototype.onEvent = function(message)
 {
-	var self = this;
-	var emitterAddress = packet.srcAddr;
-	var eventN = packet.message.command[0];
-	var hasParam = packet.message.control.hasParam;
-	var param = null;
-	if(hasParam) param = packet.message.param[0];
+    var self = this;
+    if(typeof(message.device) !== "string") return;
 
-	var EUIAddr = packet.message.data.slice(0, 8);
-	var eName = "";
-
-	if(packet.message.data[8] !== undefined)
-	{
-		var eNameLen = packet.message.data[8];
-		eName = packet.message.data.slice(9, 9 + eNameLen).toString("utf8");
-	}
-
-	var query = Device.where({ address: EUIAddr });
-	query.findOne(function(err, device)
-		{
-			if(err) return console.log(err.message);
-			if(device) self.emit("event", device, eventN, param, eName);
-		});
+    Device.findById(message.device, function(err, device)
+    {
+        if(err) return console.log(err.message);
+        if(device) self.emit("event", device, message.n, message.param, message.name);
+    });
 };
 
-var arrayToHexString = function(arry)
+DeviceManager.prototype.onAction = function(message)
 {
-	// For buffer compat:
-	var ar = [];
+    // Handle action response
+    var self = this;
+    if(typeof(message.device) !== "string") return;
 
-	for(var i = 0; i < arry.length; i++)
-	{
-		ar.push(arry[i]);
-	}
-
-	var str = ar.map(function(x)
-	{
-		x = x.toString(16).toUpperCase();
-		x = ("00"+x).substr(-2);
-		return x;
-	}).join("");
-	return str;
+    self.emit("actionResponse", null, message);
 };
 
-DeviceManager.prototype.deviceFetcher = function(srcAddr, euiAddr)
+DeviceManager.prototype.onService = function(message)
 {
-	var self = this;
+    // Handle service response
+    var self = this;
+    if(typeof(message.device) !== "string") return;
 
-	var query = Device.where({ address: euiAddr });
-	query.findOne(function(err, device)
-		{
-			if(err) return console.log("Error", err);
-			if(!device)
-			{
-				// Not aready addeed, add
-				device = new Device(
-					{
-						_id: arrayToHexString(euiAddr),
-						address: euiAddr,
-						shortAddress: srcAddr,
-						class: null,
-						name: null,
-						_defaultName: null,
-						active: true,
-						actions: [],
-						events: [],
-						_fetchComplete: false,
-						_nActions: null,
-						_nEvents: null,
-						_nInteractions: null,
-						_maxInteractions: null,
-						_retriesInactive: 0,
-						_waitingRefresh: false,
-						_retriesFetch: 0,
-						icon: "fa-lightbulb-o"
-						//_interactions: []
-					});
-				device.save(function(err, device)
-					{
-						if(err) return console.log("Error", err);
-						self.emit("deviceDiscovered");
+    self.emit("serviceResponse", null, message);
+};
 
-						// fetch all
-						self.fetchQueue.push(device);
-					});
-			}
-			else
-			{
-				// null waiting refresh, because this is where wi get the response.
-				device._waitingRefresh = false;
-				device.save();
+DeviceManager.prototype.onWSerial = function(message)
+{
+    // Handle service response
+    var self = this;
+    if(typeof(message.device) !== "string") return;
 
-				// if not active, make it active and refresh interactions
-				if(!device.active /*&& device._fetchComplete*/)
-				{
-					device.shortAddress = srcAddr;
-					device.active = true;
-					device._retriesFetch = 0;
-					device._fetchComplete = false;
+    self.emit("wserialData", null, message);
+};
 
-					// always refresh everything:
-					device.save(function(err, device)
-						{
-							if(err) return console.log("Error", err);
-							self.fetchQueue.push(device);
-						});
-				}
-				if(!device._fetchComplete)
-				{
-					// retry fetch all
-					device._retriesFetch++;
-					if(device._retriesFetch <= staticConfig.maxRetriesFetch)
-					{
-						device.save(function(err)
-							{
-								device.shortAddress = srcAddr;
-								self.fetchQueue.push(device);
-							});
-					}
-					else
-					{
-						// emit anyway, it should be a device without AquilaProtocol
-						self.emit("deviceAdded");
-					}
+DeviceManager.prototype.onPing = function(message)
+{
+    // Handle ping response
+    var self = this;
+    if(typeof(message.device) !== "string") return;
 
-				}
-			}
-		});
+    self.emit("pingResponse", null, message);
 };
 
 DeviceManager.prototype.discover = function(callback)
 {
-	var self = this;
-	mesh.ping(mesh.BROADCAST);
-	var count = 0;
-	var interval = setInterval(function()
-		{
-			mesh.ping(mesh.BROADCAST);
-			count++;
-			if(count > 3)
-			{
-				clearInterval(interval);
-				if(callback) callback();
-			}
-
-		}, 500);
+    var self = this;
+    self.client.publish("discover", "", { qos: 2 }, function()
+        {
+            if(callback) callback();
+        });
 };
 
-DeviceManager.prototype.getPAN = function()
+DeviceManager.prototype.ping = function(address, callback)
 {
-	var pan = this.protocol.getPAN();
-	return pan;
+    var self = this;
+    var msg = { device: address };
+    self.client.publish("ping", JSON.stringify(msg), { qos: 1 });
+
+    onWithTimeout(self, "ping", TIMEOUT, function(err, res)
+        {
+            if(!callback) callback = function(){};
+            if(err) return callback(err);
+            callback(null, res);
+        });
 };
 
-DeviceManager.prototype.setPAN = function(pan)
+// CHANGE: now address is the MAC address for coherence
+// TODO: add request buffer
+DeviceManager.prototype.requestAction = function(address, action, param, callback)
 {
-	var self = this;
-	if(typeof(pan) === "number")
-	{
-		mesh.setPanId(pan);
-	}
+    var self = this;
+    var msg = { device: address, n: action, param: param };
+    self.client.publish("action", JSON.stringify(msg), { qos: 2 });
+
+    // Wait response with timeout
+    onWithTimeout(self, "action", TIMEOUT, function(err, res)
+        {
+            if(!callback) callback = function(){};
+            if(err) return callback(err);
+            callback(null, res);
+        });
 };
 
-DeviceManager.prototype.requestAction = function(address, action, param)
+DeviceManager.prototype.requestService = function(address, method, service, callback, data)
 {
-	if(typeof address === "string")
-	{
-		address = parseInt(address);
-	}
+    var self = this;
+    var msg = { device: address, method: method, service: service, data: data };
+    self.client.publish("service", JSON.stringify(msg), { qos: 2 });
 
-	if(address)
-	{
-		this.protocol.requestAction(address, action, param);
-	}
+    onWithTimeout(self, "service", TIMEOUT, function(err, res)
+        {
+            if(!callback) callback = function(){};
+            if(err) return callback(err);
+            callback(null, res.device, res.status, res.data);
+        });
 };
 
-DeviceManager.prototype.requestGet = function(address, command, param, data, callback)
+DeviceManager.prototype.sendWSerial = function(address, data)
 {
-	var self = this;
-	if(typeof address === "string")
-	{
-		address = parseInt(address);
-	}
-	if(!address) return callback(new Error("Invalid address"));
-	this.protocol.requestGet(address, command, param, data);
-
-	var timeout = null;
-
-	var getCb = function(packet)
-	{
-		// Proceed only if timeout hasn't triggered
-		if(timeout)
-		{
-			clearTimeout(timeout);
-			callback(null, packet, getCb);
-		}
-	};
-
-	timeout = setTimeout(function()
-	{
-		// Clear timeout, indicating that timeout has triggered
-		timeout = null;
-		// Remove callback from event
-		self.protocol.removeListener(String(address), getCb);
-		callback(new Error("Timeout"), null, getCb);
-	}, staticConfig.timeout);
-
-
-	// TODO: Check if its necesary to remove listener after success.
-	this.protocol.on(String(address), getCb);
-};
-
-DeviceManager.prototype.requestPost = function(address, command, param, data, callback, timeout)
-{
-	var self = this;
-	if(typeof timeout === "undefined") timeout = staticConfig.timeout;
-	if(typeof address === "string")
-	{
-		address = parseInt(address);
-	}
-	if(!address) return callback(new Error("Invalid address"));
-	this.protocol.requestPost(address, command, param, data);
-
-	var tout = null;
-
-	var postCb = function(packet)
-	{
-		if(tout)
-		{
-			clearTimeout(tout);
-			callback(null, packet, postCb);
-		}
-	};
-
-	tout = setTimeout(function()
-	{
-		tout = null;
-		// Remove callback from event
-		self.protocol.removeListener(String(address), postCb);
-		callback(new Error("Timeout"), null, postCb);
-	}, timeout);
-
-	// TODO: Check if its necesary to remove listener after success.
-	this.protocol.on(String(address), postCb);
-};
-
-DeviceManager.prototype.requestCustom = function(address, data, callback)
-{
-	var self = this;
-	if(typeof address === "string")
-	{
-		address = parseInt(address);
-	}
-	if(!address) return callback(new Error("Invalid address"));
-	this.protocol.requestCustom(address, data);
-
-	var tout = null;
-
-	var custCb = function(packet)
-	{
-		if(tout)
-		{
-			clearTimeout(tout);
-			callback(null, packet, custCb);
-		}
-	};
-
-	tout = setTimeout(function()
-	{
-		tout = null;
-		// Remove callback from event
-		self.protocol.removeListener(String(address), custCb);
-		callback(new Error("Timeout"), null, custCb);
-	}, staticConfig.timeout);
-
-	// TODO: Check if its necesary to remove listener after success.
-	this.protocol.on(String(address), custCb);
-};
-
-DeviceManager.prototype.fetchAll = function(device, cb)
-{
-	//console.log("fetchAll");
-	//console.log("				DEBUG: Fetching: ", device.class);
-	async.series([
-		async.retry(3, (function(callback){ this.fetchClass(device, callback); }).bind(this) ),
-		async.retry(3, (function(callback){ this.fetchName(device, callback); }).bind(this) ),
-		async.retry(3, (function(callback){ this.fetchNActions(device, callback); }).bind(this) ),
-		async.retry(3, (function(callback){ this.fetchNEvents(device, callback); }).bind(this) ),
-		async.retry(3, (function(callback){ this.fetchMaxInteractions(device, callback); }).bind(this) ),
-		async.retry(3, (function(callback){ this.fetchActions(device, callback); }).bind(this) ),
-		async.retry(3, (function(callback){ this.fetchEvents(device, callback); }).bind(this) ),
-		async.retry(3, (function(callback){ this.fetchInteractions(device, callback); }).bind(this) )
-		],
-		function(err, results)
-		{
-			if(err) return cb(err, results);
-			device.active = true;
-			device._fetchComplete = true;
-			device.save(function(err)
-			{
-				if(err) console.log(err);
-				cb(err, results);
-			});
-
-		});
-};
-
-DeviceManager.prototype.fetchClass = function(device, callback)
-{
-	//console.log("fetchClass");
-	var self = this;
-	self.requestGet(device.shortAddress, self.protocol.COM_CLASS, null, null, (function(err, packet, getCb)
-	{
-		if(err) { self.protocol.removeListener(String(device.shortAddress), getCb); callback(err); return; }
-		if(packet.message.control.commandType === self.protocol.POST && packet.message.command[0] === self.protocol.COM_CLASS)
-		{
-			self.protocol.removeListener(String(device.shortAddress), getCb);
-			device.class = packet.message.data.toString("utf8");
-			return callback(null);
-		}
-		//else callback(new Error("Unexpected message"));
-		self.protocol.removeListener(String(device.shortAddress), getCb);
-		callback(new Error("Unexpected message"));
-
-	}));
-};
-
-DeviceManager.prototype.fetchName = function(device, callback)
-{
-	//console.log("fetchName");
-	var self = this;
-	self.requestGet(device.shortAddress, self.protocol.COM_NAME, null, null, (function(err, packet, getCb)
-	{
-		if(err) { self.protocol.removeListener(String(device.shortAddress), getCb); callback(err); return; }
-		if(packet.message.control.commandType === self.protocol.POST && packet.message.command[0] === self.protocol.COM_NAME)
-		{
-			self.protocol.removeListener(String(device.shortAddress), getCb);
-			var newName = packet.message.data.toString("utf8");
-			if(device._defaultName !== newName)
-			{
-				device.name = newName;
-			}
-			device._defaultName = newName;
-			return callback(null);
-		}
-		//else callback(new Error("Unexpected message"));
-		self.protocol.removeListener(String(device.shortAddress), getCb);
-		callback(new Error("Unexpected message"));
-
-	}));
-};
-
-DeviceManager.prototype.fetchNActions = function(device, callback)
-{
-	//console.log("fetchNActions");
-	var self = this;
-	self.requestGet(device.shortAddress, self.protocol.COM_NACTIONS, null, null, (function(err, packet, getCb)
-	{
-		if(err) { self.protocol.removeListener(String(device.shortAddress), getCb); callback(err); return; }
-		if(packet.message.control.commandType === self.protocol.POST && packet.message.command[0] === self.protocol.COM_NACTIONS)
-		{
-			self.protocol.removeListener(String(device.shortAddress), getCb);
-			device._nActions = packet.message.data[0];
-			return callback(null);
-		}
-		//else callback(new Error("Unexpected message"));
-		self.protocol.removeListener(String(device.shortAddress), getCb);
-		callback(new Error("Unexpected message"));
-
-	}));
-};
-
-DeviceManager.prototype.fetchNEvents = function(device, callback)
-{
-	//console.log("fetchNEvents");
-	var self = this;
-	self.requestGet(device.shortAddress, self.protocol.COM_NEVENTS, null, null, (function(err, packet, getCb)
-	{
-		if(err) { self.protocol.removeListener(String(device.shortAddress), getCb); callback(err); return; }
-		if(packet.message.control.commandType === self.protocol.POST && packet.message.command[0] === self.protocol.COM_NEVENTS)
-		{
-			self.protocol.removeListener(String(device.shortAddress), getCb);
-			device._nEvents = packet.message.data[0];
-			return callback(null);
-		}
-		//else callback(new Error("Unexpected message"));
-		self.protocol.removeListener(String(device.shortAddress), getCb);
-		callback(new Error("Unexpected message"));
-
-	}));
-};
-
-DeviceManager.prototype.fetchNInteractions = function(device, callback)
-{
-	//console.log("fetchNInteractions");
-	var self = this;
-	self.requestGet(device.shortAddress, self.protocol.COM_NENTRIES, null, null, (function(err, packet, getCb)
-	{
-		if(err) { self.protocol.removeListener(String(device.shortAddress), getCb); callback(err); return; }
-		if(packet.message.control.commandType === self.protocol.POST && packet.message.command[0] === self.protocol.COM_NENTRIES)
-		{
-			self.protocol.removeListener(String(device.shortAddress), getCb);
-			device._nInteractions = packet.message.data[0];
-			return callback(null);
-		}
-		//else callback(new Error("Unexpected message"));
-		self.protocol.removeListener(String(device.shortAddress), getCb);
-		callback(new Error("Unexpected message"));
-
-	}));
-};
-
-DeviceManager.prototype.fetchMaxInteractions = function(device, callback)
-{
-	var self = this;
-	self.requestGet(device.shortAddress, self.protocol.COM_SIZE, null, null, (function(err, packet, getCb)
-	{
-		if(err) { self.protocol.removeListener(String(device.shortAddress), getCb); callback(err); return; }
-		if(packet.message.control.commandType === self.protocol.POST && packet.message.command[0] === self.protocol.COM_SIZE)
-		{
-			self.protocol.removeListener(String(device.shortAddress), getCb);
-			device._maxInteractions = packet.message.data[0];
-			return callback(null);
-		}
-		//else callback(new Error("Unexpected message"));
-		self.protocol.removeListener(String(device.shortAddress), getCb);
-		callback(new Error("Unexpected message"));
-
-	}));
-};
-
-DeviceManager.prototype.fetchAction = function(device, n, callback)
-{
-	//console.log("fetchAction ", n);
-	var self = this;
-	self.requestGet(device.shortAddress, self.protocol.COM_ACTION, n, null, (function(err, packet, getCb)
-	{
-		if(err) { self.protocol.removeListener(String(device.shortAddress), getCb); callback(err); return; }
-		if(packet.message.control.commandType === self.protocol.POST && packet.message.command[0] === self.protocol.COM_ACTION)
-		{
-			self.protocol.removeListener(String(device.shortAddress), getCb);
-			var newAction = new Action();
-			newAction.n = packet.message.param[0];
-			newAction.name = packet.message.data.toString("utf8");
-
-			var alreadyAdded = false;
-			for(var actn in device.actions)
-			{
-				if(device.actions[actn].n === newAction.n) alreadyAdded = true;
-			}
-
-			if(!alreadyAdded) device.actions.push(newAction);
-			return callback(null);
-		}
-		//else callback(new Error("Unexpected message"));
-		self.protocol.removeListener(String(device.shortAddress), getCb);
-		callback(new Error("Unexpected message"));
-
-	}));
-};
-
-DeviceManager.prototype.fetchActions = function(device, cb)
-{
-	//console.log("fetchActions");
-	var self = this;
-	var fcns = [];
-
-	device.actions = [];
-
-	for(var i = 0; i < device._nActions; ++i)
-	{
-		(function()
-		{
-			var j = i;
-			fcns.push(async.retry(3, (function(callback){ self.fetchAction(device, j, callback); })) );
-		})();
-	}
-
-	async.series(fcns, function(err, results)
-		{
-			// Sometimes we miss actions, retry if so.
-			if(device.actions.length !== device._nActions) return cb(true);
-			cb(err, results);
-		});
-};
-
-DeviceManager.prototype.fetchEvent = function(device, n, callback)
-{
-	//console.log("fetchEvent ", n);
-	var self = this;
-	self.requestGet(device.shortAddress, self.protocol.COM_EVENT, n, null, (function(err, packet, getCb)
-	{
-		if(err) { self.protocol.removeListener(String(device.shortAddress), getCb); callback(err); return; }
-		if(packet.message.control.commandType === self.protocol.POST && packet.message.command[0] === self.protocol.COM_EVENT)
-		{
-			self.protocol.removeListener(String(device.shortAddress), getCb);
-			var newEvent = new Event();
-			newEvent.n = packet.message.param[0];
-			newEvent.name = packet.message.data.toString("utf8");
-
-			var alreadyAdded = false;
-			for(var evt in device.events)
-			{
-				if(device.events[evt].n === newEvent.n) alreadyAdded = true;
-			}
-
-			if(!alreadyAdded) device.events.push(newEvent);
-			return callback(null);
-		}
-		//else callback(new Error("Unexpected message"));
-		self.protocol.removeListener(String(device.shortAddress), getCb);
-		callback(new Error("Unexpected message"));
-
-	}));
-};
-
-DeviceManager.prototype.fetchEvents = function(device, cb)
-{
-	//console.log("fetchEvents");
-	var self = this;
-	var fcns = [];
-
-	device.events = [];
-
-	for(var i = 0; i < device._nEvents; ++i)
-	{
-		(function()
-		{
-			var j = i;
-			fcns.push(async.retry(3, (function(callback){ self.fetchEvent(device, j, callback); })) );
-		})();
-	}
-
-	async.series(fcns, function(err, results)
-		{
-			// Sometimes we miss events, retry if so.
-			if(device.events.length !== device._nEvents) return cb(true);
-			cb(err, results);
-		});
-};
-
-DeviceManager.prototype.fetchInteraction = function(device, n, callback)
-{
-	// console.log("fetchInteraction ", n);
-	var self = this;
-	self.requestGet(device.shortAddress, self.protocol.COM_ENTRY, n, null, (function(err, packet, getCb)
-	{
-		if(err) { self.protocol.removeListener(String(device.shortAddress), getCb); callback(err); return; }
-		if(packet.message.control.commandType === self.protocol.POST && packet.message.command[0] === self.protocol.COM_ENTRY)
-		{
-			self.protocol.removeListener(String(device.shortAddress), getCb);
-			var newInteraction = new Interaction();
-
-			newInteraction._n = packet.message.param[0];
-			newInteraction.action_address = device.address;
-			// parse Interaction
-			newInteraction.fromBuffer(packet.message);
-
-			var alreadyAdded = false;
-			for(var entr = 0; entr < device._interactions.length; entr++)
-			{
-				if(device._interactions[entr]._n === newInteraction._n) alreadyAdded = true;
-			}
-
-			if(!alreadyAdded) device._interactions.push(newInteraction);
-			return callback(null);
-		}
-		//else callback(new Error("Unexpected message"));
-		self.protocol.removeListener(String(device.shortAddress), getCb);
-		callback(new Error("Unexpected message"));
-
-	}).bind(this));
-};
-
-DeviceManager.prototype.fetchInteractions = function(device, cb)
-{
-	// console.log("fetchInteractions", device._nInteractions);
-	var self = this;
-	// Fetch NInteractions first
-	var fcns = [ async.retry(3, (function(callback){ this.fetchNInteractions(device, callback); }).bind(this) ) ];
-
-	// For temporarily storing interactions, in the end we will save them in the interactions document.
-	device._interactions = [];
-
-	for(var i = 0; i < device._nInteractions; ++i)
-	{
-		(function()
-		{
-			var j = i;
-			fcns.push(async.retry(3, (function(callback){ self.fetchInteraction(device, j, callback); })) );
-		})();
-	}
-
-	async.series(fcns, function(err, results)
-		{
-			// Sometimes we miss interactions, retry if so.
-			if(device._interactions.length !== device._nInteractions) return cb(true);
-			// Save interactions:
-			Interaction.create(device._interactions, function(err)
-				{
-					cb(err, results);
-				});
-		});
-};
-
-DeviceManager.prototype.clearInteractions = function(device, callback)
-{
-	var self = this;
-	self.requestPost(device.shortAddress, self.protocol.COM_CLEAR, null, null, (function(err, packet, postCb)
-		{
-			if(err) { self.protocol.removeListener(String(device.shortAddress), postCb); if(callback) callback(err); return;}
-			if(packet.message.control.commandType === self.protocol.ACK)
-			{
-				self.protocol.removeListener(String(device.shortAddress), postCb);
-				device._interactions = [];
-				device._nInteractions = 0;
-				Interaction.remove({"action_address": device.address}, function(err)
-					{
-						if(err) console.log("Error deleting all interactions from ", device.address, err);
-						if(callback) callback(err);
-					});
-			}
-			else if(packet.messafe.control.commandType === self.protocol.NACK)
-			{
-				self.protocol.removeListener(String(device.shortAddress), postCb);
-				if(callback) return callback(new Error("got NACK"));
-			}
-			else
-			{
-				self.protocol.removeListener(String(device.shortAddress), postCb);
-				callback(new Error("Unexpected message"));
-			}
-
-		}), staticConfig.longTimeout);
-};
-
-// Adds interaction and reloads all entries
-DeviceManager.prototype.addInteraction = function(device, interaction, cb)
-{
-	var self = this;
-	self.requestPost(device.shortAddress, self.protocol.COM_ADDENTRY, null, interaction.toBuffer(), (function(err, packet, postCb)
-		{
-			if(err) {self.protocol.removeListener(String(device.shortAddress), postCb); if(cb) cb(err); return;}
-			if(packet.message.control.commandType === self.protocol.ACK)
-			{
-				self.protocol.removeListener(String(device.shortAddress), postCb);
-				// Reload interactions:
-				Interaction.remove({"action_address": device.address}, function(err)
-					{
-						if(err) {
-							console.log("Error deleting all interactions from ", device.address, err);
-							if(cb) cb(err);
-						}
-						device._interactions = [];
-						async.series([
-							async.retry(3, (function(callback){ self.fetchNInteractions(device, callback); }) ),
-							async.retry(3, (function(callback){ self.fetchInteractions(device, callback); }) )
-							],
-							function(err, results)
-							{
-								// Save device for new NInteractions:
-								device.save(function(err, device)
-									{
-										if(cb) cb(err, results);
-									});
-							});
-					});
-			}
-			else if(packet.message.control.commandType === self.protocol.NACK)
-			{
-				self.protocol.removeListener(String(device.shortAddress), postCb);
-				if(cb) cb(new Error("got NACK"));
-			}
-			else
-			{
-				self.protocol.removeListener(String(device.shortAddress), postCb);
-				cb(new Error("Unexpected message"));
-			}
-		}), staticConfig.longTimeout);
-};
-
-DeviceManager.prototype.removeInteraction = function(device, interactionN, cb)
-{
-	var self = this;
-	self.requestPost(device.shortAddress, self.protocol.COM_DELENTRY, interactionN, null, (function(err, packet, postCb)
-		{
-			if(err) {self.protocol.removeListener(String(device.shortAddress), postCb); if(cb) cb(err); return;}
-			if(packet.message.control.commandType === self.protocol.ACK)
-			{
-				self.protocol.removeListener(String(device.shortAddress), postCb);
-				// Reload interactions:
-				Interaction.remove({"action_address": device.address}, function(err)
-					{
-						if(err) {
-							console.log("Error deleting all interactions from ", device.address, err);
-							if(cb) cb(err);
-						}
-						device._interactions = [];
-						async.series([
-							async.retry(3, (function(callback){ self.fetchNInteractions(device, callback); }) ),
-							async.retry(3, (function(callback){ self.fetchInteractions(device, callback); }) )
-							],
-							function(err, results)
-							{
-								// Save device for new NInteractions:
-								device.save(function(err, device)
-									{
-										if(cb) cb(err, results);
-									});
-							});
-					});
-			}
-			else if(packet.message.control.commandType === self.protocol.NACK)
-			{
-				self.protocol.removeListener(String(device.shortAddress), postCb);
-				if(cb) cb(new Error("got NACK"));
-			}
-			else
-			{
-				self.protocol.removeListener(String(device.shortAddress), postCb);
-				cb(new Error("Unexpected message"));
-			}
-		}), staticConfig.longTimeout);
-};
-
-DeviceManager.prototype.editInteraction = function(device, interactionN, interaction, cb)
-{
-	var self = this;
-	self.requestPost(device.shortAddress, self.protocol.COM_ENTRY, interactionN, interaction.toBuffer(), (function(err, packet, postCb)
-		{
-			if(err) {self.protocol.removeListener(String(device.shortAddress), postCb); if(cb) cb(err); return;}
-			if(packet.message.control.commandType === self.protocol.ACK)
-			{
-				self.protocol.removeListener(String(device.shortAddress), postCb);
-				// Reload interactions:
-				Interaction.remove({"action_address": device.address}, function(err)
-					{
-						if(err) {
-							console.log("Error deleting all interactions from ", device.address, err);
-							if(cb) cb(err);
-						}
-						device._interactions = [];
-						async.series([
-							async.retry(3, (function(callback){ self.fetchNInteractions(device, callback); }) ),
-							async.retry(3, (function(callback){ self.fetchInteractions(device, callback); }) )
-							],
-							function(err, results)
-							{
-								// Save device for new NInteractions:
-								device.save(function(err, device)
-									{
-										if(cb) cb(err, results);
-									});
-							});
-					});
-			}
-			else if(packet.message.control.commandType === self.protocol.NACK)
-			{
-				self.protocol.removeListener(String(device.shortAddress), postCb);
-				if(cb) cb(new Error("got NACK"));
-			}
-			else
-			{
-				self.protocol.removeListener(String(device.shortAddress), postCb);
-				cb(new Error("Unexpected message"));
-			}
-		}), staticConfig.longTimeout);
+    var self = this;
+    var msg = { device: device, data: data };
+    self.client.publish("wserial", JSON.stringify(msg), { qos: 2 });
 };
 
 var deviceManager = new DeviceManager();

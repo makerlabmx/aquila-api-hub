@@ -28,19 +28,17 @@ var eventSchema = new Schema(
         shortAddress: ipv4 address
 
 */
-var DeviceTransportSchema = new Schema(
-    {
-        transportId: String,
-        type: String,
-        hwAddress: Buffer,
-        shortAddress: String
-    });
 
 // id: String interpretation of the hwAddress
 var deviceSchema = new Schema(
     {
         _id: String,
-        transport: DeviceTransportSchema,
+        transport: {
+                transportId: String,
+                type: String,
+                hwAddress: Buffer,
+                shortAddress: String
+            },
         class: String,
         name: String,
         _defaultName: String,
@@ -48,14 +46,14 @@ var deviceSchema = new Schema(
         actions: [actionSchema],
         events: [eventSchema],
         services: [String],
-        _fetchComplete: Boolean,
-        _nActions: Number,
-        _nEvents: Number,
-        _nInteractions: Number,
-        _maxInteractions: Number,
-        _retriesInactive: Number,
-        _waitingRefresh: Boolean,
-        _retriesFetch: Number,
+        //_fetchComplete: Boolean,
+        //_nActions: Number,
+        //_nEvents: Number,
+        //_nInteractions: Number,
+        //_maxInteractions: Number,
+        //_retriesInactive: Number,
+        //_waitingRefresh: Boolean,
+        //_retriesFetch: Number,
         icon: String
         //_interactions: [interactionSchema]
     });
@@ -63,6 +61,5 @@ var deviceSchema = new Schema(
 module.exports = {
                     Device: mongoose.model("Device", deviceSchema),
                     Action: mongoose.model("Action", actionSchema),
-                    Event: mongoose.model("Event", eventSchema),
-                    DeviceTransport: mongoose.model("DeviceTransport", transportSchema)
+                    Event: mongoose.model("Event", eventSchema)
                 };

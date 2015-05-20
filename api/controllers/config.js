@@ -8,7 +8,7 @@ var Device = mongoose.model("Device");
 var Interaction = mongoose.model("Interaction");
 var deviceManager = require("./deviceManager");
 var deviceCtrl = require("./device");
-var mesh = require("./../lib/mesh");
+//var mesh = require("./../lib/mesh");
 
 var DEFAULT_PAN = 0xCA5A;
 var DEFAULT_CHANNEL = 26;
@@ -38,15 +38,15 @@ exports.init = function()
 					{
 						if(err) return console.log("Error: ", err.message);
 						//console.log("newConfig saved", newConfig);
-						deviceManager.setPAN(newConfig.pan);
+						//deviceManager.setPAN(newConfig.pan);
 					});
 			}
 			else
 			{
-				deviceManager.setPAN(config.pan);
-				mesh.setSecurityKey(config.secKey);
-				mesh.setSecurityEnabled(config.secEnabled);
-				mesh.setChannel(config.channel);
+				//deviceManager.setPAN(config.pan);
+				//mesh.setSecurityKey(config.secKey);
+				//mesh.setSecurityEnabled(config.secEnabled);
+				//mesh.setChannel(config.channel);
 			}
 		});
 };
@@ -76,7 +76,7 @@ exports.setPan = function(req, res)
 			config.save(function(err)
 				{
 					if(err) return res.status(500).send(err.message);
-					deviceManager.setPAN(config.pan);
+					//deviceManager.setPAN(config.pan);
 					res.status(200).jsonp(config);
 				});
 		});
@@ -107,8 +107,8 @@ exports.setSec = function(req, res)
 			config.save(function(err)
 				{
 					if(err) return res.status(500).send(err.message);
-					mesh.setSecurityKey(config.secKey);
-					mesh.setSecurityEnabled(config.secEnabled);
+					//mesh.setSecurityKey(config.secKey);
+					//mesh.setSecurityEnabled(config.secEnabled);
 					res.status(200).jsonp(config);
 				});
 		});
@@ -144,10 +144,10 @@ exports.setConfig = function(req, res)
 		config.save(function(err)
 		{
 			if(err) return res.status(500).send(err.message);
-			deviceManager.setPAN(config.pan);
-			mesh.setSecurityKey(config.secKey);
-			mesh.setSecurityEnabled(config.secEnabled);
-			mesh.setChannel(config.channel);
+			//deviceManager.setPAN(config.pan);
+			//mesh.setSecurityKey(config.secKey);
+			//mesh.setSecurityEnabled(config.secEnabled);
+			//mesh.setChannel(config.channel);
 			res.status(200).jsonp(config);
 		});
 	});
