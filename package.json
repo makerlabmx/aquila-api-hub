@@ -18,6 +18,7 @@
     "express-session": "^1.11.1",
     "ip": "^0.3.2",
     "jsonwebtoken": "^5.0.0",
+    "macaddress": "^0.2.8",
     "method-override": "^2.3.2",
     "minimist": "^1.1.1",
     "moira": "^1.1.2",

@@ -9,8 +9,8 @@ var Action = mongoose.model("Action");
 var Event = mongoose.model("Event");
 var Interaction = mongoose.model("Interaction");
 
-var Protocol = require("./../lib/protocol");
-var mesh = require("./../lib/mesh");
+var Protocol = require("./lib/protocol");
+var mesh = require("./lib/mesh");
 var events = require("events");
 var async = require("async");
 var buffertools = require("buffertools");
@@ -93,7 +93,7 @@ var DeviceManager = function()
 					self.fetchAll(device, function(err)
 						{
 							if(err) { if(staticConfig.debug) {console.log(err); console.log("Fetch queue error");} }
-							else self.emit("deviceAdded");
+							else self.emit("deviceAdded", device);
 							//console.log("Close");
 							callback();
 						});
@@ -152,7 +152,7 @@ var DeviceManager = function()
 													Interaction.remove({"action_address": device.address}, function(err)
 														{
 															if(err) {endThis(); return console.log("Error deleting all interactions from ", device.address, err);}
-															self.emit("deviceRemoved");
+															self.emit("deviceRemoved", device);
 															endThis();
 														});
 											});
@@ -357,7 +357,7 @@ DeviceManager.prototype.deviceFetcher = function(srcAddr, euiAddr)
 					else
 					{
 						// emit anyway, it should be a device without AquilaProtocol
-						self.emit("deviceAdded");
+						self.emit("deviceAdded", device);
 					}
 
 				}
@@ -383,6 +383,25 @@ DeviceManager.prototype.discover = function(callback)
 		}, 500);
 };
 
+DeviceManager.prototype.reload = function(callback)
+{
+	var self = this;
+	Device.remove({}, function(err)
+		{
+			Interaction.remove({}, function(err)
+			{
+				if(err) console.log(err);
+				self.discover(function()
+				{
+					if(callback) callback();
+				});
+			});
+			if(err) return consle.log(err.message);
+			
+
+		});
+};
+
 DeviceManager.prototype.getPAN = function()
 {
 	var pan = this.protocol.getPAN();
@@ -400,19 +419,20 @@ DeviceManager.prototype.setPAN = function(pan)
 
 DeviceManager.prototype.requestAction = function(address, action, param)
 {
-	if(typeof address === "string")
-	{
-		address = parseInt(address);
-	}
+	var self = this;
+	Device.findById(address, function(err, device)
+		{
+			if(err) return console.log(err);
+			if(!device) return;
+			self.protocol.requestAction(device.shortAddress, action, param);
 
-	if(address)
-	{
-		this.protocol.requestAction(address, action, param);
-	}
+
+		});
 };
 
 DeviceManager.prototype.requestGet = function(address, command, param, data, callback)
 {
+	if(!callback) callback = function(){};
 	var self = this;
 	if(typeof address === "string")
 	{
@@ -548,7 +568,7 @@ DeviceManager.prototype.fetchClass = function(device, callback)
 	var self = this;
 	self.requestGet(device.shortAddress, self.protocol.COM_CLASS, null, null, (function(err, packet, getCb)
 	{
-		if(err) { self.protocol.removeListener(String(device.shortAddress), getCb); callback(err); return; }
+		if(err) { if(getCb){ self.protocol.removeListener(String(device.shortAddress), getCb);} callback(err); return; }
 		if(packet.message.control.commandType === self.protocol.POST && packet.message.command[0] === self.protocol.COM_CLASS)
 		{
 			self.protocol.removeListener(String(device.shortAddress), getCb);

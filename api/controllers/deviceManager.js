@@ -43,7 +43,7 @@ var staticConfig = require(configManager.deviceManagerPath);
         
  */
 
-var TIMEOUT = 500;
+var TIMEOUT = 1000;
 
 var onWithTimeout = function(emitter, event, timeout, callback)
 {
@@ -100,6 +100,7 @@ var DeviceManager = function()
         self.client.subscribe("event");
         self.client.subscribe("action");
         self.client.subscribe("service");
+        self.client.subscribe("serviceResponse");
         self.client.subscribe("wserial");
         self.client.subscribe("ping");
 
@@ -121,7 +122,8 @@ var DeviceManager = function()
             if(topic === "disconnect") self.onDisconnect(message);
             if(topic === "event") self.onEvent(message);
             if(topic === "action") self.onAction(message);
-            if(topic === "service") self.onService(message);
+            //if(topic === "service") self.onService(message);
+            if(topic === "serviceResponse") self.onService(message);
             if(topic === "wserial") self.onWSerial(message);
             if(topic === "ping") self.onPing(message);
 
@@ -138,6 +140,21 @@ DeviceManager.prototype.onAnnounce = function(message)
     Device.findById(message.device, function(err, device)
         {
             if(err) return console.log(err);
+
+            // prepare actions:
+            var actions = [];
+            for(var i = 0; i < message.actions.length; i++)
+            {
+                actions.push(new Action({ n: message.actions[i].n, name: message.actions[i].name }));
+            }
+
+            // prepare events:
+            var events = [];
+            for(var i = 0; i < message.events.length; i++)
+            {
+                events.push(new Action({ n: message.events[i].n, name: message.events[i].name }));
+            }
+
             if(!device)
             {
                 // Create new device
@@ -154,8 +171,8 @@ DeviceManager.prototype.onAnnounce = function(message)
                         name: message.name,
                         _defaultName: message.name,
                         active: true,
-                        actions: message.actions,
-                        events: message.events,
+                        actions: actions,
+                        events: events,
                         services: message.services,
                         icon: "fa-lightbulb-o"
                     });
@@ -172,8 +189,8 @@ DeviceManager.prototype.onAnnounce = function(message)
                 device.class = message.class;
                 device._defaultName = message.name;
                 device.active = true;
-                device.actions = message.actions;
-                device.events = message.events;
+                device.actions = actions;
+                device.events = events;
                 device.services = message.services;
             }
 
@@ -269,7 +286,7 @@ DeviceManager.prototype.ping = function(address, callback)
     var msg = { device: address };
     self.client.publish("ping", JSON.stringify(msg), { qos: 1 });
 
-    onWithTimeout(self, "ping", TIMEOUT, function(err, res)
+    onWithTimeout(self, "pingResponse", TIMEOUT, function(err, res)
         {
             if(!callback) callback = function(){};
             if(err) return callback(err);
@@ -286,7 +303,7 @@ DeviceManager.prototype.requestAction = function(address, action, param, callbac
     self.client.publish("action", JSON.stringify(msg), { qos: 2 });
 
     // Wait response with timeout
-    onWithTimeout(self, "action", TIMEOUT, function(err, res)
+    onWithTimeout(self, "actionResponse", TIMEOUT, function(err, res)
         {
             if(!callback) callback = function(){};
             if(err) return callback(err);
@@ -297,10 +314,10 @@ DeviceManager.prototype.requestAction = function(address, action, param, callbac
 DeviceManager.prototype.requestService = function(address, method, service, callback, data)
 {
     var self = this;
-    var msg = { device: address, method: method, service: service, data: data };
+    var msg = { device: address, method: method, name: service, data: data };
     self.client.publish("service", JSON.stringify(msg), { qos: 2 });
 
-    onWithTimeout(self, "service", TIMEOUT, function(err, res)
+    onWithTimeout(self, "serviceResponse", TIMEOUT, function(err, res)
         {
             if(!callback) callback = function(){};
             if(err) return callback(err);
