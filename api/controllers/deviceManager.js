@@ -29,14 +29,14 @@ var staticConfig = require(configManager.deviceManagerPath);
     in      /disconnect {"device": "<MAC>"}
     in      /event      {"device": "<MAC>", "name": "<Event name>", "n": <event number>, "param": <param or null> }
     out     /action     {"device": "<MAC>", "n": <action number>, "param": <param or null> }
-    in      /action     {"device": "<MAC>", "confirm": <true or false>, "message": "<optional cause>" }
+    in      /actionResponse     {"device": "<MAC>", "confirm": <true or false>, "message": "<optional cause>" }
     out     /service    {"device": "<MAC>", "name": "<Service Name>", "method": "<GET, POST, PUT or DELETE>", "data": <Buffer data> }
-    in      /service    {"device": "<MAC>", "status": <Status code>, "data": <Buffer data> }
+    in      /serviceResponse    {"device": "<MAC>", "status": <Status code>, "data": <Buffer data> }
     out     /wserial    {"device": "<MAC>", "data": <Buffer data> }
     in      /wserial    {"device": "<MAC>", "data": <Buffer data> }
     out     /discover
     out     /ping       {"device": "<MAC>"}
-    in      /ping       {"device": "<MAC>", "transport": ...}
+    in      /pingResponse       {"device": "<MAC>", "transport": ...}
 
     Notes:
         /action, /service requests, limit one at a time
@@ -99,10 +99,12 @@ var DeviceManager = function()
         self.client.subscribe("disconnect");
         self.client.subscribe("event");
         self.client.subscribe("action");
+        self.client.subscribe("actionResponse");
         self.client.subscribe("service");
         self.client.subscribe("serviceResponse");
         self.client.subscribe("wserial");
         self.client.subscribe("ping");
+        self.client.subscribe("pingResponse");
 
         self.ready = true;
         self.emit("ready");
@@ -121,11 +123,11 @@ var DeviceManager = function()
             if(topic === "announce") self.onAnnounce(message);
             if(topic === "disconnect") self.onDisconnect(message);
             if(topic === "event") self.onEvent(message);
-            if(topic === "action") self.onAction(message);
+            if(topic === "actionResponse") self.onAction(message);
             //if(topic === "service") self.onService(message);
             if(topic === "serviceResponse") self.onService(message);
             if(topic === "wserial") self.onWSerial(message);
-            if(topic === "ping") self.onPing(message);
+            if(topic === "pingResponse") self.onPing(message);
 
         });
 };
