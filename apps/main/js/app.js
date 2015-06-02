@@ -8,7 +8,7 @@
     [
       'sessionController','mainController', 'dashboardController', 'deviceController', 'deviceDetailsController', 'configuracionController','interactionController', 'taskController', 'consoleController',
       'deviceFactory','tokenFactory','interactionFactory', 'taskFactory', 'configFactory','socketWSerialFactory','socketAquilaFactory',
-      'ngRoute','btford.socket-io', 'ui.bootstrap.datetimepicker'
+      'ngRoute','btford.socket-io', 'ui.bootstrap.datetimepicker', 'appsController'
     ]
   );
 
@@ -60,6 +60,10 @@
         when('/console', {
           templateUrl: 'main/views/console/console.html',
           controller:'ConsoleController'
+        }).
+        when('/apps', {
+          templateUrl: 'main/views/apps/apps.html',
+          controller: 'AppsController'
         }).
         otherwise({
           redirectTo: '/404error'

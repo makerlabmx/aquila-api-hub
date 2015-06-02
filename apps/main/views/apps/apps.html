@@ -1,0 +1,130 @@
+<div ng-controller="AppsController" data-ng-init="init()">
+	<div class="page page-dashboard col-md-12" ng-class="{'content-body':userLogin}">
+
+		<div class="">
+			<p class="help-block"><strong>System time: </strong> {{sysTime}} </p>
+		</div>
+
+		<div class="text-right">
+			<button type="button" class="btn btn-outlined btn-primary" ng-click='newTask()' >
+				<i class="fa fa-plus"></i>
+				Add new task
+			</button>
+		</div>
+
+
+		<table class="table table-striped pd-top100">
+			<thead>
+				<th>When</th>
+				<th>Do in Device</th>
+				<th>The Action</th>
+				<th>With Parameter</th>
+				<th>Options</th>
+			</thead>
+			<tbody>
+				<tr ng-repeat="task in tasks"  >
+					<td>{{verboseTask(task)}}</td>
+					<td>{{task.device.name}}</td>
+					<td>{{task.action.name || task.action}}</td>
+					<td>{{task.param}}</td>
+					<td>
+		        		<!--
+						<a class="btn btn-outlined btn-success" ng-disabled="entry.event" href ng-click='editInteraction(entry)' >
+							Editar
+				        </a>-->
+						<a class="btn btn-outlined btn-danger" href ng-click='deleteTask(task)' >
+							<i class="fa fa-trash"></i>
+				    	</a>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+
+	</div>
+
+	<div class="modal fade" id="modal-task" >
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+					<h4 class="modal-title">{{modal_title}}</h4>
+				</div>
+				<div class="modal-body">
+					<div class="row">
+						<div class="col-md-6">
+							<form role="form">
+
+								<div class="form-group">
+									<label for="doDevice">Do in Device:</label>
+									<select class="form-control" name="doDevice" ng-model="task.device" ng-options="device.name for device in devices"></select>
+								</div>
+
+								<div class="form-group">
+									<label for="actionDevice">Action:</label>
+									<select class="form-control" name="actionDevice" ng-model="task.action" ng-options="action.name for action in task.device.actions"></select>
+								</div>
+
+								<div class="form-group">
+									<label for="param">With Parameter:</label>
+									<input type="number" min="0" max="255" class="form-control" name="param" ng-model="task.param">
+								</div>
+
+								<div class="form-group">
+									<label for="repeat">Repeat:</label>
+									<select class="form-control" name="repeat" ng-model="repeatType" ng-options="idx as type for (idx, type) in repeatTypes"
+									ng-change="taskSelectChange()"></select>
+								</div>
+
+								<div class="form-group" ng-show="repeatType === '0'">
+									<label for="date">Date:</label>
+									<!-- <input class="form-control" name="date" ng-model="task.recurrenceRule.minute"> -->
+									<datetimepicker data-ng-model="task.dateRule"></datetimepicker>
+								</div>
+
+								<div class="form-group" ng-show="repeatType === '4'">
+									<label for="dayWeek">Day of week:</label>
+									<select class="form-control" name="dayWeek" ng-model="selectedDay" ng-options="idx as day for (idx, day) in week"
+									ng-change="newTaskFormatWeek()"></select>
+								</div>
+
+								<div class="form-group" ng-show="repeatType === '6'">
+									<label for="month">Month:</label>
+									<select class="form-control" name="month" ng-model="selectedMonth" ng-options="idx as month for (idx, month) in months"
+									ng-change="newTaskFormatMonth()"></select>
+								</div>
+
+								<div class="form-group" ng-show="repeatType === '5' || repeatType === '6'">
+									<label for="day">Day of month:</label>
+									<input type="number" min="1" max="31" class="form-control" name="day" ng-model="task.recurrenceRule.date">
+								</div>
+
+								<div class="form-group" ng-show="repeatType === '3' || repeatType === '4' || repeatType === '5' || repeatType === '6'">
+									<label for="hour">Hour:</label>
+									<input type="number" min="0" max="23" class="form-control" name="hour" ng-model="task.recurrenceRule.hour">
+								</div>
+
+								<div class="form-group" ng-show="repeatType === '2' || repeatType === '3' || repeatType === '4' || repeatType === '5' || repeatType === '6'">
+									<label for="minute">Minute:</label>
+									<input type="number" min="0" max="59" class="form-control" name="minute" ng-model="task.recurrenceRule.minute">
+								</div>
+							</form>
+
+
+						</div>
+					</div>
+					<p class="bg-danger" ng-show="error" >{{error}}</p>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+					<button class="btn btn-success" ng-show="edit_element" ng-click="updateTask()">
+						Update
+					</button>
+					<button class="btn btn-success" ng-show="save_element" ng-click="saveTask()">
+						Save
+					</button>
+				</div>
+			</div><!-- /.modal-content -->
+		</div><!-- /.modal-dialog -->
+	</div><!-- /.modal -->
+
+</div>
