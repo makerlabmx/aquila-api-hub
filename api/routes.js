@@ -10,6 +10,7 @@ var tokenConfig = require(configManager.tokenPath);
 var TokenCtrl = require("./controllers/token");
 var IpCtrl = require("./controllers/ip");
 var VerCtrl = require("./controllers/version.js");
+var AuthCtrl = require("./controllers/auth.js");
 
 module.exports = function(app, passport)
 {
@@ -31,6 +32,9 @@ module.exports = function(app, passport)
 	// Authentication
 	app.route("/api/token")
 		.post(TokenCtrl.retrieveToken);
+
+  app.route("/api/createToken")
+    .post(AuthCtrl.createToken);
 
 	// API:
 	// Devices
