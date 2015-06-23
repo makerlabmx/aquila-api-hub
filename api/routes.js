@@ -36,16 +36,12 @@ module.exports = function(app, passport)
 
   // --------------------------
   // New token system
-  app.route("/api/createToken")
+  app.route("/api/tokens")
+    .get(AuthCtrl.findAllTokens)
     .post(AuthCtrl.createToken);
 
-  app.route("/api/tokens")
-    .get(AuthCtrl.findAllTokens);
-
   app.route("/api/tokens/:id")
-    .get(AuthCtrl.findById);
-
-  app.route("/api/tokens/:id")
+    .get(AuthCtrl.findById)
     .delete(AuthCtrl.deleteToken);
 
   //---------------------------
