@@ -45,6 +45,9 @@ module.exports = function(app, passport)
   app.route("/api/tokens/:id")
     .get(AuthCtrl.findById);
 
+  app.route("/api/tokens/:id")
+    .delete(AuthCtrl.deleteToken);
+
   //---------------------------
 
 	// API:

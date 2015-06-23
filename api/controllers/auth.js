@@ -60,3 +60,10 @@ exports.createToken = function(req, res)
             res.json(newToken);
         });
 };
+
+exports.deleteToken = function(req, res) {
+  Token.findByIdAndRemove(req.params.id, function(err) {
+    if (err) return res.status(500).send(err.message);
+    res.json({message: "Token removed"});
+  });
+};
