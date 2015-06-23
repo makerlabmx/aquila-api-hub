@@ -10,7 +10,6 @@ var tokenConfig = require(configManager.tokenPath);
 var TokenCtrl = require("./controllers/token");
 var IpCtrl = require("./controllers/ip");
 var VerCtrl = require("./controllers/version.js");
-var AuthCtrl = require("./controllers/auth.js");
 
 module.exports = function(app, passport)
 {
@@ -24,6 +23,8 @@ module.exports = function(app, passport)
 	var InteractionCtrl = require("./controllers/interaction");
 	var TaskCtrl = require("./controllers/task");
 	var WSerialCtrl = require("./controllers/wserial");
+  var TokenModel = require("./models/token")(app, mongoose);
+  var AuthCtrl = require("./controllers/auth.js");
 
 	var apiRouter = express.Router();
 	//apiRouter.use(passport.authenticate('basic', { session: false }));
@@ -33,8 +34,12 @@ module.exports = function(app, passport)
 	app.route("/api/token")
 		.post(TokenCtrl.retrieveToken);
 
+  // New token system
   app.route("/api/createToken")
     .post(AuthCtrl.createToken);
+
+  app.route("/api/tokens")
+    .get(AuthCtrl.findAllTokens);
 
 	// API:
 	// Devices

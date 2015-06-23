@@ -5,14 +5,24 @@ var expressJwt = require("express-jwt");
 var jwt = require("jsonwebtoken");
 var configManager = require("./../../configManager");
 var tokenConfig = require(configManager.tokenPath);
+var Token = mongoose.model('Token');
 
 // User model
 var User = require("./../../api/models/user");
+
+exports.findAllTokens = function(req, res) {
+  Token.find(function(err, tokens) {
+    if (err) return res.status(500).send(err.message);
+
+    res.status(200).json(tokens);
+  });
+};
 
 exports.createToken = function(req, res)
 {
 	if(req.body.user === undefined ) return res.status(401).send('Missing user');
 	var user = req.body.user;
+  var name = req.body.name;
 
 	User.findOne({ name: user }, function(err, user)
         {
@@ -29,6 +39,16 @@ exports.createToken = function(req, res)
 
             var token = jwt.sign(profile, tokenConfig.secret);
 
-            res.json({ token: token });
+            var newToken = new Token({
+              name: name,
+              token: token,
+              timestamp: today
+            });
+
+            newToken.save(function(err){
+              if(err) return res.status(500).send(err.message);
+            });
+
+            res.json(newToken);
         });
 };
