@@ -34,12 +34,18 @@ module.exports = function(app, passport)
 	app.route("/api/token")
 		.post(TokenCtrl.retrieveToken);
 
+  // --------------------------
   // New token system
   app.route("/api/createToken")
     .post(AuthCtrl.createToken);
 
   app.route("/api/tokens")
     .get(AuthCtrl.findAllTokens);
+
+  app.route("/api/tokens/:id")
+    .get(AuthCtrl.findById);
+
+  //---------------------------
 
 	// API:
 	// Devices

@@ -18,6 +18,14 @@ exports.findAllTokens = function(req, res) {
   });
 };
 
+exports.findById = function(req, res) {
+  Token.findById(req.params.id, function(err, token) {
+    if (err) return res.status(500).send(err.message);
+
+    res.status(200).json(token);
+  });
+};
+
 exports.createToken = function(req, res)
 {
 	if(req.body.user === undefined ) return res.status(401).send('Missing user');
