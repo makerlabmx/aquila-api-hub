@@ -61,6 +61,14 @@ exports.createToken = function(req, res)
         });
 };
 
+exports.editTokenById = function(req, res) {
+  Token.findByIdAndUpdate(req.params.id, req.body, function(err, token) {
+    if (err) return res.status(500).send(err.message);
+
+    res.json(req.body);
+  });
+};
+
 exports.deleteToken = function(req, res) {
   Token.findByIdAndRemove(req.params.id, function(err) {
     if (err) return res.status(500).send(err.message);
