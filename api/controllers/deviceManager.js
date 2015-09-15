@@ -13,7 +13,6 @@ var Protocol = require("./../lib/protocol");
 var mesh = require("./../lib/mesh");
 var events = require("events");
 var async = require("async");
-var buffertools = require("buffertools");
 
 var configManager = require("./../../configManager");
 var staticConfig = require(configManager.deviceManagerPath);

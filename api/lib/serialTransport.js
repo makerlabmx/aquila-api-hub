@@ -1,3 +1,4 @@
+// SerialTransport.js
 "use strict";
 
 var util = require("util");
@@ -49,7 +50,6 @@ var checkCrc = function(data)
 var SerialTransport = function(baudrate, port)
 {
     var self = this;
-
     self.fake = false;
 
     // Serial port write buffer control
@@ -89,6 +89,16 @@ var SerialTransport = function(baudrate, port)
     self.serialPort = new SerialPort(port,
         {
             baudrate: baudrate
+        }, false);
+
+    self.serialPort.on("error", function(err)
+        {
+            console.log(err);
+        });
+
+    self.serialPort.open(function(err)
+        {
+            if(err) return console.log(err)
         });
 
     self.serialPort.on("data", function(data)
@@ -112,6 +122,7 @@ util.inherits(SerialTransport, events.EventEmitter);
 
 SerialTransport.prototype.close = function(callback)
 {
+    if(!callback) callback = function(){};
     var self = this;
     self.serialPort.flush(function(err)
     {
