@@ -19,6 +19,7 @@ var ConfigManager = function()
   self.bridgePath = path.join(self.home, ".aquila-server/bridge.js");
   self.deviceManagerPath = path.join(self.home, ".aquila-server/deviceManager.js");
   self.databasePath = path.join(self.home, ".aquila-server/database.js");
+  self.serverPath = path.join(self.home, ".aquila-server/server.js");
   self.tokenPath = path.join(self.home, ".aquila-server/token.js");
   self.sslPath = path.join(self.home, ".aquila-server/ssl");
   self.csrPath = path.join(self.sslPath, "csr.pem");
@@ -62,6 +63,13 @@ ConfigManager.prototype.checkConfigFiles = function()
   {
     console.log(" Copying database.js...");
     cp("./config/database.js", self.databasePath);
+  }
+
+  // Check server.js
+  if( !test("-e", self.serverPath) )
+  {
+    console.log(" Copying server.js...");
+    cp("./config/server.js", self.serverPath);
   }
 
   // Check token.js

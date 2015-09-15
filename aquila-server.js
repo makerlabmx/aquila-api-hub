@@ -25,8 +25,20 @@ if(argv.help)
 	process.exit();
 }
 
+var flash 	 		 = require('connect-flash');
+var cookieParser = require('cookie-parser');
+var bodyParser   = require('body-parser');
+var session      = require('express-session');
+
+// configuration ===============================================================
+var configDB = require(configManager.databasePath);
+var serverConfig = require(configManager.serverPath);
+var port = process.env.PORT || serverConfig.port;
+var useSSL = argv.ssl || serverConfig.ssl;
+require('./config/passport')(passport); // pass passport for configuration
+
 // SSL
-if(argv.ssl)
+if(useSSL)
 {
 	// For SSL support
 	var https = require("https");
@@ -38,16 +50,6 @@ if(argv.ssl)
 		cert: fs.readFileSync(certFile)
 	};
 }
-
-var flash 	 		 = require('connect-flash');
-var cookieParser = require('cookie-parser');
-var bodyParser   = require('body-parser');
-var session      = require('express-session');
-
-// configuration ===============================================================
-var configDB = require(configManager.databasePath);
-var port = process.env.PORT || 8080;
-require('./config/passport')(passport); // pass passport for configuration
 
 var app = express();
 
@@ -114,7 +116,7 @@ mongoose.connect(configDB.url, function(err, res)
 
 			// launch server ==========================================================
 			var io = null;
-			if(argv.ssl)
+			if(useSSL)
 			{
 				var server = https.createServer(sslConfig, app);
 				io = socket.listen(server);
