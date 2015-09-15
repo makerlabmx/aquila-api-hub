@@ -16,6 +16,14 @@ var TaskManager = function()
 	// Load tasks from database
 	self.init();
 
+	// Reload tasks on deviceAdded, fixes bug that when
+	// a device was forgoten and then rediscovered, its task wont be active
+	// until a server restart
+	deviceManager.on("deviceAdded", function()
+		{
+			self.reload();
+		});
+
 };
 
 TaskManager.prototype.init = function()
@@ -45,7 +53,7 @@ TaskManager.prototype.init = function()
 						var j = schedule.scheduleJob(task.dateRule, function()
 						{
 							if(!device) return; // if we deleted this device but the schedule persisted
-							console.log(Date(), "--- Doing task", device.shortAddress, task.dateRule);
+							//console.log(Date(), "--- Doing task", device.shortAddress, task.dateRule);
 							if(deviceManager.ready) deviceManager.requestAction(device.shortAddress, task.action, task.param);
 						});
 						self.tasks.push(j);
@@ -55,7 +63,7 @@ TaskManager.prototype.init = function()
 						var j = schedule.scheduleJob(task.recurrenceRule, function()
 						{
 							if(!device) return; // if we deleted this device but the schedule persisted
-							console.log(Date(), "--- Doing task", device.shortAddress, task.recurrenceRule);
+							//console.log(Date(), "--- Doing task", device.shortAddress, task.recurrenceRule);
 							if(deviceManager.ready) deviceManager.requestAction(device.shortAddress, task.action, task.param);
 						});
 						self.tasks.push(j);

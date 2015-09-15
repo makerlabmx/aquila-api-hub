@@ -29,7 +29,16 @@
   		$scope.loadTasks();
       Config.ip.get({}, function(data, status, headers)
       {
-        $scope.sysTime = moment(data.sysTime).format("MMMM Do YYYY, h:mm a");
+        // We need to display the actual time so the user can be warned if the server time is wrong
+        // Adjust timezone offsets so we display the actual time in the server
+        var servOffset = data.timeZoneOffset;
+        var cliOffset = new Date().getTimezoneOffset();
+        var adjustment = (servOffset - cliOffset)/60; // Convert adjustment from minutes hours
+
+        var sysTime = new Date(data.sysTime);
+        sysTime.setHours(sysTime.getHours() - adjustment);// Adjust time for display
+
+        $scope.sysTime = moment(sysTime).format("MMMM Do YYYY, h:mm a");
       }, function(data, status){console.log(data, status);});
   	};
 

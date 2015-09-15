@@ -73,9 +73,9 @@
       //console.log($scope.interaction);
       try {
         var data = {
-          "event_address": $scope.interaction.event.address,
+          "event_address": $scope.interaction.event.address.data,
           "event": $scope.interaction.event_cuando.n,
-          "action_address": $scope.interaction.action.address,
+          "action_address": $scope.interaction.action.address.data,
           "action": $scope.interaction.action_hacer.n,
           "param": null
         };
@@ -110,11 +110,21 @@
       });
     }
 
+    function toAddressString(address){
+      var str = "";
+      for(var i = 0; i < address.length; i++)
+      {
+        str += address[i].toString(16).toUpperCase();
+        if(i < (address.length - 1)) str += "-";
+      }
+      return str;
+    }
+
     function prepareInteraction(devs){
       for(var i = 0; i < devs.length; i++){
             var dev = devs[i];
             if(dev.event_device.name == null){
-              dev.event_device.name = dev.event_device.address;
+              dev.event_device.name = toAddressString(dev.event_device.address.data);
             }else{
               for(var x = 0; x < dev.event_device.events.length; x++){
                 if(dev.event === dev.event_device.events[x].n)
@@ -125,7 +135,7 @@
               }
             }
             if(dev.action_device.name == null){
-              dev.action_device.name = dev.action_device.address;
+              dev.action_device.name = toAddressString(dev.action_device.address.data);
             }else{
               for(var x = 0; x < dev.action_device.actions.length; x++){
                 if(dev.action === dev.action_device.actions[x].n)

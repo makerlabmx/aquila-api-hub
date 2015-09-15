@@ -11,10 +11,13 @@ exports.getIp = function(req, res)
     {
       if(err) ip = null;
 
+      var date = new Date();
+
       var data = {
         localIp: localIp.address(),
         extIp: ip,
-        sysTime: new Date()
+        sysTime: date,
+        timeZoneOffset: date.getTimezoneOffset()
       };
 
       res.json(data);

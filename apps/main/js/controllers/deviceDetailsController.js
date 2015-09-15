@@ -25,6 +25,9 @@
               $scope.newName = device.name;
               $scope.newIcon = device.icon;
               if(picker) picker.iconpicker('setIcon', device.icon);
+              // Sort actions and events for consistency
+              $scope.device.actions = $scope.device.actions.sort(function(a,b){ return a.n - b.n });
+              $scope.device.events = $scope.device.events.sort(function(a,b){ return a.n - b.n });
               // Event emittion counter preparation:
               for(var i = 0; i < $scope.device.events.length; i++)
               {
@@ -58,9 +61,14 @@
     {
       if($scope.device && emitter._id === $scope.device._id)
       {
-        if(eventN < $scope.device.events.length)
+        // We have to check for the correct event n
+        for(var i = 0; i < $scope.device.events.length; i++)
         {
-          $scope.device.events[eventN].timesEmitted++;
+          if($scope.device.events[i].n === eventN)
+          {
+            $scope.device.events[i].timesEmitted++;
+            return;
+          }
         }
       }
     };

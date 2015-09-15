@@ -43,7 +43,7 @@
         <div class="panel-body" ng-show="showDetails">
           <p><label>Short Address:</label> {{device.shortAddress.toString(16).toUpperCase()}}</p>
           <p><label>Hardware Address:</label>
-            <span ng-repeat="byte in device.address track by $index">{{byte.toString(16).toUpperCase()}}<span ng-if="$index !== device.address.length - 1">-</span></span>
+            <span ng-repeat="byte in device.address.data track by $index">{{byte.toString(16).toUpperCase()}}<span ng-if="$index !== device.address.data.length - 1">-</span></span>
           </p>
           <p><label>Default Name:</label> {{device._defaultName}}</p>
           <p><label>Class:</label> {{device.class}}</p>

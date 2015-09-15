@@ -77,7 +77,7 @@
 			Config.security.get({}, function(data, status, headers)
 			{
 				config.secEnabled = data.secEnabled;
-				config.secKey = data.secKey;
+				config.secKey = data.secKey.data;
 			});
 		};
 
@@ -92,7 +92,7 @@
 			Config.security.post({}, data, function(data, status, headers)
 			{
 				config.secEnabled = data.secEnabled;
-				config.secKey = data.secKey;
+				config.secKey = data.secKey.data;
 			}, function(data, status, headers)
 			{
 				config.displayError(true, data);

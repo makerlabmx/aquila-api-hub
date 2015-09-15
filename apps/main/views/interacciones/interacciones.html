@@ -56,7 +56,7 @@
 						<form role="form">
 							<div class="form-group">
 								<label for="whenDevice">When the Device:</label>
-								<select class="form-control" name="whenDevice" ng-model="interaction.event" ng-options="device.name for device in devices_all"></select>
+								<select class="form-control" name="whenDevice" ng-model="interaction.event" ng-options="(device.name || device.shortAddress.toString(16).toUpperCase()) for device in devices_all"></select>
 							</div>
 							<div class="form-group">
 								<label for="eventDevice">Emits:</label>
@@ -65,7 +65,7 @@
 
 							<div class="form-group">
 								<label for="doDevice">Do in Device:</label>
-								<select class="form-control" name="doDevice" ng-disabled="edit_element" ng-model="interaction.action" ng-options="device.name for device in devices"></select>
+								<select class="form-control" name="doDevice" ng-disabled="edit_element" ng-model="interaction.action" ng-options="(device.name || device.shortAddress.toString(16).toUpperCase()) for device in devices"></select>
 							</div>
 
 							<div class="form-group">

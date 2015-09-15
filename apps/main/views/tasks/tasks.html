@@ -24,9 +24,9 @@
 			<tbody>
 				<tr ng-repeat="task in tasks"  >
 					<td>{{verboseTask(task)}}</td>
-					<td>{{task.device.name}}</td>
+					<td>{{task.device.name || task.device.shortAddress.toString(16).toUpperCase()}}</td>
 					<td>{{task.action.name || task.action}}</td>
-					<td>{{task.param}}</td>
+					<td>{{task.param || 'N/A'}}</td>
 					<td>
 		        		<!--
 						<a class="btn btn-outlined btn-success" ng-disabled="entry.event" href ng-click='editInteraction(entry)' >
@@ -56,7 +56,7 @@
 
 								<div class="form-group">
 									<label for="doDevice">Do in Device:</label>
-									<select class="form-control" name="doDevice" ng-model="task.device" ng-options="device.name for device in devices"></select>
+									<select class="form-control" name="doDevice" ng-model="task.device" ng-options="(device.name || device.shortAddress.toString(16).toUpperCase()) for device in devices"></select>
 								</div>
 
 								<div class="form-group">

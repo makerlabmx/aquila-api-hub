@@ -28,7 +28,7 @@
               var name = devs[i].name;
               if(!name) name = "";
               self.devices.push({
-                name: name + " [" + devs[i].shortAddress + "]",
+                name: name + " [" + devs[i].shortAddress.toString(16).toUpperCase() + "]",
                 shortAddress: devs[i].shortAddress
               });
             }
@@ -53,7 +53,7 @@
       if(data.srcAddr !== self.lastSender)
       {
         self.lastSender = data.srcAddr;
-        var legend = "FROM " + self.lastSender + ":\n";
+        var legend = "FROM " + self.lastSender.toString(16).toUpperCase() + ":\n";
         self.append(legend);
       }
 
