@@ -97,6 +97,7 @@ function connectMongo()
 				return setTimeout(function()
 					{
 						// Retry
+						console.log("Database not ready, retrying...");
 						connectMongo();
 					}, 2000);
 			}
