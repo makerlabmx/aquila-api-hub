@@ -77,8 +77,8 @@ app.set("views", __dirname + "/apps");
 app.engine("html", require("ejs").renderFile);
 app.set('view engine', 'ejs'); // set up ejs for templating
 
-// Will try to connect 10 times (useful for when mongo is still starting)
-var mongoConnectRetries = 10;
+// Will try to connect 60 times (useful for when mongo is still starting)
+var mongoConnectRetries = 60;
 
 function connectMongo()
 {
@@ -93,12 +93,12 @@ function connectMongo()
 					console.log("ERROR connecting to database, make sure that mongodb is installed and running.");
 					return process.exit(1);
 				}
-				// Retry in 1 second
+				// Retry in 2 seconds
 				return setTimeout(function()
 					{
 						// Retry
 						connectMongo();
-					}, 1000);
+					}, 2000);
 			}
 			// On success, continue app startup
 			onMongoConnect();
