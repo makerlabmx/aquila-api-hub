@@ -77,66 +77,91 @@ app.set("views", __dirname + "/apps");
 app.engine("html", require("ejs").renderFile);
 app.set('view engine', 'ejs'); // set up ejs for templating
 
-mongoose.connect(configDB.url, function(err, res)
-	{
-		if(err)
-		{
-			console.log("ERROR connecting to database, make sure that mongodb is installed and running.");
-			process.exit(1);
-		}
-	  console.log("Connected to Database");
+// Will try to connect 10 times (useful for when mongo is still starting)
+var mongoConnectRetries = 10;
 
-	    // routes ======================================================================
-		// Routers
-		var router = express.Router();
-
-		// Main app route
-		router.get("/", function(req, res)
+function connectMongo()
+{
+	mongoose.connect(configDB.url, function(err, res)
 		{
-			res.render("main/index.html");
+			if(err)
+			{
+				mongoConnectRetries--;
+				// check retries remaining
+				if(mongoConnectRetries === 0)
+				{
+					console.log("ERROR connecting to database, make sure that mongodb is installed and running.");
+					return process.exit(1);
+				}
+				// Retry in 1 second
+				return setTimeout(function()
+					{
+						// Retry
+						connectMongo();
+					}, 1000);
+			}
+			// On success, continue app startup
+			onMongoConnect();
 		});
+};
 
-		app.use(router);
-		// Load API routes passing app.
-		require("./api/routes")(app, passport);
-		// Load Admin routes
-		require("./admin/routes")(app, passport);
+function onMongoConnect()
+{
+  console.log("Connected to Database");
 
-		// initialize Aquila protocol =================================================
-	  var deviceManager = require("./api/controllers/deviceManager");
+  // routes ======================================================================
+	// Routers
+	var router = express.Router();
 
-		// Don't listen until deviceManager is ready:
-		var onReady = function()
-		{
-			// Discover nearby devices
-			deviceManager.discover();
-
-			// Init config
-			require("./api/controllers/config").init();
-
-			// launch server ==========================================================
-			var io = null;
-			if(useSSL)
-			{
-				var server = https.createServer(sslConfig, app);
-				io = socket.listen(server);
-				server.listen(port, function()
-				{
-					console.log("Aquila server running on https://localhost:" + port);
-				});
-			}
-			else
-			{
-				io = socket.listen(app.listen(port, function()
-				{
-					console.log("Aquila server running on http://localhost:" + port);
-				}));
-			}
-
-			// Socket configuration
-			require("./api/sockets")(io, passport, deviceManager);
-		};
-
-		if(deviceManager.ready) onReady();
-		else deviceManager.on("ready", onReady);
+	// Main app route
+	router.get("/", function(req, res)
+	{
+		res.render("main/index.html");
 	});
+
+	app.use(router);
+	// Load API routes passing app.
+	require("./api/routes")(app, passport);
+	// Load Admin routes
+	require("./admin/routes")(app, passport);
+
+	// initialize Aquila protocol =================================================
+  var deviceManager = require("./api/controllers/deviceManager");
+
+	// Don't listen until deviceManager is ready:
+	var onReady = function()
+	{
+		// Discover nearby devices
+		deviceManager.discover();
+
+		// Init config
+		require("./api/controllers/config").init();
+
+		// launch server ==========================================================
+		var io = null;
+		if(useSSL)
+		{
+			var server = https.createServer(sslConfig, app);
+			io = socket.listen(server);
+			server.listen(port, function()
+			{
+				console.log("Aquila server running on https://localhost:" + port);
+			});
+		}
+		else
+		{
+			io = socket.listen(app.listen(port, function()
+			{
+				console.log("Aquila server running on http://localhost:" + port);
+			}));
+		}
+
+		// Socket configuration
+		require("./api/sockets")(io, passport, deviceManager);
+	};
+
+	if(deviceManager.ready) onReady();
+	else deviceManager.on("ready", onReady);
+};
+
+connectMongo();
