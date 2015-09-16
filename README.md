@@ -31,7 +31,7 @@ API documentation: http://docs.aquila2.apiary.io/
 ### Linux (Ubuntu / Debian)
 
 1. build-essential and git: ``sudo apt-get install build-essential git``
-2. Node.js v0.10.35 or newer (Not tested with versions v0.12.x):  http://nodejs.org/
+2. Node.js v0.12.7:  http://nodejs.org/
 3. MongoDB: ``sudo apt-get install mongodb``
 
 
