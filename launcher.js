@@ -11,7 +11,7 @@ var configManager = require("./configManager");
 var args = process.argv.slice(2).join(" ");
 
 var home = process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME'];
-var killall_mongod = (process.platform === 'win32') ? 'taskkill /F /IM mongod.exe' : 'killall mongod';
+var killall_mongod = (process.platform === 'win32') ? 'taskkill /T /IM mongod.exe' : 'killall mongod';
 
 echo("Aquila Server\n");
 echo("IMPORTANT: Make sure that the bridge is connected.\n");

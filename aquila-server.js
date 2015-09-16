@@ -81,7 +81,7 @@ mongoose.connect(configDB.url, function(err, res)
 	{
 		if(err)
 		{
-			console.log("ERROR connecting to database, make shure that mongodb is installed and running.");
+			console.log("ERROR connecting to database, make sure that mongodb is installed and running.");
 			process.exit(1);
 		}
 	  console.log("Connected to Database");
