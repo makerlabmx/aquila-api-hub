@@ -90,14 +90,14 @@ function connectMongo()
 				// check retries remaining
 				if(mongoConnectRetries === 0)
 				{
-					console.log("ERROR connecting to database, make sure that mongodb is installed and running.");
+					console.log("ERROR connecting to database, make sure that mongodb is installed and running or try resetting the database.");
 					return process.exit(1);
 				}
 				// Retry in 2 seconds
 				return setTimeout(function()
 					{
 						// Retry
-						console.log("Database not ready, retrying...");
+						console.log("    Database not ready, retrying connection...");
 						connectMongo();
 					}, 2000);
 			}
