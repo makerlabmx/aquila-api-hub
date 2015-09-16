@@ -10,7 +10,7 @@ var configManager = require("./configManager");
 // get args for passing to aquila-server
 var args = process.argv.slice(2).join(" ");
 
-var home = process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME'];
+var home = process.env[(process.platform === 'win32') ? 'ALLUSERSPROFILE' : 'HOME'];
 var killall_mongod = (process.platform === 'win32') ? 'taskkill /T /IM mongod.exe' : 'killall mongod';
 
 echo("Aquila Server\n");

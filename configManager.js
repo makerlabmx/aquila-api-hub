@@ -15,7 +15,7 @@ var crypto = require("crypto");
 var ConfigManager = function()
 {
   var self = this;
-  self.home = process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME'];
+  self.home = process.env[(process.platform === 'win32') ? 'ALLUSERSPROFILE' : 'HOME'];
   self.bridgePath = path.join(self.home, ".aquila-server/bridge.js");
   self.deviceManagerPath = path.join(self.home, ".aquila-server/deviceManager.js");
   self.databasePath = path.join(self.home, ".aquila-server/database.js");
