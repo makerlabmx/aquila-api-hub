@@ -517,18 +517,20 @@ DeviceManager.prototype.fetchAll = function(device, cb)
 {
 	//console.log("fetchAll");
 	//console.log("				DEBUG: Fetching: ", device.class);
+	var self = this;
 	async.series([
-		async.retry(3, (function(callback){ this.fetchClass(device, callback); }).bind(this) ),
-		async.retry(3, (function(callback){ this.fetchName(device, callback); }).bind(this) ),
-		async.retry(3, (function(callback){ this.fetchNActions(device, callback); }).bind(this) ),
-		async.retry(3, (function(callback){ this.fetchNEvents(device, callback); }).bind(this) ),
-		async.retry(3, (function(callback){ this.fetchMaxInteractions(device, callback); }).bind(this) ),
-		async.retry(3, (function(callback){ this.fetchActions(device, callback); }).bind(this) ),
-		async.retry(3, (function(callback){ this.fetchEvents(device, callback); }).bind(this) ),
-		async.retry(3, (function(callback){ this.fetchInteractions(device, callback); }).bind(this) )
+		function(callback){ async.retry(3, (function(callback){ self.fetchClass(device, callback); }), function(err,result){ callback(err); } ) },
+		function(callback){ async.retry(3, (function(callback){ self.fetchName(device, callback); }), function(err,result){ callback(err); } ) },
+		function(callback){ async.retry(3, (function(callback){ self.fetchNActions(device, callback); }), function(err,result){ callback(err); } ) },
+		function(callback){ async.retry(3, (function(callback){ self.fetchNEvents(device, callback); }), function(err,result){ callback(err); } ) },
+		function(callback){ async.retry(3, (function(callback){ self.fetchMaxInteractions(device, callback); }), function(err,result){ callback(err); } ) },
+		function(callback){ async.retry(3, (function(callback){ self.fetchActions(device, callback); }), function(err,result){ callback(err); } ) },
+		function(callback){ async.retry(3, (function(callback){ self.fetchEvents(device, callback); }), function(err,result){ callback(err); } ) },
+		function(callback){ async.retry(3, (function(callback){ self.fetchInteractions(device, callback); }), function(err,result){ callback(err); } ) }
 		],
 		function(err, results)
 		{
+			console.log(err, results);
 			if(err) return cb(err, results);
 			device.active = true;
 			device._fetchComplete = true;
@@ -543,7 +545,7 @@ DeviceManager.prototype.fetchAll = function(device, cb)
 
 DeviceManager.prototype.fetchClass = function(device, callback)
 {
-	//console.log("fetchClass");
+	console.log("fetchClass");
 	var self = this;
 	self.requestGet(device.shortAddress, self.protocol.COM_CLASS, null, null, (function(err, packet, getCb)
 	{
@@ -563,7 +565,7 @@ DeviceManager.prototype.fetchClass = function(device, callback)
 
 DeviceManager.prototype.fetchName = function(device, callback)
 {
-	//console.log("fetchName");
+	console.log("fetchName");
 	var self = this;
 	self.requestGet(device.shortAddress, self.protocol.COM_NAME, null, null, (function(err, packet, getCb)
 	{
@@ -588,7 +590,7 @@ DeviceManager.prototype.fetchName = function(device, callback)
 
 DeviceManager.prototype.fetchNActions = function(device, callback)
 {
-	//console.log("fetchNActions");
+	console.log("fetchNActions");
 	var self = this;
 	self.requestGet(device.shortAddress, self.protocol.COM_NACTIONS, null, null, (function(err, packet, getCb)
 	{
@@ -608,7 +610,7 @@ DeviceManager.prototype.fetchNActions = function(device, callback)
 
 DeviceManager.prototype.fetchNEvents = function(device, callback)
 {
-	//console.log("fetchNEvents");
+	console.log("fetchNEvents");
 	var self = this;
 	self.requestGet(device.shortAddress, self.protocol.COM_NEVENTS, null, null, (function(err, packet, getCb)
 	{
@@ -628,7 +630,7 @@ DeviceManager.prototype.fetchNEvents = function(device, callback)
 
 DeviceManager.prototype.fetchNInteractions = function(device, callback)
 {
-	//console.log("fetchNInteractions");
+	console.log("fetchNInteractions");
 	var self = this;
 	self.requestGet(device.shortAddress, self.protocol.COM_NENTRIES, null, null, (function(err, packet, getCb)
 	{
@@ -667,7 +669,7 @@ DeviceManager.prototype.fetchMaxInteractions = function(device, callback)
 
 DeviceManager.prototype.fetchAction = function(device, n, callback)
 {
-	//console.log("fetchAction ", n);
+	console.log("fetchAction ", n);
 	var self = this;
 	self.requestGet(device.shortAddress, self.protocol.COM_ACTION, n, null, (function(err, packet, getCb)
 	{
@@ -697,7 +699,7 @@ DeviceManager.prototype.fetchAction = function(device, n, callback)
 
 DeviceManager.prototype.fetchActions = function(device, cb)
 {
-	//console.log("fetchActions");
+	console.log("fetchActions");
 	var self = this;
 	var fcns = [];
 
@@ -708,7 +710,7 @@ DeviceManager.prototype.fetchActions = function(device, cb)
 		(function()
 		{
 			var j = i;
-			fcns.push(async.retry(3, (function(callback){ self.fetchAction(device, j, callback); })) );
+			fcns.push( function(callback){ async.retry(3, (function(callback){ self.fetchAction(device, j, callback); }), function(err, result){ callback(err); }) } );
 		})();
 	}
 
@@ -722,7 +724,7 @@ DeviceManager.prototype.fetchActions = function(device, cb)
 
 DeviceManager.prototype.fetchEvent = function(device, n, callback)
 {
-	//console.log("fetchEvent ", n);
+	console.log("fetchEvent ", n);
 	var self = this;
 	self.requestGet(device.shortAddress, self.protocol.COM_EVENT, n, null, (function(err, packet, getCb)
 	{
@@ -752,7 +754,7 @@ DeviceManager.prototype.fetchEvent = function(device, n, callback)
 
 DeviceManager.prototype.fetchEvents = function(device, cb)
 {
-	//console.log("fetchEvents");
+	console.log("fetchEvents");
 	var self = this;
 	var fcns = [];
 
@@ -763,7 +765,7 @@ DeviceManager.prototype.fetchEvents = function(device, cb)
 		(function()
 		{
 			var j = i;
-			fcns.push(async.retry(3, (function(callback){ self.fetchEvent(device, j, callback); })) );
+			fcns.push( function(callback){ async.retry(3, (function(callback){ self.fetchEvent(device, j, callback); }), function(err, result){ callback(err); }) } );
 		})();
 	}
 
@@ -813,7 +815,7 @@ DeviceManager.prototype.fetchInteractions = function(device, cb)
 	// console.log("fetchInteractions", device._nInteractions);
 	var self = this;
 	// Fetch NInteractions first
-	var fcns = [ async.retry(3, (function(callback){ this.fetchNInteractions(device, callback); }).bind(this) ) ];
+	var fcns = [ function(callback){ async.retry(3, function(callback){ self.fetchNInteractions(device, callback); }, function(err, result){ callback(err); } ) } ];
 
 	// For temporarily storing interactions, in the end we will save them in the interactions document.
 	device._interactions = [];
@@ -823,7 +825,7 @@ DeviceManager.prototype.fetchInteractions = function(device, cb)
 		(function()
 		{
 			var j = i;
-			fcns.push(async.retry(3, (function(callback){ self.fetchInteraction(device, j, callback); })) );
+			fcns.push( function(callback){ async.retry(3, (function(callback){ self.fetchInteraction(device, j, callback); }), function(err, result){ callback(err); }) } );
 		})();
 	}
 
@@ -889,8 +891,8 @@ DeviceManager.prototype.addInteraction = function(device, interaction, cb)
 						}
 						device._interactions = [];
 						async.series([
-							async.retry(3, (function(callback){ self.fetchNInteractions(device, callback); }) ),
-							async.retry(3, (function(callback){ self.fetchInteractions(device, callback); }) )
+							function(callback){ async.retry(3, (function(callback){ self.fetchNInteractions(device, callback); }), function(err, result){ callback(err); } ) },
+							function(callback){ async.retry(3, (function(callback){ self.fetchInteractions(device, callback); }), function(err, result){ callback(err); } ) }
 							],
 							function(err, results)
 							{
@@ -933,8 +935,8 @@ DeviceManager.prototype.removeInteraction = function(device, interactionN, cb)
 						}
 						device._interactions = [];
 						async.series([
-							async.retry(3, (function(callback){ self.fetchNInteractions(device, callback); }) ),
-							async.retry(3, (function(callback){ self.fetchInteractions(device, callback); }) )
+							function(callback){ async.retry(3, (function(callback){ self.fetchNInteractions(device, callback); }), function(err, result){ callback(err); } ) },
+							function(callback){ async.retry(3, (function(callback){ self.fetchInteractions(device, callback); }), function(err, result){ callback(err); } ) }
 							],
 							function(err, results)
 							{
@@ -977,8 +979,8 @@ DeviceManager.prototype.editInteraction = function(device, interactionN, interac
 						}
 						device._interactions = [];
 						async.series([
-							async.retry(3, (function(callback){ self.fetchNInteractions(device, callback); }) ),
-							async.retry(3, (function(callback){ self.fetchInteractions(device, callback); }) )
+							function(callback){ async.retry(3, (function(callback){ self.fetchNInteractions(device, callback); }), function(err, result){ callback(err); } ) },
+							function(callback){ async.retry(3, (function(callback){ self.fetchInteractions(device, callback); }), function(err, result){ callback(err); } ) }
 							],
 							function(err, results)
 							{
