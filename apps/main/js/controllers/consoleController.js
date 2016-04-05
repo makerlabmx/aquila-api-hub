@@ -97,7 +97,7 @@
     self.append = function(text)
     {
       // fix CR in pre
-      text = text.replace("\r", "\n");
+      text = text.replace("\r", "");
       self.output += text;
       // scroll to bottom
       var outputArea = document.getElementById('console_output');

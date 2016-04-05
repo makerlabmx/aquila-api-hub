@@ -1,0 +1,48 @@
+<div class="page page-dashboard container" ng-controller="ServicesController as services" ng-init="services.init()" ng-class="{'content-body':userLogin}">
+
+  <!-- <div class="page-header">
+    <h1>Serial Console</h1>
+  </div> -->
+
+  <div class="row" >
+    <div class="col-md-10 col-sm-10">
+
+      <div class="form-group">
+        <div class="input-group">
+          <span class="input-group-addon">To:</span>
+          <select class="form-control" id="addr_input" ng-model="services.deviceAddr" ng-options="device.id as device.name for device in services.devices"></select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="input-group">
+          <span class="input-group-addon">Service name:</span>
+
+          <input class="form-control" type="text" name="send_input" id="send_input" value="" ng-model="services.serviceName" ng-keyup="$event.keyCode == 13 ? services.send() : null">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="input-group">
+          <span class="input-group-addon">Method:</span>
+          <select class="form-control" id="method_input" ng-model="services.method" ng-options="method for method in services.methods"></select>
+        </div>
+      </div>
+
+      <div class="form-group" ng-show="services.method !== 'GET' ">
+        <label for="body">Data to send (optional, must be JSON format):</label>
+        <textarea class="form-control" rows="5" name="body" ng-model="services.body"></textarea>
+      </div>
+      <button class="btn btn-success" type="button" name="send_button" id="send_button" ng-click="services.send()">Send Request</button>
+      <i class='fa fa-clock-o fa-lg' ng-show="services.loading"></i> 
+
+      <br><br>
+      <div id="console_div" class="form-group">
+        <label for="response">Response:</label>
+        <pre class="form-control" name="response" style="min-height: 200px">{{services.response}}</pre>
+      </div>
+      <button class="btn btn-danger" name="clear_button" id="clear_button" ng-click="services.clear()">Clear Response</button>
+    </div>
+  </div>
+
+</div>

@@ -6,7 +6,7 @@
 
   var app = angular.module('aquila',
     [
-      'sessionController','mainController', 'dashboardController', 'deviceController', 'deviceDetailsController', 'configuracionController','interactionController', 'taskController', 'consoleController',
+      'sessionController','mainController', 'dashboardController', 'deviceController', 'deviceDetailsController', 'configuracionController','interactionController', 'taskController', 'consoleController', 'servicesController',
       'deviceFactory','tokenFactory','interactionFactory', 'taskFactory', 'configFactory','socketWSerialFactory','socketAquilaFactory',
       'ngRoute','btford.socket-io', 'ui.bootstrap.datetimepicker'
     ]
@@ -60,6 +60,10 @@
         when('/console', {
           templateUrl: 'main/views/console/console.html',
           controller:'ConsoleController'
+        }).
+        when('/services', {
+          templateUrl: 'main/views/services/services.html',
+          controller:'ServicesController'
         }).
         otherwise({
           redirectTo: '/404error'

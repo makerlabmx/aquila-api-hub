@@ -82,6 +82,16 @@ var DeviceManager = function()
 
 	this.fetchQueue = async.queue(function(device, callback)
 		{
+			function doFetchAll(device)
+			{
+				self.fetchAll(device, function(err)
+					{
+						if(err) { if(staticConfig.debug) {console.log(err); console.log("Fetch queue error");} }
+						else self.emit("deviceAdded");
+						//console.log("Close");
+						callback();
+					});
+			}
 			//console.log("Open");
 			// Update device to check if not already fetched
 			Device.findById(device._id, function(err, device)
@@ -89,13 +99,7 @@ var DeviceManager = function()
 					var alreadyFetched = false;
 					if(device) alreadyFetched = device._fetchComplete;
 					if(err || alreadyFetched || !device) return callback();
-					self.fetchAll(device, function(err)
-						{
-							if(err) { if(staticConfig.debug) {console.log(err); console.log("Fetch queue error");} }
-							else self.emit("deviceAdded");
-							//console.log("Close");
-							callback();
-						});
+					doFetchAll(device);
 				});
 
 		}, 1);
@@ -322,9 +326,17 @@ DeviceManager.prototype.deviceFetcher = function(srcAddr, euiAddr)
 			}
 			else
 			{
-				// null waiting refresh, because this is where wi get the response.
+				// null waiting refresh, because this is where we get the response.
 				device._waitingRefresh = false;
 				device.save();
+
+				// Algorithm:
+				// 	if was inactive -> refresh all
+				// 	else if fetchComplete: check for changes in class (code update):
+				// 		if changed -> refresh all
+				// 		else do nothing
+				// 	else
+				// 		retry fetch
 
 				// if not active, make it active and refresh interactions
 				if(!device.active /*&& device._fetchComplete*/)
@@ -340,16 +352,47 @@ DeviceManager.prototype.deviceFetcher = function(srcAddr, euiAddr)
 							if(err) return console.log("Error", err);
 							self.fetchQueue.push(device);
 						});
+					return;
 				}
-				if(!device._fetchComplete)
+				else if(device._fetchComplete)
+				{
+					if(device._retriesFetch > staticConfig.maxRetriesFetch) return;
+					// Check if changed, if so, refetch
+					var oldClass = device.class;
+					if(staticConfig.debug) console.log("--- Already fetched, check change in class")
+					self.fetchClass(device, function(err, cb, device)
+					{
+						if(err) return console.log(err);
+						if(staticConfig.debug) console.log("--- new class:", device.class, " old class: ", oldClass);
+
+						if(device.class === oldClass) { if(staticConfig.debug) console.log('--- not changed'); return;  }
+						if(staticConfig.debug) console.log("--------Refetching");
+
+						device.shortAddress = srcAddr;
+						device.active = true;
+						device._retriesFetch = 0;
+						device._fetchComplete = false;
+
+						// refresh everithing
+						device.save(function(err, device)
+						{
+							if(err) return console.log("Error", err);
+							self.fetchQueue.push(device);
+						});
+					});
+					return;
+				}
+				else if(!device._fetchComplete)
 				{
 					// retry fetch all
 					device._retriesFetch++;
 					if(device._retriesFetch <= staticConfig.maxRetriesFetch)
 					{
+						device.shortAddress = srcAddr;
+
 						device.save(function(err)
 							{
-								device.shortAddress = srcAddr;
+								if(err) return console.log("Error", err);
 								self.fetchQueue.push(device);
 							});
 					}
@@ -358,7 +401,7 @@ DeviceManager.prototype.deviceFetcher = function(srcAddr, euiAddr)
 						// emit anyway, it should be a device without AquilaProtocol
 						self.emit("deviceAdded");
 					}
-
+					return;
 				}
 			}
 		});
@@ -530,7 +573,6 @@ DeviceManager.prototype.fetchAll = function(device, cb)
 		],
 		function(err, results)
 		{
-			console.log(err, results);
 			if(err) return cb(err, results);
 			device.active = true;
 			device._fetchComplete = true;
@@ -545,7 +587,7 @@ DeviceManager.prototype.fetchAll = function(device, cb)
 
 DeviceManager.prototype.fetchClass = function(device, callback)
 {
-	console.log("fetchClass");
+	if(staticConfig.debug) console.log("fetchClass");
 	var self = this;
 	self.requestGet(device.shortAddress, self.protocol.COM_CLASS, null, null, (function(err, packet, getCb)
 	{
@@ -554,7 +596,7 @@ DeviceManager.prototype.fetchClass = function(device, callback)
 		{
 			self.protocol.removeListener(String(device.shortAddress), getCb);
 			device.class = packet.message.data.toString("utf8");
-			return callback(null);
+			return callback(null, null, device);
 		}
 		//else callback(new Error("Unexpected message"));
 		self.protocol.removeListener(String(device.shortAddress), getCb);
@@ -565,7 +607,7 @@ DeviceManager.prototype.fetchClass = function(device, callback)
 
 DeviceManager.prototype.fetchName = function(device, callback)
 {
-	console.log("fetchName");
+	if(staticConfig.debug) console.log("fetchName");
 	var self = this;
 	self.requestGet(device.shortAddress, self.protocol.COM_NAME, null, null, (function(err, packet, getCb)
 	{
@@ -590,7 +632,7 @@ DeviceManager.prototype.fetchName = function(device, callback)
 
 DeviceManager.prototype.fetchNActions = function(device, callback)
 {
-	console.log("fetchNActions");
+	if(staticConfig.debug) console.log("fetchNActions");
 	var self = this;
 	self.requestGet(device.shortAddress, self.protocol.COM_NACTIONS, null, null, (function(err, packet, getCb)
 	{
@@ -610,7 +652,7 @@ DeviceManager.prototype.fetchNActions = function(device, callback)
 
 DeviceManager.prototype.fetchNEvents = function(device, callback)
 {
-	console.log("fetchNEvents");
+	if(staticConfig.debug) console.log("fetchNEvents");
 	var self = this;
 	self.requestGet(device.shortAddress, self.protocol.COM_NEVENTS, null, null, (function(err, packet, getCb)
 	{
@@ -630,7 +672,7 @@ DeviceManager.prototype.fetchNEvents = function(device, callback)
 
 DeviceManager.prototype.fetchNInteractions = function(device, callback)
 {
-	console.log("fetchNInteractions");
+	if(staticConfig.debug) console.log("fetchNInteractions");
 	var self = this;
 	self.requestGet(device.shortAddress, self.protocol.COM_NENTRIES, null, null, (function(err, packet, getCb)
 	{
@@ -669,7 +711,7 @@ DeviceManager.prototype.fetchMaxInteractions = function(device, callback)
 
 DeviceManager.prototype.fetchAction = function(device, n, callback)
 {
-	console.log("fetchAction ", n);
+	if(staticConfig.debug) console.log("fetchAction:", n);
 	var self = this;
 	self.requestGet(device.shortAddress, self.protocol.COM_ACTION, n, null, (function(err, packet, getCb)
 	{
@@ -699,7 +741,7 @@ DeviceManager.prototype.fetchAction = function(device, n, callback)
 
 DeviceManager.prototype.fetchActions = function(device, cb)
 {
-	console.log("fetchActions");
+	if(staticConfig.debug) console.log("fetchActions");
 	var self = this;
 	var fcns = [];
 
@@ -724,7 +766,7 @@ DeviceManager.prototype.fetchActions = function(device, cb)
 
 DeviceManager.prototype.fetchEvent = function(device, n, callback)
 {
-	console.log("fetchEvent ", n);
+	if(staticConfig.debug) console.log("fetchEvent:", n);
 	var self = this;
 	self.requestGet(device.shortAddress, self.protocol.COM_EVENT, n, null, (function(err, packet, getCb)
 	{
@@ -754,7 +796,7 @@ DeviceManager.prototype.fetchEvent = function(device, n, callback)
 
 DeviceManager.prototype.fetchEvents = function(device, cb)
 {
-	console.log("fetchEvents");
+	if(staticConfig.debug) console.log("fetchEvents");
 	var self = this;
 	var fcns = [];
 
@@ -779,7 +821,7 @@ DeviceManager.prototype.fetchEvents = function(device, cb)
 
 DeviceManager.prototype.fetchInteraction = function(device, n, callback)
 {
-	// console.log("fetchInteraction ", n);
+	if(staticConfig.debug) console.log("fetchInteraction:", n);
 	var self = this;
 	self.requestGet(device.shortAddress, self.protocol.COM_ENTRY, n, null, (function(err, packet, getCb)
 	{
@@ -812,7 +854,7 @@ DeviceManager.prototype.fetchInteraction = function(device, n, callback)
 
 DeviceManager.prototype.fetchInteractions = function(device, cb)
 {
-	// console.log("fetchInteractions", device._nInteractions);
+	if(staticConfig.debug) console.log("fetchInteractions", device._nInteractions);
 	var self = this;
 	// Fetch NInteractions first
 	var fcns = [ function(callback){ async.retry(3, function(callback){ self.fetchNInteractions(device, callback); }, function(err, result){ callback(err); } ) } ];
