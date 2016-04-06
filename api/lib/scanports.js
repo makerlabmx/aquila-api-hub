@@ -29,38 +29,50 @@ var scanPorts = function(baudrate, callback)
 
 				var transport = new SerialTransport(baudrate, port.comName);
 
-				transport.on("error", function(err)
-					{
-						// Do nothing, we don't want to stop if we encounter an ocupied port
-						transport.close(function(){ cb(); });
-					});
+				var cbCalled = false;
 
-				transport.on("ready", function()
-					{
-						var timeout = setTimeout(function()
+				var onReady = function()
+				{
+					var timeout = setTimeout(function()
+						{
+							if(cbCalled) return;
+							cbCalled = true;
+							transport.close(function(){ cb(); });
+						}, TIMEOUT);
+
+					transport.on("data", function(data)
+						{
+							if(data[0] === CMD_START)
 							{
-								transport.close(function(){ cb(); });
-							}, TIMEOUT);
+								clearTimeout(timeout);
+								console.log("Found bridge in ", port.comName);
+								transport.close(function(err)
+									{
+										if(cbCalled) return;
+										cbCalled = true;
+										transport = null;
+										if(err) return cb(err);
+										foundPort = port.comName;
+										setTimeout(function(){cb("found");}, 1000);
+										
+									});
+							}
+						});
 
-						transport.on("data", function(data)
-							{
-								if(data[0] === CMD_START)
-								{
-									clearTimeout(timeout);
-									console.log("Found bridge in ", port.comName);
-									transport.close(function(err)
-										{
-											transport = null;
-											if(err) return cb(err);
-											foundPort = port.comName;
-											setTimeout(function(){cb("found");}, 1000);
-											
-										});
-								}
-							});
+					transport.write(new Buffer([CMD_PING]));
+				}
 
-						transport.write(new Buffer([CMD_PING]));
-					});
+				var onErrorF = function(err)
+				{
+					// Do nothing, we don't want to stop if we encounter an ocupied port
+					if(cbCalled) return;
+					cbCalled = true;					
+					transport.close(function(){ cb(); });
+				}
+
+				transport.on("error", onErrorF);
+
+				transport.on("ready", onReady);
 
 			}, function(err)
 			{
