@@ -4,7 +4,7 @@
   "description": "Aquila API and Web App server for the Hub.",
   "main": "launcher.js",
   "author": "Rodrigo Méndez <rmendez@makerlab.mx> (http://aquila.io/)",
-  "license": "GPL-2.0",
+  "license": "MIT",
   "dependencies": {
     "async": "^2.0.0-rc.2",
     "bcrypt": "^0.8.5",
